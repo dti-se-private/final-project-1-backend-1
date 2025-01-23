@@ -1,4 +1,4 @@
-package org.dti.se.finalproject1backend1.inners.models.entities;
+package org.dti.se.finalproject1backend1.inners.models.valueobjects;
 
 import lombok.*;
 import lombok.experimental.Accessors;

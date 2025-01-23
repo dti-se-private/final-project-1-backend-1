@@ -49,8 +49,7 @@ public class StatisticRest {
                     .message(e.getMessage())
                     .build()
                     .toEntity(HttpStatus.BAD_REQUEST);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return ResponseBody
                     .<List<StatisticSeriesResponse>>builder()
                     .message("Internal server error.")

@@ -2,7 +2,7 @@ package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
-import org.dti.se.finalproject1backend1.inners.models.entities.Session;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.dti.se.finalproject1backend1.outers.deliveries.filters.AuthenticationManagerImpl;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
@@ -42,7 +42,7 @@ public class BasicAuthenticationUseCase {
 
         Account account;
         try {
-            account = accountRepository.findFirstByIdNull(accountId);
+            account = accountRepository.findFirstById(accountId);
         } catch (EmptyResultDataAccessException e) {
             throw new AccountNotFoundException();
         }

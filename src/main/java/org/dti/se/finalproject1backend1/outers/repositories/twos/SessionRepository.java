@@ -1,7 +1,7 @@
 package org.dti.se.finalproject1backend1.outers.repositories.twos;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.dti.se.finalproject1backend1.inners.models.entities.Session;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;

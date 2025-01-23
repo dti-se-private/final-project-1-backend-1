@@ -3,13 +3,14 @@ package org.dti.se.finalproject1backend1.inners.models.entities;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.datatype.jsr310.ser.OffsetDateTimeSerializer;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.Accessors;
 import org.dti.se.finalproject1backend1.inners.models.Model;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
 import org.springframework.data.domain.Persistable;
-import org.springframework.data.relational.core.mapping.Table;
 
 import java.util.UUID;
 
@@ -21,6 +22,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Accessors(chain = true)
 @Table(name = "account")
+@Entity
 public class Account extends Model implements Persistable<UUID> {
     @Id
     private UUID id;

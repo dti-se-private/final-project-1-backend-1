@@ -2,7 +2,7 @@ package org.dti.se.finalproject1backend1.outers.deliveries.filters;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
-import org.dti.se.finalproject1backend1.inners.models.entities.Session;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.JwtAuthenticationUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
