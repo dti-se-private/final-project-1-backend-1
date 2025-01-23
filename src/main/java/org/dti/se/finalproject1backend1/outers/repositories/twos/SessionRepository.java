@@ -3,10 +3,9 @@ package org.dti.se.finalproject1backend1.outers.repositories.twos;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.dti.se.finalproject1backend1.inners.models.entities.Session;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.stereotype.Repository;
-import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
@@ -17,37 +16,34 @@ import java.time.temporal.ChronoUnit;
 public class SessionRepository {
 
     @Autowired
-    ReactiveRedisTemplate<String, String> stringTemplate;
+    RedisTemplate<String, String> stringTemplate;
 
-    public Mono<Boolean> setByAccessToken(Session session) {
-        return stringTemplate
+    public void setByAccessToken(Session session) {
+        String key = session.getAccessToken();
+        String value = session.toJsonString();
+        Duration timeout = Duration.between(
+                OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS).toInstant(),
+                session.getAccessTokenExpiredAt().toInstant()
+        );
+        stringTemplate
                 .opsForValue()
-                .set(
-                        session.getAccessToken(),
-                        session.toJsonString(),
-                        Duration.between(
-                                OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS).toInstant(),
-                                session.getAccessTokenExpiredAt().toInstant()
-                        )
-                );
+                .set(key, value, timeout);
+
     }
 
-    public Mono<Session> getByAccessToken(String accessToken) {
-        return stringTemplate
-                .opsForValue()
-                .get(accessToken)
-                .handle((jsonString, sink) -> {
-                    try {
-                        sink.next(Jackson2ObjectMapperBuilder.json().build().readValue(jsonString, Session.class));
-                    } catch (JsonProcessingException e) {
-                        sink.error(new RuntimeException(e));
-                    }
-                });
+    public Session getByAccessToken(String accessToken) {
+        String jsonString = stringTemplate.opsForValue().get(accessToken);
+        try {
+            return Jackson2ObjectMapperBuilder.json().build().readValue(jsonString, Session.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public Mono<Boolean> deleteByAccessToken(String accessToken) {
-        return stringTemplate
+    public void deleteByAccessToken(String accessToken) {
+        stringTemplate
                 .opsForValue()
+                .getOperations()
                 .delete(accessToken);
     }
 

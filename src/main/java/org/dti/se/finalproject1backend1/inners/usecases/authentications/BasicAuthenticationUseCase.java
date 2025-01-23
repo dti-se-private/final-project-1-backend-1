@@ -1,14 +1,16 @@
 package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 
+import com.auth0.jwt.interfaces.DecodedJWT;
+import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.Session;
-import org.dti.se.finalproject1backend1.outers.deliveries.filters.ReactiveAuthenticationManagerImpl;
+import org.dti.se.finalproject1backend1.outers.deliveries.filters.AuthenticationManagerImpl;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.twos.SessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -26,38 +28,37 @@ public class BasicAuthenticationUseCase {
     SessionRepository sessionRepository;
 
     @Autowired
-    ReactiveAuthenticationManagerImpl reactiveAuthenticationManagerImpl;
+    AuthenticationManagerImpl authenticationManagerImpl; // Keep the autowired, assume it's adapted
 
-    public Mono<Void> logout(Session session) {
-        return reactiveAuthenticationManagerImpl
-                .authenticate(new UsernamePasswordAuthenticationToken(null, session))
-                .then(sessionRepository.deleteByAccessToken(session.getAccessToken()))
-                .then();
+    public void logout(Session session) {
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(null, session, null);
+        authenticationManagerImpl.authenticate(authentication);
+        sessionRepository.deleteByAccessToken(session.getAccessToken());
     }
 
-    public Mono<Session> refreshSession(Session session) {
-        return Mono
-                .fromCallable(() -> jwtAuthenticationUseCase.verify(session.getRefreshToken()))
-                .map(decodedJwt -> decodedJwt.getClaim("account_id").as(UUID.class))
-                .flatMap(accountId -> accountRepository.findFirstById(accountId))
-                .switchIfEmpty(Mono.error(new AccountNotFoundException()))
-                .map(account -> {
-                            OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
-                            return Session
-                                    .builder()
-                                    .accountId(account.getId())
-                                    .accessToken(jwtAuthenticationUseCase.generate(account, now.plusSeconds(30)))
-                                    .refreshToken(jwtAuthenticationUseCase.generate(account, now.plusDays(3)))
-                                    .accessTokenExpiredAt(now.plusMinutes(5))
-                                    .refreshTokenExpiredAt(now.plusDays(3))
-                                    .build();
-                        }
-                )
-                .flatMap(newSession -> sessionRepository
-                        .setByAccessToken(newSession)
-                        .thenReturn(newSession)
-                );
+    public Session refreshSession(Session session) {
+        DecodedJWT jwt = jwtAuthenticationUseCase.verify(session.getRefreshToken());
+        UUID accountId = jwt.getClaim("account_id").as(UUID.class);
+
+        Account account;
+        try {
+            account = accountRepository.findFirstByIdNull(accountId);
+        } catch (EmptyResultDataAccessException e) {
+            throw new AccountNotFoundException();
+        }
+
+        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+        String newAccessToken = jwtAuthenticationUseCase.generate(account, now.plusSeconds(30));
+        String newRefreshToken = jwtAuthenticationUseCase.generate(account, now.plusDays(3));
+        Session newSession = Session
+                .builder()
+                .accountId(account.getId())
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .accessTokenExpiredAt(now.plusSeconds(5))
+                .refreshTokenExpiredAt(now.plusDays(3))
+                .build();
+        sessionRepository.setByAccessToken(newSession);
+        return newSession;
     }
-
-
 }

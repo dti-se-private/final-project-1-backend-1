@@ -1,26 +1,22 @@
 package org.dti.se.finalproject1backend1.outers.configurations.datastores;
 
-import io.r2dbc.spi.ConnectionFactories;
-import io.r2dbc.spi.ConnectionFactory;
+import jakarta.persistence.EntityManagerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
-import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-import org.springframework.data.r2dbc.repository.config.EnableR2dbcRepositories;
-import org.springframework.r2dbc.connection.R2dbcTransactionManager;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.transaction.annotation.Isolation;
-import org.springframework.transaction.reactive.TransactionalOperator;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
+
+import javax.sql.DataSource;
 
 
 @Configuration
-@EnableR2dbcRepositories(
-        basePackages = "org.dti.se.finalproject1backend1.outers.repositories.ones",
-        entityOperationsRef = "oneTemplate"
-)
 @EnableTransactionManagement
 public class OneDatastoreConfiguration {
 
@@ -28,34 +24,39 @@ public class OneDatastoreConfiguration {
     private Environment environment;
 
     @Bean
-    public ConnectionFactory oneConnectionFactory() {
+    public DataSource oneDataSource() {
+        DriverManagerDataSource dataSource = new DriverManagerDataSource();
         String url = String.format(
-                "r2dbc:postgresql://%s:%s@%s:%s/%s?preparedStatementCacheQueries=0",
+                "jdbc:postgresql://%s:%s@%s:%s/%s",
                 environment.getProperty("datastore.one.user"),
                 environment.getProperty("datastore.one.password"),
                 environment.getProperty("datastore.one.host"),
                 environment.getProperty("datastore.one.port"),
                 environment.getProperty("datastore.one.database")
         );
-        return ConnectionFactories
-                .get(url);
+        dataSource.setDriverClassName("org.postgresql.Driver");
+        dataSource.setUrl(url);
+        return dataSource;
     }
 
     @Bean
-    public R2dbcEntityTemplate oneTemplate(@Qualifier("oneConnectionFactory") ConnectionFactory connectionFactory) {
-        return new R2dbcEntityTemplate(connectionFactory);
+    public JdbcTemplate oneTemplate(@Qualifier("oneDataSource") DataSource dataSource) {
+        return new JdbcTemplate(dataSource);
     }
 
     @Bean
-    public R2dbcTransactionManager oneTransactionManager(@Qualifier("oneConnectionFactory") ConnectionFactory connectionFactory) {
-        return new R2dbcTransactionManager(connectionFactory);
+    public LocalContainerEntityManagerFactoryBean oneEntityManagerFactory(@Qualifier("oneDataSource") DataSource dataSource) {
+        LocalContainerEntityManagerFactoryBean entityManagerFactory = new LocalContainerEntityManagerFactoryBean();
+        entityManagerFactory.setDataSource(dataSource);
+        entityManagerFactory.setPackagesToScan("org.dti.se.finalproject1backend1.inners.models.entities");
+        return entityManagerFactory;
     }
 
     @Bean
-    public TransactionalOperator oneTransactionalOperator(@Qualifier("oneTransactionManager") R2dbcTransactionManager transactionManager) {
-        DefaultTransactionDefinition transactionDefinition = new DefaultTransactionDefinition();
-        transactionDefinition.setIsolationLevel(Isolation.DEFAULT.value());
-        return TransactionalOperator.create(transactionManager, transactionDefinition);
+    public PlatformTransactionManager oneTransactionManager(@Qualifier("oneEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
+        JpaTransactionManager transactionManager = new JpaTransactionManager();
+        transactionManager.setEntityManagerFactory(entityManagerFactory);
+        return transactionManager;
     }
 
 }

@@ -7,7 +7,6 @@ import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExists
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 import java.util.UUID;
 
@@ -19,21 +18,22 @@ public class RegisterAuthenticationUseCase {
     @Autowired
     SecurityConfiguration securityConfiguration;
 
+    public Account registerByEmailAndPassword(RegisterByEmailAndPasswordRequest request) {
+        Account foundAccount = accountRepository.findFirstByEmail(request.getEmail());
+        if (foundAccount != null) {
+            throw new AccountExistsException();
+        }
 
-    public Mono<Account> registerByEmailAndPassword(RegisterByEmailAndPasswordRequest request) {
-        return accountRepository
-                .findFirstByEmail(request.getEmail())
-                .flatMap(foundAccount -> Mono.error(new AccountExistsException()))
-                .thenReturn(Account
-                        .builder()
-                        .id(UUID.randomUUID())
-                        .name(request.getName())
-                        .email(request.getEmail())
-                        .password(securityConfiguration.encode(request.getPassword()))
-                        .phone(request.getPhone())
-                        .build()
-                )
-                .flatMap(accountRepository::save);
+        String encodedPassword = securityConfiguration.encode(request.getPassword());
+        Account accountToSave = Account
+                .builder()
+                .id(UUID.randomUUID())
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(encodedPassword)
+                .phone(request.getPhone())
+                .build();
+        return accountRepository.save(accountToSave);
     }
 
 }

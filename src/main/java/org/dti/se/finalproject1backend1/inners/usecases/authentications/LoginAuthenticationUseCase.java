@@ -1,5 +1,6 @@
 package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 
+import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.Session;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountCredentialsInvalidException;
@@ -7,7 +8,6 @@ import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountReposito
 import org.dti.se.finalproject1backend1.outers.repositories.twos.SessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -26,27 +26,25 @@ public class LoginAuthenticationUseCase {
     @Autowired
     SecurityConfiguration securityConfiguration;
 
-    public Mono<Session> loginByEmailAndPassword(String email, String password) {
-        return accountRepository
-                .findFirstByEmailAndPassword(email, securityConfiguration.encode(password))
-                .switchIfEmpty(Mono.error(new AccountCredentialsInvalidException()))
-                .map(account -> {
-                    OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
-                    OffsetDateTime accessTokenExpiredAt = now.plusSeconds(30);
-                    OffsetDateTime refreshTokenExpiredAt = now.plusDays(3);
-                    return Session
-                            .builder()
-                            .accountId(account.getId())
-                            .accessToken(jwtAuthenticationUseCase.generate(account, accessTokenExpiredAt))
-                            .refreshToken(jwtAuthenticationUseCase.generate(account, refreshTokenExpiredAt))
-                            .accessTokenExpiredAt(accessTokenExpiredAt)
-                            .refreshTokenExpiredAt(refreshTokenExpiredAt)
-                            .build();
-                })
-                .flatMap(session -> sessionRepository
-                        .setByAccessToken(session)
-                        .thenReturn(session)
-                );
-    }
+    public Session loginByEmailAndPassword(String email, String password) {
+        Account account = accountRepository.findFirstByEmailAndPassword(email, securityConfiguration.encode(password));
+        if (account == null) {
+            throw new AccountCredentialsInvalidException();
+        }
 
+        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+        OffsetDateTime accessTokenExpiredAt = now.plusSeconds(30);
+        OffsetDateTime refreshTokenExpiredAt = now.plusDays(3);
+        Session session = Session
+                .builder()
+                .accountId(account.getId())
+                .accessToken(jwtAuthenticationUseCase.generate(account, accessTokenExpiredAt))
+                .refreshToken(jwtAuthenticationUseCase.generate(account, refreshTokenExpiredAt))
+                .accessTokenExpiredAt(accessTokenExpiredAt)
+                .refreshTokenExpiredAt(refreshTokenExpiredAt)
+                .build();
+
+        sessionRepository.setByAccessToken(session);
+        return session;
+    }
 }

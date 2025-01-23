@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 
@@ -18,7 +19,7 @@ public class TwoDatastoreConfiguration {
     private Environment environment;
 
     @Bean
-    public ReactiveRedisConnectionFactory reactiveRedisConnectionFactory() {
+    public RedisConnectionFactory reactiveRedisConnectionFactory() {
         RedisStandaloneConfiguration config = new RedisStandaloneConfiguration();
         config.setHostName(Objects.requireNonNull(environment.getProperty("datastore.two.host")));
         config.setPort(Integer.parseInt(Objects.requireNonNull(environment.getProperty("datastore.two.port"))));

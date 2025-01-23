@@ -1,37 +1,41 @@
 package org.dti.se.finalproject1backend1.outers.deliveries.filters;
 
-import io.r2dbc.postgresql.api.PostgresqlException;
-import org.dti.se.finalproject1backend1.outers.deliveries.holders.WebHolder;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.reactive.TransactionalOperator;
-import org.springframework.web.server.ServerWebExchange;
-import org.springframework.web.server.WebFilter;
-import org.springframework.web.server.WebFilterChain;
-import reactor.core.publisher.Mono;
-import reactor.util.retry.Retry;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.web.filter.OncePerRequestFilter;
 
-import java.time.Duration;
+import java.io.IOException;
 
 @Component
-public class TransactionWebFilterImpl implements WebFilter {
+public class TransactionWebFilterImpl extends OncePerRequestFilter {
 
     @Autowired
-    @Qualifier("oneTransactionalOperator")
-    private TransactionalOperator transactionalOperator;
+    @Qualifier("oneTransactionManager")
+    private PlatformTransactionManager transactionManager;
 
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        return transactionalOperator
-                .execute(transaction -> chain
-                        .filter(exchange)
-                        .contextWrite(context -> context.put(WebHolder.TRANSACTION_CONTEXT_KEY, transaction))
-                )
-                .retryWhen(Retry
-                        .backoff(10, Duration.ofMillis(100))
-                        .filter(throwable -> throwable instanceof PostgresqlException)
-                )
-                .then();
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.setIsolationLevel(TransactionDefinition.ISOLATION_SERIALIZABLE);
+        TransactionStatus status = transactionManager.getTransaction(definition);
+
+        try {
+            filterChain.doFilter(request, response);
+            transactionManager.commit(status);
+        } catch (Exception exception) {
+            if (!status.isCompleted()) {
+                transactionManager.rollback(status);
+            }
+            throw exception;
+        }
     }
 }

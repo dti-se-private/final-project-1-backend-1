@@ -1,51 +1,54 @@
 package org.dti.se.finalproject1backend1.outers.deliveries.filters;
 
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.dti.se.finalproject1backend1.inners.models.entities.Session;
 import org.dti.se.finalproject1backend1.outers.repositories.twos.SessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.web.server.authentication.AuthenticationWebFilter;
-import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers;
 import org.springframework.stereotype.Component;
-import org.springframework.web.server.ServerWebExchange;
-import reactor.core.publisher.Mono;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import java.io.IOException;
 
 @Component
-public class AuthenticationWebFilterImpl extends AuthenticationWebFilter {
+public class AuthenticationWebFilterImpl extends OncePerRequestFilter {
 
     @Autowired
     private SessionRepository sessionRepository;
 
     @Autowired
-    SecurityConfiguration securityConfiguration;
+    private AuthenticationManagerImpl authenticationManager;
 
-    public AuthenticationWebFilterImpl(ReactiveAuthenticationManager authenticationManager) {
-        super(authenticationManager);
-        setServerAuthenticationConverter(exchange -> getAccessToken(exchange)
-                .flatMap(accessToken -> sessionRepository.getByAccessToken(accessToken))
-                .map(session -> new UsernamePasswordAuthenticationToken(null, session))
-                .flatMap(authenticationManager::authenticate)
-                .onErrorResume(TokenExpiredException.class, exception -> {
-                    exchange
-                            .getResponse()
-                            .setRawStatusCode(HttpStatus.UNAUTHORIZED.value());
-                    return Mono.empty();
-                })
-
-        );
-        setRequiresAuthenticationMatcher(ServerWebExchangeMatchers.anyExchange());
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        try {
+            String accessToken = getAccessToken(request);
+            if (accessToken != null) {
+                Session session = sessionRepository.getByAccessToken(accessToken);
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        null,
+                        session,
+                        null
+                );
+                authenticationManager.authenticate(authentication);
+            }
+            filterChain.doFilter(request, response);
+        } catch (TokenExpiredException e) {
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        }
     }
 
-    public Mono<String> getAccessToken(ServerWebExchange exchange) {
-        return Mono
-                .fromCallable(exchange::getRequest)
-                .mapNotNull(serverHttpRequest -> serverHttpRequest.getHeaders().getFirst(HttpHeaders.AUTHORIZATION))
-                .filter(authorizationHeader -> !authorizationHeader.isBlank())
-                .filter(authorizationHeader -> authorizationHeader.startsWith("Bearer "))
-                .map(authorizationHeader -> authorizationHeader.split(" ")[1]);
+    public String getAccessToken(HttpServletRequest request) {
+        String authorizationHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            return authorizationHeader.split(" ")[1];
+        }
+        return null;
     }
 }
