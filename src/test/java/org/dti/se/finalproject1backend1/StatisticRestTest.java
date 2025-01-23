@@ -1,90 +1,66 @@
 package org.dti.se.finalproject1backend1;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.statistics.StatisticSeriesResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.core.ParameterizedTypeReference;
 
 import java.util.List;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-@SpringBootTest
-@AutoConfigureMockMvc
 public class StatisticRestTest extends TestConfiguration {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @BeforeEach
-    public void beforeEach() throws Exception {
+    public void beforeEach() {
+        configure();
         populate();
         auth();
     }
 
     @AfterEach
-    public void afterEach() throws Exception {
+    public void afterEach() {
         deauth();
         depopulate();
     }
 
     @Test
-    public void testEventTransactionAmountStatistic() throws Exception {
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/statistics/events")
-                .param("type", "transactionAmount")
-                .param("aggregation", "sum")
-                .param("period", "day")
-                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
-                .contentType(MediaType.APPLICATION_JSON);
-
-        MvcResult result = mockMvc
-                .perform(request)
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String content = result.getResponse().getContentAsString();
-        ResponseBody<List<StatisticSeriesResponse>> body = objectMapper.readValue(content, new TypeReference<>() {
-        });
-        assert body != null;
-        assert body.getMessage() != null;
-        assert body.getData() != null;
+    public void testEventTransactionAmountStatistic() {
+        webTestClient
+                .get()
+                .uri(
+                        "/statistics/events?type={type}&aggregation={aggregation}&period={period}",
+                        "transactionAmount", "sum", "day"
+                )
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(new ParameterizedTypeReference<ResponseBody<List<StatisticSeriesResponse>>>() {
+                })
+                .value(body -> {
+                    assert body != null;
+                    assert body.getMessage() != null;
+                    assert body.getData() != null;
+                });
     }
 
     @Test
-    public void testEventParticipantCountStatistic() throws Exception {
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/statistics/events")
-                .param("type", "participantCount")
-                .param("aggregation", "sum")
-                .param("period", "day")
-                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
-                .contentType(MediaType.APPLICATION_JSON);
-
-        MvcResult result = mockMvc
-                .perform(request)
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String content = result.getResponse().getContentAsString();
-        ResponseBody<List<StatisticSeriesResponse>> body = objectMapper.readValue(content, new TypeReference<>() {
-        });
-        assert body != null;
-        assert body.getMessage() != null;
-        assert body.getData() != null;
+    public void testEventParticipantCountStatistic() {
+        webTestClient
+                .get()
+                .uri(
+                        "/statistics/events?type={type}&aggregation={aggregation}&period={period}",
+                        "participantCount", "sum", "day"
+                )
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(new ParameterizedTypeReference<ResponseBody<List<StatisticSeriesResponse>>>() {
+                })
+                .value(body -> {
+                    assert body != null;
+                    assert body.getMessage() != null;
+                    assert body.getData() != null;
+                });
     }
+
 }

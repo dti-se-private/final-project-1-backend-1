@@ -1,7 +1,5 @@
 package org.dti.se.finalproject1backend1;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.Session;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
@@ -9,32 +7,16 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.authenticatio
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.core.ParameterizedTypeReference;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-@SpringBootTest
-@AutoConfigureMockMvc
 public class AuthenticationRestTest extends TestConfiguration {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @BeforeEach
     public void beforeEach() {
+        configure();
         populate();
     }
 
@@ -43,9 +25,8 @@ public class AuthenticationRestTest extends TestConfiguration {
         depopulate();
     }
 
-
     @Test
-    public void testLoginByEmailAndPassword() throws Exception {
+    public void testLoginByEmailAndPassword() {
         ResponseBody<Account> registerResponse = register();
         Account realAccount = registerResponse.getData();
         LoginByEmailAndPasswordRequest requestBody = LoginByEmailAndPasswordRequest
@@ -54,82 +35,76 @@ public class AuthenticationRestTest extends TestConfiguration {
                 .password(rawPassword)
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post("/authentications/logins/email-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody));
-
-        MvcResult result = mockMvc
-                .perform(request)
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String content = result.getResponse().getContentAsString();
-        ResponseBody<Session> body = objectMapper.readValue(content, new TypeReference<>() {
-        });
-        assert body != null;
-        assert body.getMessage().equals("Login succeed.");
-        assert body.getData() != null;
-        assert body.getData().getAccessToken() != null;
-        assert body.getData().getRefreshToken() != null;
-        assert body.getData().getAccessTokenExpiredAt().isAfter(OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS));
-        assert body.getData().getRefreshTokenExpiredAt().isAfter(OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS));
+        webTestClient
+                .post()
+                .uri("/authentications/logins/email-password")
+                .bodyValue(requestBody)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(new ParameterizedTypeReference<ResponseBody<Session>>() {
+                })
+                .value(body -> {
+                    assert body != null;
+                    assert body.getMessage().equals("Login succeed.");
+                    assert body.getData() != null;
+                    assert body.getData().getAccessToken() != null;
+                    assert body.getData().getRefreshToken() != null;
+                    assert body.getData().getAccessTokenExpiredAt().isAfter(OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS));
+                    assert body.getData().getRefreshTokenExpiredAt().isAfter(OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS));
+                });
 
         fakeAccounts.add(realAccount);
     }
 
     @Test
-    public void testLogout() throws Exception {
+    public void testLogout() {
         ResponseBody<Account> registerResponse = register();
         Account realAccount = registerResponse.getData();
         ResponseBody<Session> loginResponse = login(realAccount);
         Session requestBody = loginResponse.getData();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post("/authentications/logouts/session")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody));
+        webTestClient
+                .post()
+                .uri("/authentications/logouts/session")
+                .bodyValue(requestBody)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(new ParameterizedTypeReference<ResponseBody<Void>>() {
+                })
+                .value(body -> {
+                    assert body != null;
+                    assert body.getMessage().equals("Logout succeed.");
+                });
 
-        MvcResult result = mockMvc
-                .perform(request)
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String content = result.getResponse().getContentAsString();
-        ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {
-        });
-        assert body != null;
-        assert body.getMessage().equals("Logout succeed.");
-
-        fakeAccounts.add(realAccount); // Although logout doesn't directly add an account, keeping this line for consistency with original tests setup/teardown.
+        fakeAccounts.add(realAccount);
     }
 
     @Test
-    public void testRefreshSession() throws Exception {
+    public void testRefreshSession() {
         ResponseBody<Account> registerResponse = register();
         Account realAccount = registerResponse.getData();
         ResponseBody<Session> loginResponse = login(realAccount);
         Session requestBody = loginResponse.getData();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post("/authentications/refreshes/session")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody));
-
-        MvcResult result = mockMvc
-                .perform(request)
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String content = result.getResponse().getContentAsString();
-        ResponseBody<Session> body = objectMapper.readValue(content, new TypeReference<>() {
-        });
-        assert body != null;
-        assert body.getData() != null;
-        assert body.getData().getAccessToken() != null;
-        assert body.getData().getRefreshToken() != null;
-        assert body.getData().getAccessTokenExpiredAt().isAfter(OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS));
-        assert body.getData().getRefreshTokenExpiredAt().isAfter(OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS));
+        webTestClient
+                .post()
+                .uri("/authentications/refreshes/session")
+                .bodyValue(requestBody)
+                .exchange()
+                .expectStatus()
+                .isOk()
+                .expectBody(new ParameterizedTypeReference<ResponseBody<Session>>() {
+                })
+                .value(body -> {
+                    assert body != null;
+                    assert body.getData() != null;
+                    assert body.getData().getAccessToken() != null;
+                    assert body.getData().getRefreshToken() != null;
+                    assert body.getData().getAccessTokenExpiredAt().isAfter(OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS));
+                    assert body.getData().getRefreshTokenExpiredAt().isAfter(OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS));
+                });
 
         fakeAccounts.add(realAccount);
     }
