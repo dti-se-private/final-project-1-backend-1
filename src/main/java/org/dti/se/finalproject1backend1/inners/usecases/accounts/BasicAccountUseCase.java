@@ -5,7 +5,6 @@ import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfigurat
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -26,40 +25,32 @@ public class BasicAccountUseCase {
     }
 
     public Account findOneById(UUID id) {
-        Account account;
-        try {
-            account = accountRepository.findFirstById(id);
-        } catch (EmptyResultDataAccessException e) {
+        Account account = accountRepository.findFirstById(id);
+        if (account == null) {
             throw new AccountNotFoundException();
         }
         return account;
     }
 
     public Account findOneByEmail(String email) {
-        Account account;
-        try {
-            account = accountRepository.findFirstByEmail(email);
-        } catch (EmptyResultDataAccessException e) {
+        Account account = accountRepository.findFirstByEmail(email);
+        if (account == null) {
             throw new AccountNotFoundException();
         }
         return account;
     }
 
     public Account findOneByEmailAndPassword(String email, String password) {
-        Account account;
-        try {
-            account = accountRepository.findFirstByEmailAndPassword(email, password);
-        } catch (EmptyResultDataAccessException e) {
+        Account account = accountRepository.findFirstByEmailAndPassword(email, password);
+        if (account == null) {
             throw new AccountNotFoundException();
         }
         return account;
     }
 
     public Account patchOneById(UUID id, Account account) {
-        Account accountToPatch;
-        try {
-            accountToPatch = accountRepository.findFirstById(id);
-        } catch (EmptyResultDataAccessException e) {
+        Account accountToPatch = accountRepository.findFirstById(id);
+        if (accountToPatch == null) {
             throw new AccountNotFoundException();
         }
         accountToPatch.patchFrom(account);
@@ -69,10 +60,8 @@ public class BasicAccountUseCase {
     }
 
     public void deleteOneById(UUID id) {
-        Account account;
-        try {
-            account = accountRepository.findFirstById(id);
-        } catch (EmptyResultDataAccessException e) {
+        Account account = accountRepository.findFirstById(id);
+        if (account == null) {
             throw new AccountNotFoundException();
         }
         accountRepository.delete(account);

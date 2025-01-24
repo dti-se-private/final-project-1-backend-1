@@ -8,7 +8,6 @@ import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFou
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.twos.SessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
@@ -40,10 +39,8 @@ public class BasicAuthenticationUseCase {
         DecodedJWT jwt = jwtAuthenticationUseCase.verify(session.getRefreshToken());
         UUID accountId = jwt.getClaim("account_id").as(UUID.class);
 
-        Account account;
-        try {
-            account = accountRepository.findFirstById(accountId);
-        } catch (EmptyResultDataAccessException e) {
+        Account account = accountRepository.findFirstById(accountId);
+        if (account == null) {
             throw new AccountNotFoundException();
         }
 

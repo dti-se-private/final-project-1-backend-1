@@ -7,7 +7,6 @@ import org.dti.se.finalproject1backend1.inners.usecases.authentications.JwtAuthe
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -29,10 +28,8 @@ public class AuthenticationManagerImpl implements AuthenticationManager { // Cha
         Session session = (Session) authentication.getCredentials();
         DecodedJWT jwt = jwtAuthenticationUseCase.verify(session.getAccessToken());
         UUID accountId = jwt.getClaim("account_id").as(UUID.class);
-        Account account;
-        try {
-            account = accountRepository.findFirstById(accountId);
-        } catch (EmptyResultDataAccessException e) {
+        Account account = accountRepository.findFirstById(accountId);
+        if (account == null) {
             throw new AccountNotFoundException();
         }
 
