@@ -10,7 +10,10 @@ import org.dti.se.finalproject1backend1.outers.repositories.twos.SessionReposito
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -23,7 +26,7 @@ public class AuthenticationWebFilterImpl extends OncePerRequestFilter {
     private SessionRepository sessionRepository;
 
     @Autowired
-    private AuthenticationManagerImpl authenticationManager;
+    private AuthenticationManager authenticationManager;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
@@ -31,12 +34,13 @@ public class AuthenticationWebFilterImpl extends OncePerRequestFilter {
             String accessToken = getAccessToken(request);
             if (accessToken != null) {
                 Session session = sessionRepository.getByAccessToken(accessToken);
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                UsernamePasswordAuthenticationToken authenticationRequest = new UsernamePasswordAuthenticationToken(
                         null,
                         session,
                         null
                 );
-                authenticationManager.authenticate(authentication);
+                Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);
+                SecurityContextHolder.getContext().setAuthentication(authenticationResponse);
             }
             filterChain.doFilter(request, response);
         } catch (TokenExpiredException e) {

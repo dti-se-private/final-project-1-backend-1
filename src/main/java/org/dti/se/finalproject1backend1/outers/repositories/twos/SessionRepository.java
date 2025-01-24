@@ -32,7 +32,9 @@ public class SessionRepository {
     }
 
     public Session getByAccessToken(String accessToken) {
-        String jsonString = stringTemplate.opsForValue().get(accessToken);
+        String jsonString = stringTemplate
+                .opsForValue()
+                .get(accessToken);
         try {
             return Jackson2ObjectMapperBuilder.json().build().readValue(jsonString, Session.class);
         } catch (JsonProcessingException e) {

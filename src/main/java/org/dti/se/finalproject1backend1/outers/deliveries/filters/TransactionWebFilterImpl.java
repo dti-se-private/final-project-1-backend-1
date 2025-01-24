@@ -25,7 +25,7 @@ public class TransactionWebFilterImpl extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
-        definition.setIsolationLevel(TransactionDefinition.ISOLATION_SERIALIZABLE);
+        definition.setIsolationLevel(TransactionDefinition.ISOLATION_DEFAULT);
         TransactionStatus status = transactionManager.getTransaction(definition);
 
         try {

@@ -20,6 +20,7 @@ public class BasicAccountUseCase {
 
     public Account saveOne(Account account) {
         String encodedPassword = securityConfiguration.encode(account.getPassword());
+        account.setId(UUID.randomUUID());
         account.setPassword(encodedPassword);
         return accountRepository.save(account);
     }
@@ -61,7 +62,7 @@ public class BasicAccountUseCase {
         } catch (EmptyResultDataAccessException e) {
             throw new AccountNotFoundException();
         }
-        accountToPatch.patchFrom(account).setIsNew(false);
+        accountToPatch.patchFrom(account);
         String encodedPassword = securityConfiguration.encode(accountToPatch.getPassword());
         accountToPatch.setPassword(encodedPassword);
         return accountRepository.save(accountToPatch);

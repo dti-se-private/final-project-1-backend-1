@@ -1,5 +1,7 @@
 package org.dti.se.finalproject1backend1;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
@@ -8,29 +10,28 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.authenticatio
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebFlux;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpHeaders;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 @SpringBootTest
-@AutoConfigureWebFlux
-@AutoConfigureWebTestClient
+@AutoConfigureMockMvc
 public class TestConfiguration {
 
     @Autowired
-    protected WebTestClient webTestClient;
+    protected MockMvc mockMvc;
 
     @Autowired
     protected AccountRepository accountRepository;
@@ -38,25 +39,18 @@ public class TestConfiguration {
     @Autowired
     protected SecurityConfiguration securityConfiguration;
 
-    @Autowired
-    @Qualifier("oneTemplate")
-    protected JdbcTemplate oneTemplate;
-
     protected ArrayList<Account> fakeAccounts = new ArrayList<>();
 
     protected String rawPassword = String.format("password-%s", UUID.randomUUID());
     protected Account authenticatedAccount;
     protected Session authenticatedSession;
 
-    public void configure() {
-        this.webTestClient = this.webTestClient
-                .mutate()
-                .responseTimeout(Duration.ofSeconds(5))
-                .build();
-    }
+    @Autowired
+    protected ObjectMapper objectMapper;
 
     public void populate() {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+        List<Account> accountsToSave = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             Account newAccount = Account
                     .builder()
@@ -66,43 +60,33 @@ public class TestConfiguration {
                     .password(securityConfiguration.encode(rawPassword))
                     .phone(String.format("phone-%s", UUID.randomUUID()))
                     .build();
+            accountsToSave.add(newAccount);
             fakeAccounts.add(newAccount);
         }
-        List<Account> savedAccounts = accountRepository.saveAll(fakeAccounts);
-        assert savedAccounts.size() == fakeAccounts.size();
+        accountRepository.saveAll(accountsToSave);
     }
 
     public void depopulate() {
         accountRepository.deleteAll(fakeAccounts);
+        fakeAccounts.clear();
     }
 
-    public void auth() {
+    public void auth() throws Exception {
         authenticatedAccount = register().getData();
         fakeAccounts.add(authenticatedAccount);
         authenticatedSession = login(authenticatedAccount).getData();
-        String authorization = String.format("Bearer %s", authenticatedSession.getAccessToken());
-        webTestClient = webTestClient
-                .mutate()
-                .defaultHeader(HttpHeaders.AUTHORIZATION, authorization)
-                .build();
     }
 
-    public void auth(Account account) {
+    public void auth(Account account) throws Exception {
         authenticatedAccount = account;
         authenticatedSession = login(account).getData();
-        String authorization = String.format("Bearer %s", authenticatedSession.getAccessToken());
-        webTestClient = webTestClient
-                .mutate()
-                .defaultHeader(HttpHeaders.AUTHORIZATION, authorization)
-                .build();
     }
 
-    public void deauth() {
+    public void deauth() throws Exception {
         logout(authenticatedSession);
     }
 
-    protected ResponseBody<Account> register() {
-        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+    protected ResponseBody<Account> register() throws Exception {
         RegisterByEmailAndPasswordRequest requestBody = RegisterByEmailAndPasswordRequest
                 .builder()
                 .name(String.format("name-%s", UUID.randomUUID()))
@@ -111,75 +95,78 @@ public class TestConfiguration {
                 .phone(String.format("phone-%s", UUID.randomUUID()))
                 .build();
 
-        return webTestClient
-                .post()
-                .uri("/authentications/registers/email-password")
-                .bodyValue(requestBody)
-                .exchange()
-                .expectStatus()
-                .isCreated()
-                .expectBody(new ParameterizedTypeReference<ResponseBody<Account>>() {
-                })
-                .value(body -> {
-                    assert body != null;
-                    assert body.getMessage().equals("Register succeed.");
-                    assert body.getData() != null;
-                    assert body.getData().getId() != null;
-                    assert body.getData().getName().equals(requestBody.getName());
-                    assert body.getData().getEmail().equals(requestBody.getEmail());
-                    assert securityConfiguration.matches(requestBody.getPassword(), body.getData().getPassword());
-                    assert body.getData().getPhone().equals(requestBody.getPhone());
-                })
-                .returnResult()
-                .getResponseBody();
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/authentications/registers/email-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        ResponseBody<Account> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
+        assert body != null;
+        assert body.getMessage().equals("Register succeed.");
+        assert body.getData() != null;
+        assert body.getData().getId() != null;
+        assert body.getData().getName().equals(requestBody.getName());
+        assert body.getData().getEmail().equals(requestBody.getEmail());
+        assert securityConfiguration.matches(requestBody.getPassword(), body.getData().getPassword());
+        assert body.getData().getPhone().equals(requestBody.getPhone());
+        return body;
     }
 
-    protected ResponseBody<Session> login(Account account) {
-        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+    protected ResponseBody<Session> login(Account account) throws Exception {
         LoginByEmailAndPasswordRequest requestBody = LoginByEmailAndPasswordRequest
                 .builder()
                 .email(account.getEmail())
                 .password(rawPassword)
                 .build();
 
-        return webTestClient
-                .post()
-                .uri("/authentications/logins/email-password")
-                .bodyValue(requestBody)
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody(new ParameterizedTypeReference<ResponseBody<Session>>() {
-                })
-                .value(body -> {
-                    assert body != null;
-                    assert body.getMessage().equals("Login succeed.");
-                    assert body.getData() != null;
-                    assert body.getData().getAccessToken() != null;
-                    assert body.getData().getRefreshToken() != null;
-                    assert body.getData().getAccessTokenExpiredAt().isAfter(now);
-                    assert body.getData().getRefreshTokenExpiredAt().isAfter(now);
-                })
-                .returnResult()
-                .getResponseBody();
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/authentications/logins/email-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        ResponseBody<Session> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
+        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+        assert body != null;
+        assert body.getMessage().equals("Login succeed.");
+        assert body.getData() != null;
+        assert body.getData().getAccessToken() != null;
+        assert body.getData().getRefreshToken() != null;
+        assert body.getData().getAccessTokenExpiredAt().isAfter(now);
+        assert body.getData().getRefreshTokenExpiredAt().isAfter(now);
+        return body;
     }
 
-    protected ResponseBody<Void> logout(Session session) {
-        return this.webTestClient
-                .post()
-                .uri("/authentications/logouts/session")
-                .bodyValue(session)
-                .exchange()
-                .expectStatus()
-                .isOk()
-                .expectBody(new ParameterizedTypeReference<ResponseBody<Void>>() {
-                })
-                .value(body -> {
-                    assert body != null;
-                    assert body.getMessage().equals("Logout succeed.");
-                })
-                .returnResult()
-                .getResponseBody();
-    }
+    protected ResponseBody<Void> logout(Session session) throws Exception {
 
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/authentications/logouts/session")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(session));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
+        assert body != null;
+        assert body.getMessage().equals("Logout succeed.");
+        return body;
+    }
 }
