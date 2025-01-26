@@ -86,6 +86,40 @@ public class AuthenticationRest {
         }
     }
 
+    @PostMapping(value = "/registers/internal")
+    public ResponseEntity<ResponseBody<Account>> registerByInternal(
+            @RequestBody RegisterByEmailAndPasswordRequest request
+    ) {
+        try {
+            Account account = registerAuthenticationUseCase.registerByInternal(request);
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Register succeed.")
+                    .data(account)
+                    .build()
+                    .toEntity(HttpStatus.CREATED);
+        } catch (AccountExistsException e) {
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Account exists.")
+                    .build()
+                    .toEntity(HttpStatus.CONFLICT);
+        } catch (RuntimeException e) {
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Invalid or expired OTP.")
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping(value = "/logouts/session")
     public ResponseEntity<ResponseBody<Void>> logoutBySession(
             @RequestBody Session session
