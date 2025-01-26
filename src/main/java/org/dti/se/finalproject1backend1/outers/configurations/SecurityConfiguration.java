@@ -42,11 +42,12 @@ public class SecurityConfiguration implements PasswordEncoder {
     Environment environment;
 
     public List<String> unAuthenticatedPaths = List.of(
-            "/otp/**",
+            "/otps/**",
             "/authentications/**",
             "/products/**",
             "/webjars/**",
-            "/v3/api-docs/**"
+            "/v3/api-docs/**",
+            "/swagger-ui/**"
     );
 
     @Bean

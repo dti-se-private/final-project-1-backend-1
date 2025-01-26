@@ -16,8 +16,6 @@ import java.util.UUID;
 @Table(name = "account_address")
 public class AccountAddress {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @ColumnDefault("uuid_generate_v4()")
     @Column(name = "id", nullable = false)
     private UUID id;
 

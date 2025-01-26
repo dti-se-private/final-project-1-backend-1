@@ -18,8 +18,6 @@ import java.util.UUID;
 @Table(name = "warehouse_ledger")
 public class WarehouseLedger {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @ColumnDefault("uuid_generate_v4()")
     @Column(name = "id", nullable = false)
     private UUID id;
 

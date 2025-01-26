@@ -21,8 +21,6 @@ import java.util.UUID;
 @Entity
 public class Account extends Model {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    @ColumnDefault("uuid_generate_v4()")
     @Column(name = "id", nullable = false)
     private UUID id;
 

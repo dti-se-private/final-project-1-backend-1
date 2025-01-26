@@ -7,6 +7,7 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Verification;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
+import org.dti.se.finalproject1backend1.outers.exceptions.authentications.OtpInvalidException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountPermissionRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.VerificationRepository;
@@ -51,19 +52,18 @@ public class RegisterAuthenticationUseCase {
 
     @Transactional
     public Account registerByInternal(RegisterByEmailAndPasswordRequest request) {
-        // Validate OTP
         Verification verification = verificationRepository.findByEmailAndCode(request.getEmail(), request.getOtp());
         if (verification == null || OffsetDateTime.now().isAfter(verification.getEndTime())) {
-            throw new RuntimeException("Invalid or expired OTP");
+            throw new OtpInvalidException();
         }
 
-        // Check if account already exists
+        verificationRepository.delete(verification);
+
         Account foundAccount = accountRepository.findFirstByEmail(request.getEmail());
         if (foundAccount != null) {
             throw new AccountExistsException();
         }
 
-        // Create new account
         String encodedPassword = securityConfiguration.encode(request.getPassword());
         Account accountToSave = Account
                 .builder()
@@ -77,7 +77,6 @@ public class RegisterAuthenticationUseCase {
                 .build();
         Account savedAccount = accountRepository.save(accountToSave);
 
-        // Grant CUSTOMER permission
         AccountPermission accountPermission = new AccountPermission();
         accountPermission.setId(UUID.randomUUID());
         accountPermission.setAccount(savedAccount);
