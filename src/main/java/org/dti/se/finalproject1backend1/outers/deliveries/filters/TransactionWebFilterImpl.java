@@ -75,6 +75,7 @@ public class TransactionWebFilterImpl extends GenericFilterBean {
                 }
             } catch (Exception otherException) {
                 // For other exceptions, rollback and fail without retry.
+                otherException.printStackTrace();
                 logger.error("Non-concurrency exception, rolling back and failing: {}", otherException.getMessage(), otherException);
                 if (!status.isCompleted()) {
                     transactionManager.rollback(status);

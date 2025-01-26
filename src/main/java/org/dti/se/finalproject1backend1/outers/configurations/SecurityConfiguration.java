@@ -42,7 +42,7 @@ public class SecurityConfiguration implements PasswordEncoder {
     Environment environment;
 
     public List<String> unAuthenticatedPaths = List.of(
-            "/api/otp/**",
+            "/otp/**",
             "/authentications/**",
             "/products/**",
             "/webjars/**",

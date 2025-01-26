@@ -49,6 +49,7 @@ public class RegisterAuthenticationUseCase {
         return accountRepository.save(accountToSave);
     }
 
+    @Transactional
     public Account registerByInternal(RegisterByEmailAndPasswordRequest request) {
         // Validate OTP
         Verification verification = verificationRepository.findByEmailAndCode(request.getEmail(), request.getOtp());
