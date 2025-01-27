@@ -5,7 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface VerificationRepository extends JpaRepository<Verification, String>, JpaSpecificationExecutor<Verification> {
-    Verification findByEmailAndCode(String email, String code);
+    Verification findByEmailAndCodeAndType(String email, String code, String type);
 
     Verification findByEmail(String email);
 }

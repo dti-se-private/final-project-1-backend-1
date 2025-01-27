@@ -52,7 +52,7 @@ public class RegisterAuthenticationUseCase {
 
     @Transactional
     public Account registerByInternal(RegisterByEmailAndPasswordRequest request) {
-        Verification verification = verificationRepository.findByEmailAndCode(request.getEmail(), request.getOtp());
+        Verification verification = verificationRepository.findByEmailAndCodeAndType(request.getEmail(), request.getOtp(), "REGISTER");
         if (verification == null || OffsetDateTime.now().isAfter(verification.getEndTime())) {
             throw new OtpInvalidException();
         }
@@ -82,6 +82,8 @@ public class RegisterAuthenticationUseCase {
         accountPermission.setAccount(savedAccount);
         accountPermission.setPermission("CUSTOMER");
         accountPermissionRepository.save(accountPermission);
+
+        verificationRepository.delete(verification);
 
         return savedAccount;
     }
