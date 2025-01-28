@@ -52,7 +52,7 @@ public class CategoryRest {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('SUPER_ADMIN)")
+//    @PreAuthorize("hasAuthority('SUPER_ADMIN)")
     public CategoryResponse updateCategory(@PathVariable UUID id, @RequestBody CategoryRequest categoryRequest) {
         Category category = categoryMapper.toEntity(categoryRequest);
         Category updatedCategory = categoryService.updateCategory(id, category);
@@ -60,7 +60,7 @@ public class CategoryRest {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+//    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
     public ResponseEntity<String> deleteCategory(@PathVariable UUID id) {
         categoryService.deleteCategory(id);
         return ResponseEntity.ok("Category deleted Successfully.");
