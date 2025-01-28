@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -47,8 +48,7 @@ public class SecurityConfiguration implements PasswordEncoder {
             "/products/**",
             "/webjars/**",
             "/v3/api-docs/**",
-            "/swagger-ui/**",
-            "/product-categories/**"
+            "/swagger-ui/**"
     );
 
     @Bean
@@ -65,7 +65,10 @@ public class SecurityConfiguration implements PasswordEncoder {
                 .addFilterAt(authenticationWebFilterImpl, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
                         .requestMatchers(unAuthenticatedPaths.toArray(String[]::new)).permitAll()
-//                        .requestMatchers("/product-categories/**").hasAnyRole("WAREHOUSE_ADMIN", "SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/product-categories/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/product-categories/**").hasAuthority("SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/product-categories/**").hasAuthority("SUPER_ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/product-categories/**").hasAuthority("SUPER_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .build();
