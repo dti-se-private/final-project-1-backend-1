@@ -33,7 +33,7 @@ public class LoginAuthenticationUseCase {
         }
 
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
-        OffsetDateTime accessTokenExpiredAt = now.plusSeconds(30);
+        OffsetDateTime accessTokenExpiredAt = now.plusMinutes(30);
         OffsetDateTime refreshTokenExpiredAt = now.plusDays(3);
         Session session = Session
                 .builder()
