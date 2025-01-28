@@ -47,7 +47,8 @@ public class SecurityConfiguration implements PasswordEncoder {
             "/products/**",
             "/webjars/**",
             "/v3/api-docs/**",
-            "/swagger-ui/**"
+            "/swagger-ui/**",
+            "/product-categories/**"
     );
 
     @Bean
@@ -64,6 +65,7 @@ public class SecurityConfiguration implements PasswordEncoder {
                 .addFilterAt(authenticationWebFilterImpl, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
                         .requestMatchers(unAuthenticatedPaths.toArray(String[]::new)).permitAll()
+//                        .requestMatchers("/product-categories/**").hasAnyRole("WAREHOUSE_ADMIN", "SUPER_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .build();
