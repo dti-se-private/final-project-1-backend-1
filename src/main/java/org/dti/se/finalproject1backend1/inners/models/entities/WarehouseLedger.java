@@ -39,21 +39,12 @@ public class WarehouseLedger {
     @JoinColumn(name = "destination_warehouse_id", nullable = false)
     private Warehouse destinationWarehouse;
 
-    @NotNull
-    @Column(name = "pre_quantity", nullable = false)
     private BigDecimal preQuantity;
 
-    @NotNull
-    @Column(name = "post_quantity", nullable = false)
     private BigDecimal postQuantity;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
-    @Column(name = "\"time\"")
     private OffsetDateTime time;
 
-    @NotNull
-    @ColumnDefault("'WAITING_APPROVAL'")
-    @Column(name = "status", nullable = false, length = Integer.MAX_VALUE)
     private String status;
 
 }

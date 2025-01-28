@@ -24,27 +24,19 @@ public class Account extends Model {
     @Column(name = "id", nullable = false)
     private UUID id;
 
-    @Column(name = "name", nullable = false, length = Integer.MAX_VALUE)
     private String name;
 
-    @Column(name = "email", nullable = false, length = Integer.MAX_VALUE)
     private String email;
 
-    @Column(name = "password", nullable = false, length = Integer.MAX_VALUE)
     private String password;
 
-    @Column(name = "phone", length = Integer.MAX_VALUE)
     private String phone;
 
     @ColumnDefault("false")
     @Column(name = "is_verified")
     private Boolean isVerified;
 
-    @Column(name = "image")
     private byte[] image;
-
-    @Column(name = "provider", length = Integer.MAX_VALUE)
-    private String provider;
 
     @OneToMany(mappedBy = "account")
     private Set<AccountAddress> accountAddresses = new LinkedHashSet<>();

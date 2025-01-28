@@ -25,16 +25,10 @@ public class PaymentProof {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
-    @NotNull
-    @Column(name = "file", nullable = false)
     private byte[] file;
 
-    @NotNull
-    @Column(name = "extension", nullable = false, length = Integer.MAX_VALUE)
     private String extension;
 
-    @NotNull
-    @Column(name = "\"time\"", nullable = false)
     private OffsetDateTime time;
 
 }

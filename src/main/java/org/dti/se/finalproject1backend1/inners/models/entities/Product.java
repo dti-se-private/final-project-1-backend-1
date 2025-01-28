@@ -26,18 +26,12 @@ public class Product {
     @JoinColumn(name = "category_id")
     private Category category;
 
-    @NotNull
-    @Column(name = "name", nullable = false, length = Integer.MAX_VALUE)
     private String name;
 
-    @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
-    @NotNull
-    @Column(name = "price", nullable = false, precision = 15, scale = 2)
     private BigDecimal price;
 
-    @Column(name = "image")
     private byte[] image;
 
     @OneToMany(mappedBy = "product")

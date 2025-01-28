@@ -18,11 +18,8 @@ public class Category {
     @Column(name = "id", nullable = false)
     private UUID id;
 
-    @NotNull
-    @Column(name = "name", nullable = false, length = Integer.MAX_VALUE)
     private String name;
 
-    @Column(name = "description", length = Integer.MAX_VALUE)
     private String description;
 
     @OneToMany(mappedBy = "category")

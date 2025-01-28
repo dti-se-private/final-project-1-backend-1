@@ -14,20 +14,13 @@ import java.util.UUID;
 @Table(name = "verification")
 public class Verification {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "id", nullable = false)
     private UUID id;
 
-    @NotNull
-    @Column(name = "email", nullable = false, length = Integer.MAX_VALUE)
     private String email;
 
-    @NotNull
-    @Column(name = "type", nullable = false, length = Integer.MAX_VALUE)
     private String type;
 
-    @NotNull
-    @Column(name = "code", nullable = false, length = Integer.MAX_VALUE)
     private String code;
 
     @NotNull

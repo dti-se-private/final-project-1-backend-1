@@ -27,22 +27,18 @@ public class Order {
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
-    @NotNull
-    @Column(name = "total_price", nullable = false)
     private BigDecimal totalPrice;
 
-    @NotNull
-    @Column(name = "shipment_price", nullable = false)
     private BigDecimal shipmentPrice;
 
-    @NotNull
-    @Column(name = "item_price", nullable = false)
     private BigDecimal itemPrice;
+
     @OneToMany(mappedBy = "order")
     private Set<OrderStatus> orderStatuses = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "order")
     private Set<OrderItem> orderItems = new LinkedHashSet<>();
+
     @OneToMany(mappedBy = "order")
     private Set<PaymentProof> paymentProofs = new LinkedHashSet<>();
 

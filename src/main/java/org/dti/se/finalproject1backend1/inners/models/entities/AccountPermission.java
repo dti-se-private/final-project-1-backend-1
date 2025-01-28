@@ -24,8 +24,6 @@ public class AccountPermission {
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
-    @NotNull
-    @Column(name = "permission", nullable = false, length = Integer.MAX_VALUE)
     private String permission;
 
 }

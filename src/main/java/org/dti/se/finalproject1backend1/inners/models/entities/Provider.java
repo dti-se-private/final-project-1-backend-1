@@ -13,8 +13,8 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "account_address")
-public class AccountAddress {
+@Table(name = "provider")
+public class Provider {
     @Id
     @Column(name = "id", nullable = false)
     private UUID id;
@@ -27,14 +27,4 @@ public class AccountAddress {
 
     private String name;
 
-    private String address;
-
-    private Boolean isPrimary = false;
-
-/*
- TODO [Reverse Engineering] create field to map the 'location' column
- Available actions: Define target Java type | Uncomment as is | Remove column mapping
-    @Column(name = "location", columnDefinition = "geography")
-    private Object location;
-*/
 }

@@ -7,6 +7,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByExternalRequest;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.BasicAuthenticationUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.LoginAuthenticationUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.RegisterAuthenticationUseCase;
@@ -119,6 +120,35 @@ public class AuthenticationRest {
                     .build()
                     .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @PostMapping(value = "/registers/external")
+    public ResponseEntity<ResponseBody<Account>> registerByExternal(
+            @RequestBody RegisterByExternalRequest request
+    ) {
+        try {
+            Account account = registerAuthenticationUseCase.registerByExternal(request);
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Register succeed.")
+                    .data(account)
+                    .build()
+                    .toEntity(HttpStatus.CREATED);
+        } catch (AccountExistsException e) {
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Account exists.")
+                    .build()
+                    .toEntity(HttpStatus.CONFLICT);
+        }
+//        catch (Exception e) {
+//            return ResponseBody
+//                    .<Account>builder()
+//                    .message("Internal server error.")
+//                    .exception(e)
+//                    .build()
+//                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
     }
 
     @PostMapping(value = "/logouts/session")

@@ -23,16 +23,12 @@ public class Session {
     @JoinColumn(name = "account_id")
     private Account account;
 
-    @Column(name = "access_token", length = Integer.MAX_VALUE)
     private String accessToken;
 
-    @Column(name = "refresh_token", length = Integer.MAX_VALUE)
     private String refreshToken;
 
-    @Column(name = "access_token_expired_at")
     private OffsetDateTime accessTokenExpiredAt;
 
-    @Column(name = "refresh_token_expired_at")
     private OffsetDateTime refreshTokenExpiredAt;
 
 }

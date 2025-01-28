@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.util.Random;
+import java.util.UUID;
 
 @Service
 public class OtpUseCase {
@@ -23,6 +24,7 @@ public class OtpUseCase {
         OffsetDateTime endTime = initTime.plusHours(1);
 
         Verification verification = new Verification();
+        verification.setId(UUID.randomUUID());
         verification.setEmail(email);
         verification.setType(type);
         verification.setCode(otp);
