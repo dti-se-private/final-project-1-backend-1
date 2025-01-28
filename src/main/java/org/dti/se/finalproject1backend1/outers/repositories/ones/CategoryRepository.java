@@ -13,10 +13,10 @@ import java.util.UUID;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
-    @Query("SELECT c FROM Category c WHERE" +
-            "(:search IS NULL OR c.name LIKE %:search%) AND " +
-            "(:filters IS NULL OR c.type = :filters)")
+    @Query("SELECT c FROM Category c WHERE "
+            + "(:name IS NULL OR c.name LIKE %:name%) AND "
+            + "(:description IS NULL OR c.description LIKE %:description%)")
     List<Category> findCategories(Pageable pageable,
-                                  @Param("filters") String filters,
-                                  @Param("search") String search);
+                                  @Param("name") String name,
+                                  @Param("description") String description);
 }
