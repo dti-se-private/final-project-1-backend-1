@@ -1,14 +1,14 @@
 package org.dti.se.finalproject1backend1.inners.usecases.warehouseproducts;
 
-import com.fasterxml.jackson.databind.deser.std.UUIDDeserializer;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.dti.se.finalproject1backend1.inners.models.entities.Product;
 import org.dti.se.finalproject1backend1.inners.models.entities.WarehouseProduct;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouseproducts.WarehouseProductRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouseproducts.WarehouseProductResponse;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,7 +23,18 @@ public class WarehouseProductUseCase {
     @Autowired
     private WarehouseProductMapper warehouseProductMapper;
 
-    public List<WarehouseProduct> getAllWarehouseProducts() {return warehouseProductRepository.findAll(); }
+    public Page<WarehouseProductResponse> getAllWarehouseProducts(Pageable pageable, String filters, String search) {
+        Page<WarehouseProduct> warehouseProducts;
+
+        if (search != null && !search.isEmpty()) {
+            warehouseProducts = warehouseProductRepository.searchByProductOrWarehouse(search, pageable);
+        } else if (filters != null && !filters.isEmpty()) {
+            warehouseProducts = warehouseProductRepository.findWithFilters(filters, pageable);
+        } else {
+            warehouseProducts = warehouseProductRepository.findAll(pageable);
+        }
+        return warehouseProducts.map(warehouseProductMapper::toResponse);
+    }
 
     public WarehouseProduct getWarehouseProductById(UUID id) {
         return warehouseProductRepository.findById(id)

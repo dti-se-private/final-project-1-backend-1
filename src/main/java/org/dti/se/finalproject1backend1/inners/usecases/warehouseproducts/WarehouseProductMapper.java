@@ -5,9 +5,11 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Warehouse;
 import org.dti.se.finalproject1backend1.inners.models.entities.WarehouseProduct;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouseproducts.WarehouseProductRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouseproducts.WarehouseProductResponse;
+import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+@Component
 public class WarehouseProductMapper {
 
     public WarehouseProductResponse toResponse(WarehouseProduct entity) {
@@ -16,8 +18,8 @@ public class WarehouseProductMapper {
         }
 
         WarehouseProductResponse response = new WarehouseProductResponse();
-        response.setWarehouseId(entity.getWarehouse().getId());
-        response.setProductId(entity.getProduct().getId());
+        response.setWarehouse(entity.getWarehouse());
+        response.setProduct(entity.getProduct());
         response.setQuantity(entity.getQuantity());
         return response;
     }

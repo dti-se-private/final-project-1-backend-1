@@ -49,7 +49,8 @@ public class SecurityConfiguration implements PasswordEncoder {
             "/webjars/**",
             "/v3/api-docs/**",
             "/swagger-ui/**",
-            "/product-categories/**"
+            "/product-categories/**",
+            "/warehouse-products/**"
     );
 
     @Bean

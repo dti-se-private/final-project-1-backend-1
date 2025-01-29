@@ -7,6 +7,11 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouseprod
 import org.dti.se.finalproject1backend1.inners.usecases.warehouseproducts.WarehouseProductMapper;
 import org.dti.se.finalproject1backend1.inners.usecases.warehouseproducts.WarehouseProductUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -24,8 +29,15 @@ public class WarehouseProductRest {
     private final WarehouseProductMapper warehouseProductMapper;
 
     @GetMapping
-    public List<WarehouseProductResponse> listAllWarehouseProducts() {
-        return warehouseProductService.getAllWarehouseProducts().stream().map(warehouseProductMapper::toResponse).collect(Collectors.toList());
+    public ResponseEntity<Page<WarehouseProductResponse>> listAllWarehouseProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(required = false) String filters,
+            @RequestParam(required = false) String search
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+        Page<WarehouseProductResponse> response = warehouseProductService.getAllWarehouseProducts(pageable,filters, search);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
