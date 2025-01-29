@@ -140,15 +140,14 @@ public class AuthenticationRest {
                     .message("Account exists.")
                     .build()
                     .toEntity(HttpStatus.CONFLICT);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-//        catch (Exception e) {
-//            return ResponseBody
-//                    .<Account>builder()
-//                    .message("Internal server error.")
-//                    .exception(e)
-//                    .build()
-//                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
     }
 
     @PostMapping(value = "/logouts/session")
