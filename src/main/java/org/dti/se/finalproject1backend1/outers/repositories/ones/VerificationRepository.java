@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface VerificationRepository extends JpaRepository<Verification, String>, JpaSpecificationExecutor<Verification> {
     Verification findFirstByEmailAndCodeAndType(String email, String code, String type);
+
     Verification findFirstByEmail(String email);
+
     Verification findFirstByEmailAndType(String email, String type);
 }

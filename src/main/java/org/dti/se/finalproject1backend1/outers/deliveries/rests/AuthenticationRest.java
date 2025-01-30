@@ -27,8 +27,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthenticationRest {
     @Autowired
     private BasicAuthenticationUseCase basicAuthenticationUseCase;
+
     @Autowired
     private LoginAuthenticationUseCase loginAuthenticationUseCase;
+
     @Autowired
     private RegisterAuthenticationUseCase registerAuthenticationUseCase;
 
@@ -112,15 +114,14 @@ public class AuthenticationRest {
                     .message("OTP is invalid or expired.")
                     .build()
                     .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
-//        catch (Exception e) {
-//            return ResponseBody
-//                    .<Account>builder()
-//                    .message("Internal server error.")
-//                    .exception(e)
-//                    .build()
-//                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
     }
 
     @PostMapping(value = "/registers/external")

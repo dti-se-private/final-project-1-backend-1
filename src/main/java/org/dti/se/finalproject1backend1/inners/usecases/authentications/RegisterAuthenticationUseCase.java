@@ -2,9 +2,6 @@ package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
-import jakarta.transaction.Transactional;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
 import org.dti.se.finalproject1backend1.inners.models.entities.Provider;
@@ -19,13 +16,11 @@ import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountReposito
 import org.dti.se.finalproject1backend1.outers.repositories.ones.ProviderRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.VerificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.OffsetDateTime;
-import java.util.Collections;
 import java.util.UUID;
 
 @Service
@@ -48,7 +43,7 @@ public class RegisterAuthenticationUseCase {
     @Autowired
     GoogleIdTokenVerifier googleIdTokenVerifier;
 
-    @Transactional
+
     public Account registerByEmailAndPassword(RegisterByEmailAndPasswordRequest request) {
         Account foundAccount = accountRepository.findFirstByEmail(request.getEmail());
         if (foundAccount != null) {
@@ -67,7 +62,7 @@ public class RegisterAuthenticationUseCase {
         return accountRepository.save(accountToSave);
     }
 
-    @Transactional
+
     public Account registerByInternal(RegisterByEmailAndPasswordRequest request) {
         Verification verification = verificationRepository.findFirstByEmailAndCodeAndType(request.getEmail(), request.getOtp(), "REGISTER");
         if (verification == null || OffsetDateTime.now().isAfter(verification.getEndTime())) {
@@ -110,7 +105,7 @@ public class RegisterAuthenticationUseCase {
         return savedAccount;
     }
 
-    @Transactional
+
     public Account registerByExternal(RegisterByExternalRequest request) {
         GoogleIdToken idToken;
 

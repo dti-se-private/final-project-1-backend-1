@@ -14,9 +14,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.authenticatio
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -98,6 +96,7 @@ public class AuthenticationRestTest extends TestConfiguration {
 
         Verification verification = getVerification(email, type);
 
+        Thread.sleep(3000);
         RegisterByEmailAndPasswordRequest requestBody = RegisterByEmailAndPasswordRequest
                 .builder()
                 .name(String.format("name-%s", UUID.randomUUID()))
