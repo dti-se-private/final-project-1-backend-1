@@ -97,8 +97,13 @@ public class AccountRestTest extends TestConfiguration {
         });
         assert body != null;
         assert body.getMessage().equals("Account found.");
+
         assert body.getData() != null;
-        assert body.getData().equals(realAccount);
+        assert Objects.equals(body.getData().getId(), realAccount.getId());
+        assert body.getData().getName().equals(realAccount.getName());
+        assert body.getData().getEmail().equals(realAccount.getEmail());
+        assert body.getData().getPassword().equals(realAccount.getPassword());
+        assert body.getData().getPhone().equals(realAccount.getPhone());
     }
 
     @Test

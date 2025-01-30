@@ -7,11 +7,13 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByExternalRequest;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.BasicAuthenticationUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.LoginAuthenticationUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.RegisterAuthenticationUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountCredentialsInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
+import org.dti.se.finalproject1backend1.outers.exceptions.authentications.OtpInvalidException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,8 +27,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthenticationRest {
     @Autowired
     private BasicAuthenticationUseCase basicAuthenticationUseCase;
+
     @Autowired
     private LoginAuthenticationUseCase loginAuthenticationUseCase;
+
     @Autowired
     private RegisterAuthenticationUseCase registerAuthenticationUseCase;
 
@@ -64,6 +68,68 @@ public class AuthenticationRest {
     ) {
         try {
             Account account = registerAuthenticationUseCase.registerByEmailAndPassword(request);
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Register succeed.")
+                    .data(account)
+                    .build()
+                    .toEntity(HttpStatus.CREATED);
+        } catch (AccountExistsException e) {
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Account exists.")
+                    .build()
+                    .toEntity(HttpStatus.CONFLICT);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping(value = "/registers/internal")
+    public ResponseEntity<ResponseBody<Account>> registerByInternal(
+            @RequestBody RegisterByEmailAndPasswordRequest request
+    ) {
+        try {
+            Account account = registerAuthenticationUseCase.registerByInternal(request);
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Register succeed.")
+                    .data(account)
+                    .build()
+                    .toEntity(HttpStatus.CREATED);
+        } catch (AccountExistsException e) {
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Account exists.")
+                    .build()
+                    .toEntity(HttpStatus.CONFLICT);
+        } catch (OtpInvalidException e) {
+            return ResponseBody
+                    .<Account>builder()
+                    .message("OTP is invalid or expired.")
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping(value = "/registers/external")
+    public ResponseEntity<ResponseBody<Account>> registerByExternal(
+            @RequestBody RegisterByExternalRequest request
+    ) {
+        try {
+            Account account = registerAuthenticationUseCase.registerByExternal(request);
             return ResponseBody
                     .<Account>builder()
                     .message("Register succeed.")

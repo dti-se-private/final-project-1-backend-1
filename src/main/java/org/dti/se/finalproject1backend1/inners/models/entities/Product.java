@@ -1,0 +1,44 @@
+package org.dti.se.finalproject1backend1.inners.models.entities;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.math.BigDecimal;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.UUID;
+
+@Getter
+@Setter
+@Entity
+@Table(name = "product")
+public class Product {
+    @Id
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+
+    private String name;
+
+    private String description;
+
+    private BigDecimal price;
+
+    private byte[] image;
+
+    @OneToMany(mappedBy = "product")
+    private Set<CartItem> cartItems = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "product")
+    private Set<OrderItem> orderItems = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "product")
+    private Set<WarehouseLedger> warehouseLedgers = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "product")
+    private Set<WarehouseProduct> warehouseProducts = new LinkedHashSet<>();
+
+}

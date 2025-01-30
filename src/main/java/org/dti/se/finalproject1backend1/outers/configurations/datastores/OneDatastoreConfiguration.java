@@ -60,6 +60,7 @@ public class OneDatastoreConfiguration {
         factory.setPackagesToScan("org.dti.se.finalproject1backend1.inners.models.entities");
         HashMap<String, Object> properties = new HashMap<>();
         properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+        properties.put("hibernate.physical_naming_strategy", "org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy");
         factory.setJpaPropertyMap(properties);
         return factory;
     }
