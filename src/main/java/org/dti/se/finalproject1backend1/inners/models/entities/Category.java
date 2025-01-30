@@ -11,8 +11,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@Getter
-@Setter
+@Data
 @Entity
 @Table(name = "category")
 public class Category {
@@ -24,6 +23,7 @@ public class Category {
     private String description;
 
     @OneToMany(mappedBy = "category")
+    @JsonManagedReference
     private Set<Product> products = new LinkedHashSet<>();
 
 }
