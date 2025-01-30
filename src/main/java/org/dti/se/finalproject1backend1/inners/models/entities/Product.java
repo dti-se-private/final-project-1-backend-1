@@ -1,33 +1,37 @@
 package org.dti.se.finalproject1backend1.inners.models.entities;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.Accessors;
 
-import java.math.BigDecimal;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
+
+@Builder
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Accessors(chain = true)
 @Entity
 @Table(name = "product")
 public class Product {
     @Id
     private UUID id;
 
+    private UUID categoryId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
-    @JsonBackReference
     private Category category;
 
     private String name;
 
     private String description;
 
-    private BigDecimal price;
+    private Double price;
 
     private byte[] image;
 

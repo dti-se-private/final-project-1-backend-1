@@ -1,8 +1,9 @@
-package org.dti.se.finalproject1backend1.inners.models.valueobjects.categories;
+package org.dti.se.finalproject1backend1.inners.models.valueobjects.carts;
 
 import lombok.*;
 import lombok.experimental.Accessors;
 import org.dti.se.finalproject1backend1.inners.models.Model;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
 
 import java.util.UUID;
 
@@ -12,8 +13,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class CategoryResponse extends Model {
+public class CartItemResponse extends Model {
     private UUID id;
-    private String name;
-    private String description;
+    private ProductResponse product;
+    private Double quantity;
 }

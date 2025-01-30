@@ -1,6 +1,5 @@
 package org.dti.se.finalproject1backend1.outers.repositories.ones;
 
-import org.dti.se.finalproject1backend1.inners.models.entities.Warehouse;
 import org.dti.se.finalproject1backend1.inners.models.entities.WarehouseProduct;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface WarehouseProductRepository extends JpaRepository<WarehouseProduct, UUID > {
+public interface WarehouseProductRepository extends JpaRepository<WarehouseProduct, UUID> {
     // search by product name or warehouse
     @Query("SELECT wp FROM WarehouseProduct wp " +
             "WHERE LOWER(wp.product.name) LIKE LOWER(CONCAT('%', :search, '%')) " +

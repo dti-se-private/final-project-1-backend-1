@@ -10,7 +10,8 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.authenticatio
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByExternalRequest;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
-import org.dti.se.finalproject1backend1.outers.exceptions.authentications.OtpInvalidException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationExpiredException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountPermissionRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.ProviderRepository;
@@ -45,10 +46,9 @@ public class RegisterAuthenticationUseCase {
 
 
     public Account registerByEmailAndPassword(RegisterByEmailAndPasswordRequest request) {
-        Account foundAccount = accountRepository.findFirstByEmail(request.getEmail());
-        if (foundAccount != null) {
-            throw new AccountExistsException();
-        }
+        Account foundAccount = accountRepository
+                .findByEmail(request.getEmail())
+                .orElseThrow(AccountExistsException::new);
 
         String encodedPassword = securityConfiguration.encode(request.getPassword());
         Account accountToSave = Account
@@ -64,17 +64,19 @@ public class RegisterAuthenticationUseCase {
 
 
     public Account registerByInternal(RegisterByEmailAndPasswordRequest request) {
-        Verification verification = verificationRepository.findFirstByEmailAndCodeAndType(request.getEmail(), request.getOtp(), "REGISTER");
-        if (verification == null || OffsetDateTime.now().isAfter(verification.getEndTime())) {
-            throw new OtpInvalidException();
+        Verification verification = verificationRepository
+                .findByEmailAndCodeAndType(request.getEmail(), request.getOtp(), "REGISTER")
+                .orElseThrow(VerificationNotFoundException::new);
+
+        if (OffsetDateTime.now().isAfter(verification.getEndTime())) {
+            throw new VerificationExpiredException();
         }
 
         verificationRepository.delete(verification);
 
-        Account foundAccount = accountRepository.findFirstByEmail(request.getEmail());
-        if (foundAccount != null) {
-            throw new AccountExistsException();
-        }
+        Account foundAccount = accountRepository
+                .findByEmail(request.getEmail())
+                .orElseThrow(AccountExistsException::new);
 
         String encodedPassword = securityConfiguration.encode(request.getPassword());
         Account accountToSave = Account
@@ -127,10 +129,9 @@ public class RegisterAuthenticationUseCase {
         String name = payload.get("name").toString();
         String picture = payload.get("picture").toString();
 
-        Account foundAccount = accountRepository.findFirstByEmail(email);
-        if (foundAccount != null) {
-            throw new AccountExistsException();
-        }
+        Account foundAccount = accountRepository
+                .findByEmail(email)
+                .orElseThrow(AccountExistsException::new);
 
         Account accountToSave = Account
                 .builder()

@@ -4,14 +4,19 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.Accessors;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
-@Data
+@Builder
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Accessors(chain = true)
 @Entity
 @Table(name = "category")
 public class Category {
@@ -23,7 +28,6 @@ public class Category {
     private String description;
 
     @OneToMany(mappedBy = "category")
-    @JsonManagedReference
     private Set<Product> products = new LinkedHashSet<>();
 
 }

@@ -14,9 +14,9 @@ import java.util.Set;
 import java.util.UUID;
 
 
-@Data
-@EqualsAndHashCode(callSuper = true)
 @Builder
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
@@ -50,8 +50,5 @@ public class Account extends Model {
 
     @OneToMany(mappedBy = "account")
     private Set<Order> orders = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "account")
-    private Set<Session> sessions = new LinkedHashSet<>();
 
 }

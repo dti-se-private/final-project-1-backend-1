@@ -1,8 +1,10 @@
-package org.dti.se.finalproject1backend1.inners.models.valueobjects.categories;
+package org.dti.se.finalproject1backend1.inners.models.valueobjects.carts;
 
 import lombok.*;
 import lombok.experimental.Accessors;
 import org.dti.se.finalproject1backend1.inners.models.Model;
+
+import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -10,7 +12,7 @@ import org.dti.se.finalproject1backend1.inners.models.Model;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class CategoryRequest extends Model {
-    private String name;
-    private String description;
+public class AddCartItemRequest extends Model {
+    private UUID productId;
+    private Double quantity;
 }

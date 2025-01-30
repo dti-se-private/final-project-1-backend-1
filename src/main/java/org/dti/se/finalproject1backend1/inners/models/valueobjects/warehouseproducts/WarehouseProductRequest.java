@@ -2,12 +2,11 @@ package org.dti.se.finalproject1backend1.inners.models.valueobjects.warehousepro
 
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
 public class WarehouseProductRequest {
     private UUID warehouseId;
     private UUID productId;
-    private BigDecimal quantity;
+    private Double quantity;
 }

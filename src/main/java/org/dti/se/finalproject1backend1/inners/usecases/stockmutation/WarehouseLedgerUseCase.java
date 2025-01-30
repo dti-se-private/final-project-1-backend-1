@@ -1,14 +1,18 @@
-package org.dti.se.finalproject1backend1.inners.usecases.stock_mutation;
+package org.dti.se.finalproject1backend1.inners.usecases.stockmutation;
 
 import lombok.RequiredArgsConstructor;
-import org.dti.se.finalproject1backend1.inners.models.entities.*;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
+import org.dti.se.finalproject1backend1.inners.models.entities.Product;
+import org.dti.se.finalproject1backend1.inners.models.entities.Warehouse;
+import org.dti.se.finalproject1backend1.inners.models.entities.WarehouseLedger;
+import org.dti.se.finalproject1backend1.inners.models.entities.WarehouseProduct;
+import org.dti.se.finalproject1backend1.outers.repositories.ones.ProductRepository;
+import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseLedgerRepository;
+import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseProductRepository;
+import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,12 +30,12 @@ public class WarehouseLedgerUseCase {
         // Apply filtering and searching logic here (if needed)
         return warehouseLedgerRepository.findAll(PageRequest.of(page, size));
     }
+
     public Optional<WarehouseLedger> getLedgerById(UUID id) {
         return warehouseLedgerRepository.findById(id);
     }
 
-    @Transactional
-    public WarehouseLedger addLedgerMutation(UUID productId, UUID originWarehouseId, UUID destinationWarehouseId, BigDecimal quantity) {
+    public WarehouseLedger addLedgerMutation(UUID productId, UUID originWarehouseId, UUID destinationWarehouseId, Double quantity) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
         Warehouse originWarehouse = warehouseRepository.findById(originWarehouseId)
@@ -50,12 +54,12 @@ public class WarehouseLedgerUseCase {
                     newProduct.setId(UUID.randomUUID());
                     newProduct.setWarehouse(destinationWarehouse);
                     newProduct.setProduct(product);
-                    newProduct.setQuantity(BigDecimal.ZERO);
+                    newProduct.setQuantity(0.0);
                     return warehouseProductRepository.save(newProduct);
                 });
 
         // Ensure there's enough stock in origin
-        if (originProduct.getQuantity().compareTo(quantity) < 0) {
+        if (originProduct.getQuantity() < 0) {
             throw new RuntimeException("Insufficient stock in origin warehouse");
         }
 
@@ -66,14 +70,13 @@ public class WarehouseLedgerUseCase {
         ledger.setOriginWarehouse(originWarehouse);
         ledger.setDestinationWarehouse(destinationWarehouse);
         ledger.setPreQuantity(originProduct.getQuantity());
-        ledger.setPostQuantity(originProduct.getQuantity().subtract(quantity));
+        ledger.setPostQuantity(originProduct.getQuantity() - quantity);
         ledger.setTime(OffsetDateTime.now());
         ledger.setStatus("WAITING_APPROVAL");
 
         return warehouseLedgerRepository.save(ledger);
     }
 
-    @Transactional
     public WarehouseLedger approveLedgerMutation(UUID ledgerId) {
         WarehouseLedger ledger = warehouseLedgerRepository.findById(ledgerId)
                 .orElseThrow(() -> new RuntimeException("Ledger not found"));
@@ -88,8 +91,8 @@ public class WarehouseLedgerUseCase {
         WarehouseProduct destinationProduct = warehouseProductRepository.findByProductAndWarehouse(ledger.getDestinationWarehouse().getId(), ledger.getProduct().getId())
                 .orElseThrow(() -> new RuntimeException("Destination warehouse product not found"));
 
-        originProduct.setQuantity(originProduct.getQuantity().subtract(ledger.getPostQuantity()));
-        destinationProduct.setQuantity(destinationProduct.getQuantity().add(ledger.getPostQuantity()));
+        originProduct.setQuantity(originProduct.getQuantity() - ledger.getPostQuantity());
+        destinationProduct.setQuantity(destinationProduct.getQuantity() + ledger.getPostQuantity());
 
         warehouseProductRepository.save(originProduct);
         warehouseProductRepository.save(destinationProduct);
@@ -99,7 +102,6 @@ public class WarehouseLedgerUseCase {
         return warehouseLedgerRepository.save(ledger);
     }
 
-    @Transactional
     public WarehouseLedger rejectLedgerMutation(UUID ledgerId) {
         WarehouseLedger ledger = warehouseLedgerRepository.findById(ledgerId)
                 .orElseThrow(() -> new RuntimeException("Ledger not found"));

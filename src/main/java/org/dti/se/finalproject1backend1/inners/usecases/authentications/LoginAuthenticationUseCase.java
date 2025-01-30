@@ -27,10 +27,9 @@ public class LoginAuthenticationUseCase {
     SecurityConfiguration securityConfiguration;
 
     public Session loginByEmailAndPassword(String email, String password) {
-        Account account = accountRepository.findFirstByEmailAndPassword(email, securityConfiguration.encode(password));
-        if (account == null) {
-            throw new AccountCredentialsInvalidException();
-        }
+        Account account = accountRepository
+                .findByEmailAndPassword(email, securityConfiguration.encode(password))
+                .orElseThrow(AccountCredentialsInvalidException::new);
 
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
         OffsetDateTime accessTokenExpiredAt = now.plusMinutes(30);

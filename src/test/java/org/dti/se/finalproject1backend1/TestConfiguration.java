@@ -2,16 +2,15 @@ package org.dti.se.finalproject1backend1;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.dti.se.finalproject1backend1.inners.models.entities.Account;
-import org.dti.se.finalproject1backend1.inners.models.entities.Verification;
+import org.dti.se.finalproject1backend1.inners.models.entities.*;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.VerificationRepository;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
+import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -26,7 +25,6 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -40,7 +38,16 @@ public class TestConfiguration {
 
     @Autowired
     protected AccountRepository accountRepository;
-
+    @Autowired
+    protected WarehouseRepository warehouseRepository;
+    @Autowired
+    protected CategoryRepository categoryRepository;
+    @Autowired
+    protected ProductRepository productRepository;
+    @Autowired
+    protected WarehouseProductRepository warehouseProductRepository;
+    @Autowired
+    protected CartItemRepository cartItemRepository;
     @Autowired
     protected VerificationRepository verificationRepository;
 
@@ -51,6 +58,11 @@ public class TestConfiguration {
     protected SecurityConfiguration securityConfiguration;
 
     protected ArrayList<Account> fakeAccounts = new ArrayList<>();
+    protected ArrayList<Warehouse> fakeWarehouses = new ArrayList<>();
+    protected ArrayList<Category> fakeCategories = new ArrayList<>();
+    protected ArrayList<Product> fakeProducts = new ArrayList<>();
+    protected ArrayList<WarehouseProduct> fakeWarehouseProducts = new ArrayList<>();
+    protected ArrayList<CartItem> fakeCartItems = new ArrayList<>();
 
     protected String rawPassword = String.format("password-%s", UUID.randomUUID());
     protected Account authenticatedAccount;
@@ -61,7 +73,6 @@ public class TestConfiguration {
 
     public void populate() {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
-        List<Account> accountsToSave = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             Account newAccount = Account
                     .builder()
@@ -71,13 +82,80 @@ public class TestConfiguration {
                     .password(securityConfiguration.encode(rawPassword))
                     .phone(String.format("phone-%s", UUID.randomUUID()))
                     .build();
-            accountsToSave.add(newAccount);
             fakeAccounts.add(newAccount);
+
         }
-        accountRepository.saveAll(accountsToSave);
+        accountRepository.saveAll(fakeAccounts);
+
+        for (int i = 0; i < 4; i++) {
+            Warehouse newWarehouse = Warehouse
+                    .builder()
+                    .id(UUID.randomUUID())
+                    .name(String.format("name-%s", UUID.randomUUID()))
+                    .description(String.format("description-%s", UUID.randomUUID()))
+                    .build();
+            fakeWarehouses.add(newWarehouse);
+        }
+        warehouseRepository.saveAll(fakeWarehouses);
+
+        for (int i = 0; i < 4; i++) {
+            Category newCategory = Category
+                    .builder()
+                    .id(UUID.randomUUID())
+                    .name(String.format("name-%s", UUID.randomUUID()))
+                    .description(String.format("description-%s", UUID.randomUUID()))
+                    .build();
+            fakeCategories.add(newCategory);
+        }
+        categoryRepository.saveAll(fakeCategories);
+
+        fakeCategories.forEach(category -> {
+            for (int i = 0; i < 4; i++) {
+                Product newProduct = Product
+                        .builder()
+                        .id(UUID.randomUUID())
+                        .category(category)
+                        .name(String.format("name-%s", UUID.randomUUID()))
+                        .description(String.format("description-%s", UUID.randomUUID()))
+                        .price(Math.random() * 1000000)
+                        .image(new byte[0])
+                        .build();
+                fakeProducts.add(newProduct);
+            }
+        });
+        productRepository.saveAll(fakeProducts);
+
+        fakeProducts.forEach(product -> {
+            WarehouseProduct newWarehouseProduct = WarehouseProduct
+                    .builder()
+                    .id(UUID.randomUUID())
+                    .productId(product.getId())
+                    .quantity(Math.random() * 1000)
+                    .build();
+            fakeWarehouseProducts.add(newWarehouseProduct);
+
+            CartItem newCartItem = CartItem
+                    .builder()
+                    .id(UUID.randomUUID())
+                    .productId(product.getId())
+                    .quantity(Math.random() * 100)
+                    .build();
+        });
+        warehouseProductRepository.saveAll(fakeWarehouseProducts);
+        cartItemRepository.saveAll(fakeCartItems);
     }
 
     public void depopulate() {
+        cartItemRepository.deleteAll(fakeCartItems);
+        fakeCartItems.clear();
+        warehouseProductRepository.deleteAll(fakeWarehouseProducts);
+        fakeWarehouseProducts.clear();
+        productRepository.deleteAll(fakeProducts);
+        fakeProducts.clear();
+        categoryRepository.deleteAll(fakeCategories);
+        fakeCategories.clear();
+        warehouseRepository.deleteAll(fakeWarehouses);
+        fakeWarehouses.clear();
         accountRepository.deleteAll(fakeAccounts);
         fakeAccounts.clear();
     }
@@ -203,6 +281,9 @@ public class TestConfiguration {
         assert body.getMessage().equals("OTP sent succeed.");
         assert body.getData() == null;
 
-        return verificationRepository.findFirstByEmailAndType(email, type);
+        return verificationRepository
+                .findByEmailAndType(email, type)
+                .orElseThrow(VerificationNotFoundException::new);
+
     }
 }

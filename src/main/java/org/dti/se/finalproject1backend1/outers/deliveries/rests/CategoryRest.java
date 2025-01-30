@@ -7,7 +7,6 @@ import org.dti.se.finalproject1backend1.inners.usecases.categories.CategoryMappe
 import org.dti.se.finalproject1backend1.inners.usecases.categories.CategoryUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +22,7 @@ public class CategoryRest {
 
     @Autowired
     private CategoryMapper categoryMapper;
+
     @GetMapping
     public List<CategoryResponse> getAllCategories(
             @RequestParam(defaultValue = "0") int page,
@@ -47,7 +47,7 @@ public class CategoryRest {
     public Category addCategory(@RequestBody CategoryRequest categoryRequest) {
         Category category = categoryMapper.toEntity(categoryRequest);
 
-        Category savedCategory =categoryService.addCategory(category);
+        Category savedCategory = categoryService.addCategory(category);
         return savedCategory;
     }
 

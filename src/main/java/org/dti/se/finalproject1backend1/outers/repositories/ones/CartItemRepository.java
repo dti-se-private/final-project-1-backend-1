@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface CartRepository extends JpaRepository<CartItem, UUID> {
-    List<CartItem> findByAccount(Account account);
-    Optional<CartItem> findByAccountAndProductId(Account account, UUID productId);
+public interface CartItemRepository extends JpaRepository<CartItem, UUID> {
+    Optional<CartItem> findByAccountIdAndProductId(UUID accountId, UUID productId);
 }

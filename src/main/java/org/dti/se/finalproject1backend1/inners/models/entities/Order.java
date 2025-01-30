@@ -1,32 +1,36 @@
 package org.dti.se.finalproject1backend1.inners.models.entities;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.Accessors;
 
-import java.math.BigDecimal;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
+@Builder
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Accessors(chain = true)
 @Entity
-@Table(name = "\"order\"")
+@Table(name = "order")
 public class Order {
     @Id
     private UUID id;
+
+    private UUID accountId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 
-    private BigDecimal totalPrice;
+    private Double totalPrice;
 
-    private BigDecimal shipmentPrice;
+    private Double shipmentPrice;
 
-    private BigDecimal itemPrice;
+    private Double itemPrice;
 
     @OneToMany(mappedBy = "order")
     private Set<OrderStatus> orderStatuses = new LinkedHashSet<>();

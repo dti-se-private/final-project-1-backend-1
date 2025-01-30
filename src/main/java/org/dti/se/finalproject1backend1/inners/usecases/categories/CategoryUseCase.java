@@ -25,7 +25,7 @@ public class CategoryUseCase {
 
     public Category getCategoryById(UUID id) {
         return categoryRepository.findById(id)
-                .orElseThrow(()-> new EntityNotFoundException("Category not Found for ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Category not Found for ID: " + id));
     }
 
     public Category addCategory(Category category) {

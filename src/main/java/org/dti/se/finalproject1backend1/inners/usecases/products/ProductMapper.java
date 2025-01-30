@@ -2,6 +2,7 @@ package org.dti.se.finalproject1backend1.inners.usecases.products;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.Category;
 import org.dti.se.finalproject1backend1.inners.models.entities.Product;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.categories.CategoryResponse;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
 import org.springframework.stereotype.Component;
@@ -18,7 +19,13 @@ public class ProductMapper {
 
         ProductResponse productResponse = new ProductResponse();
         productResponse.setId(product.getId());
-        productResponse.setCategoryId(product.getCategory() != null ? product.getCategory().getId(): null);
+        CategoryResponse categoryResponse = CategoryResponse
+                .builder()
+                .id(product.getCategory().getId())
+                .name(product.getCategory().getName())
+                .description(product.getCategory().getDescription())
+                .build();
+        productResponse.setCategory(product.getCategory() != null ? categoryResponse : null);
         productResponse.setName(product.getName());
         productResponse.setDescription(product.getDescription());
         productResponse.setPrice(product.getPrice());

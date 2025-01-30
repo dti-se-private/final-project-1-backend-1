@@ -3,7 +3,7 @@ package org.dti.se.finalproject1backend1.outers.deliveries.rests;
 import lombok.RequiredArgsConstructor;
 import org.dti.se.finalproject1backend1.inners.models.entities.WarehouseLedger;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.mutations.AddMutationRequest;
-import org.dti.se.finalproject1backend1.inners.usecases.stock_mutation.WarehouseLedgerUseCase;
+import org.dti.se.finalproject1backend1.inners.usecases.stockmutation.WarehouseLedgerUseCase;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +26,7 @@ public class WarehouseLedgerRest {
         Page<WarehouseLedger> ledgers = warehouseLedgerService.getWarehouseLedgers(page, size, filters, search);
         return ResponseEntity.ok(ledgers);
     }
+
     @PostMapping("/mutations/add")
     public ResponseEntity<WarehouseLedger> addMutation(@RequestBody AddMutationRequest request) {
         WarehouseLedger ledger = warehouseLedgerService.addLedgerMutation(

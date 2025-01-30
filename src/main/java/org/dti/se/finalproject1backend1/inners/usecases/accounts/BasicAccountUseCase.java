@@ -25,34 +25,27 @@ public class BasicAccountUseCase {
     }
 
     public Account findOneById(UUID id) {
-        Account account = accountRepository.findFirstById(id);
-        if (account == null) {
-            throw new AccountNotFoundException();
-        }
-        return account;
+        return accountRepository
+                .findById(id)
+                .orElseThrow(AccountNotFoundException::new);
     }
 
     public Account findOneByEmail(String email) {
-        Account account = accountRepository.findFirstByEmail(email);
-        if (account == null) {
-            throw new AccountNotFoundException();
-        }
-        return account;
+        return accountRepository
+                .findByEmail(email)
+                .orElseThrow(AccountNotFoundException::new);
     }
 
     public Account findOneByEmailAndPassword(String email, String password) {
-        Account account = accountRepository.findFirstByEmailAndPassword(email, password);
-        if (account == null) {
-            throw new AccountNotFoundException();
-        }
-        return account;
+        return accountRepository
+                .findByEmailAndPassword(email, password)
+                .orElseThrow(AccountNotFoundException::new);
     }
 
     public Account patchOneById(UUID id, Account account) {
-        Account accountToPatch = accountRepository.findFirstById(id);
-        if (accountToPatch == null) {
-            throw new AccountNotFoundException();
-        }
+        Account accountToPatch = accountRepository
+                .findById(id)
+                .orElseThrow(AccountNotFoundException::new);
         accountToPatch.patchFrom(account);
         String encodedPassword = securityConfiguration.encode(accountToPatch.getPassword());
         accountToPatch.setPassword(encodedPassword);
@@ -60,10 +53,9 @@ public class BasicAccountUseCase {
     }
 
     public void deleteOneById(UUID id) {
-        Account account = accountRepository.findFirstById(id);
-        if (account == null) {
-            throw new AccountNotFoundException();
-        }
+        Account account = accountRepository
+                .findById(id)
+                .orElseThrow(AccountNotFoundException::new);
         accountRepository.delete(account);
     }
 }

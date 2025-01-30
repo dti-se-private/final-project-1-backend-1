@@ -39,10 +39,9 @@ public class BasicAuthenticationUseCase {
         DecodedJWT jwt = jwtAuthenticationUseCase.verify(session.getRefreshToken());
         UUID accountId = jwt.getClaim("account_id").as(UUID.class);
 
-        Account account = accountRepository.findFirstById(accountId);
-        if (account == null) {
-            throw new AccountNotFoundException();
-        }
+        Account account = accountRepository
+                .findById(accountId)
+                .orElseThrow(AccountNotFoundException::new);
 
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
         String newAccessToken = jwtAuthenticationUseCase.generate(account, now.plusSeconds(30));

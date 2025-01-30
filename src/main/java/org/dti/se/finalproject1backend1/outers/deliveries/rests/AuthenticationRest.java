@@ -13,7 +13,7 @@ import org.dti.se.finalproject1backend1.inners.usecases.authentications.LoginAut
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.RegisterAuthenticationUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountCredentialsInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
-import org.dti.se.finalproject1backend1.outers.exceptions.authentications.OtpInvalidException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationExpiredException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -108,7 +108,7 @@ public class AuthenticationRest {
                     .message("Account exists.")
                     .build()
                     .toEntity(HttpStatus.CONFLICT);
-        } catch (OtpInvalidException e) {
+        } catch (VerificationExpiredException e) {
             return ResponseBody
                     .<Account>builder()
                     .message("OTP is invalid or expired.")

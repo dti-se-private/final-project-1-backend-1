@@ -11,7 +11,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -38,7 +37,7 @@ public class WarehouseProductUseCase {
 
     public WarehouseProduct getWarehouseProductById(UUID id) {
         return warehouseProductRepository.findById(id)
-                .orElseThrow(()-> new EntityNotFoundException("Warehouse Product not Found for ID: " + id));
+                .orElseThrow(() -> new EntityNotFoundException("Warehouse Product not Found for ID: " + id));
     }
 
     public WarehouseProduct addWarehouseProduct(WarehouseProduct warehouseProduct) {
@@ -47,7 +46,7 @@ public class WarehouseProductUseCase {
 
     public WarehouseProductResponse updateWarehouseProduct(UUID id, WarehouseProductRequest request) {
         WarehouseProduct existing = warehouseProductRepository.findById(id)
-                .orElseThrow(()-> new IllegalArgumentException("Warehouse Product Not Found"));
+                .orElseThrow(() -> new IllegalArgumentException("Warehouse Product Not Found"));
         existing.setQuantity(request.getQuantity());
         WarehouseProduct updated = warehouseProductRepository.save(existing);
         return warehouseProductMapper.toResponse(updated);

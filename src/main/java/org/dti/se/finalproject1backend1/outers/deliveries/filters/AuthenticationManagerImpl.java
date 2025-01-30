@@ -28,10 +28,9 @@ public class AuthenticationManagerImpl implements AuthenticationManager { // Cha
         Session session = (Session) authentication.getCredentials();
         DecodedJWT jwt = jwtAuthenticationUseCase.verify(session.getAccessToken());
         UUID accountId = jwt.getClaim("account_id").as(UUID.class);
-        Account account = accountRepository.findFirstById(accountId);
-        if (account == null) {
-            throw new AccountNotFoundException();
-        }
+        Account account = accountRepository
+                .findById(accountId)
+                .orElseThrow(AccountNotFoundException::new);
 
         return new UsernamePasswordAuthenticationToken(
                 account,

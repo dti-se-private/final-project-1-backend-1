@@ -2,13 +2,11 @@ package org.dti.se.finalproject1backend1.outers.deliveries.rests;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.Category;
 import org.dti.se.finalproject1backend1.inners.models.entities.Product;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.categories.CategoryResponse;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
 import org.dti.se.finalproject1backend1.inners.usecases.categories.CategoryUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.products.ProductMapper;
 import org.dti.se.finalproject1backend1.inners.usecases.products.ProductUseCase;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
