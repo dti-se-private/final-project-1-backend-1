@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -57,12 +58,12 @@ public class TestConfiguration {
     @Autowired
     protected SecurityConfiguration securityConfiguration;
 
-    protected ArrayList<Account> fakeAccounts = new ArrayList<>();
-    protected ArrayList<Warehouse> fakeWarehouses = new ArrayList<>();
-    protected ArrayList<Category> fakeCategories = new ArrayList<>();
-    protected ArrayList<Product> fakeProducts = new ArrayList<>();
-    protected ArrayList<WarehouseProduct> fakeWarehouseProducts = new ArrayList<>();
-    protected ArrayList<CartItem> fakeCartItems = new ArrayList<>();
+    protected List<Account> fakeAccounts = new ArrayList<>();
+    protected List<Warehouse> fakeWarehouses = new ArrayList<>();
+    protected List<Category> fakeCategories = new ArrayList<>();
+    protected List<Product> fakeProducts = new ArrayList<>();
+    protected List<WarehouseProduct> fakeWarehouseProducts = new ArrayList<>();
+    protected List<CartItem> fakeCartItems = new ArrayList<>();
 
     protected String rawPassword = String.format("password-%s", UUID.randomUUID());
     protected Account authenticatedAccount;
@@ -85,7 +86,7 @@ public class TestConfiguration {
             fakeAccounts.add(newAccount);
 
         }
-        accountRepository.saveAll(fakeAccounts);
+        fakeAccounts = accountRepository.saveAll(fakeAccounts);
 
         for (int i = 0; i < 4; i++) {
             Warehouse newWarehouse = Warehouse
@@ -96,7 +97,7 @@ public class TestConfiguration {
                     .build();
             fakeWarehouses.add(newWarehouse);
         }
-        warehouseRepository.saveAll(fakeWarehouses);
+        fakeWarehouses = warehouseRepository.saveAll(fakeWarehouses);
 
         for (int i = 0; i < 4; i++) {
             Category newCategory = Category
@@ -107,7 +108,7 @@ public class TestConfiguration {
                     .build();
             fakeCategories.add(newCategory);
         }
-        categoryRepository.saveAll(fakeCategories);
+        fakeCategories = categoryRepository.saveAll(fakeCategories);
 
         fakeCategories.forEach(category -> {
             for (int i = 0; i < 4; i++) {
@@ -118,31 +119,40 @@ public class TestConfiguration {
                         .name(String.format("name-%s", UUID.randomUUID()))
                         .description(String.format("description-%s", UUID.randomUUID()))
                         .price(Math.random() * 1000000)
-                        .image(new byte[0])
+                        .image(null)
                         .build();
                 fakeProducts.add(newProduct);
             }
         });
-        productRepository.saveAll(fakeProducts);
+        fakeProducts = productRepository.saveAll(fakeProducts);
 
         fakeProducts.forEach(product -> {
-            WarehouseProduct newWarehouseProduct = WarehouseProduct
-                    .builder()
-                    .id(UUID.randomUUID())
-                    .productId(product.getId())
-                    .quantity(Math.random() * 1000)
-                    .build();
-            fakeWarehouseProducts.add(newWarehouseProduct);
-
-            CartItem newCartItem = CartItem
-                    .builder()
-                    .id(UUID.randomUUID())
-                    .productId(product.getId())
-                    .quantity(Math.random() * 100)
-                    .build();
+            fakeWarehouses.forEach(warehouse -> {
+                WarehouseProduct newWarehouseProduct = WarehouseProduct
+                        .builder()
+                        .id(UUID.randomUUID())
+                        .warehouse(warehouse)
+                        .product(product)
+                        .quantity(Math.random() * 1000)
+                        .build();
+                fakeWarehouseProducts.add(newWarehouseProduct);
+            });
         });
-        warehouseProductRepository.saveAll(fakeWarehouseProducts);
-        cartItemRepository.saveAll(fakeCartItems);
+        fakeWarehouseProducts = warehouseProductRepository.saveAll(fakeWarehouseProducts);
+
+        fakeAccounts.forEach(account -> {
+            fakeProducts.forEach(product -> {
+                CartItem newCartItem = CartItem
+                        .builder()
+                        .id(UUID.randomUUID())
+                        .account(account)
+                        .product(product)
+                        .quantity(Math.random() * 100)
+                        .build();
+                fakeCartItems.add(newCartItem);
+            });
+        });
+        fakeCartItems = cartItemRepository.saveAll(fakeCartItems);
     }
 
     public void depopulate() {

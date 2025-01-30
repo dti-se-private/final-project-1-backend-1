@@ -19,8 +19,6 @@ public class AccountPermission {
     @Id
     private UUID id;
 
-    private UUID accountId;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;

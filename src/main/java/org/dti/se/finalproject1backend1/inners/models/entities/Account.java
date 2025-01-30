@@ -34,21 +34,25 @@ public class Account extends Model {
 
     private String phone;
 
-    @ColumnDefault("false")
-    private Boolean isVerified;
+    @Builder.Default
+    private Boolean isVerified = false;
 
     private byte[] image;
 
     @OneToMany(mappedBy = "account")
+    @Builder.Default
     private Set<AccountAddress> accountAddresses = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "account")
+    @Builder.Default
     private Set<AccountPermission> accountPermissions = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "account")
+    @Builder.Default
     private Set<CartItem> cartItems = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "account")
+    @Builder.Default
     private Set<Order> orders = new LinkedHashSet<>();
 
 }

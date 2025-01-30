@@ -20,19 +20,13 @@ public class WarehouseLedger {
     @Id
     private UUID id;
 
-    private UUID productId;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    private UUID originWarehouseId;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "origin_warehouse_id", nullable = false)
     private Warehouse originWarehouse;
-
-    private UUID destinationWarehouseId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "destination_warehouse_id", nullable = false)

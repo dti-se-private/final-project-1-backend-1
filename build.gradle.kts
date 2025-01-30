@@ -34,9 +34,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("com.auth0:java-jwt:latest.release")
     implementation("com.github.javadev:underscore:latest.release")
-    implementation("com.google.api-client:google-api-client:1.33.0")
-    implementation("com.google.oauth-client:google-oauth-client-jetty:1.33.0")
-    implementation("com.google.http-client:google-http-client-jackson2:1.33.0")
+    implementation("com.google.api-client:google-api-client:2.7.2")
     testImplementation("org.springframework.security:spring-security-test")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
@@ -44,6 +42,7 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")
+    implementation("org.hibernate.orm:hibernate-spatial:6.6.5.Final")
     implementation("org.postgresql:postgresql")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }

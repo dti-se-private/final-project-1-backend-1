@@ -19,13 +19,9 @@ public class CartItem {
     @Id
     private UUID id;
 
-    private UUID accountId;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
-
-    private UUID productId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)

@@ -21,8 +21,6 @@ public class Product {
     @Id
     private UUID id;
 
-    private UUID categoryId;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     private Category category;
@@ -36,15 +34,19 @@ public class Product {
     private byte[] image;
 
     @OneToMany(mappedBy = "product")
+    @Builder.Default
     private Set<CartItem> cartItems = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "product")
+    @Builder.Default
     private Set<OrderItem> orderItems = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "product")
+    @Builder.Default
     private Set<WarehouseLedger> warehouseLedgers = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "product")
+    @Builder.Default
     private Set<WarehouseProduct> warehouseProducts = new LinkedHashSet<>();
 
 }

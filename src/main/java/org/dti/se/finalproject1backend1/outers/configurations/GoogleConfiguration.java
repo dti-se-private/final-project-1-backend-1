@@ -2,7 +2,9 @@ package org.dti.se.finalproject1backend1.outers.configurations;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,10 +22,12 @@ public class GoogleConfiguration {
 
     @Bean
     public GoogleIdTokenVerifier verifier() throws GeneralSecurityException, IOException {
-        return new GoogleIdTokenVerifier.Builder(
-                GoogleNetHttpTransport.newTrustedTransport(),
-                JacksonFactory.getDefaultInstance()
-        ).setAudience(Collections.singletonList(environment.getProperty("google.client.id")))
+        NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+        JsonFactory jsonFactory = new GsonFactory();
+        String clientId = environment.getProperty("google.client_id");
+        return new GoogleIdTokenVerifier
+                .Builder(httpTransport, jsonFactory)
+                .setAudience(Collections.singletonList(clientId))
                 .build();
     }
 }

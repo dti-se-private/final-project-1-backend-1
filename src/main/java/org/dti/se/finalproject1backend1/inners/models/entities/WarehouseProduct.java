@@ -19,13 +19,9 @@ public class WarehouseProduct {
     @Id
     private UUID id;
 
-    private UUID warehouseId;
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "warehouse_id", nullable = false)
     private Warehouse warehouse;
-
-    private UUID productId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "product_id", nullable = false)

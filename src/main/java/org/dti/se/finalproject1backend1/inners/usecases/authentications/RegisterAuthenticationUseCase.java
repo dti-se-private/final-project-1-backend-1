@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -46,9 +47,12 @@ public class RegisterAuthenticationUseCase {
 
 
     public Account registerByEmailAndPassword(RegisterByEmailAndPasswordRequest request) {
-        Account foundAccount = accountRepository
-                .findByEmail(request.getEmail())
-                .orElseThrow(AccountExistsException::new);
+        Optional<Account> foundAccount = accountRepository
+                .findByEmail(request.getEmail());
+
+        if (foundAccount.isPresent()) {
+            throw new AccountExistsException();
+        }
 
         String encodedPassword = securityConfiguration.encode(request.getPassword());
         Account accountToSave = Account
@@ -74,9 +78,12 @@ public class RegisterAuthenticationUseCase {
 
         verificationRepository.delete(verification);
 
-        Account foundAccount = accountRepository
-                .findByEmail(request.getEmail())
-                .orElseThrow(AccountExistsException::new);
+        Optional<Account> foundAccount = accountRepository
+                .findByEmail(request.getEmail());
+
+        if (foundAccount.isPresent()) {
+            throw new AccountExistsException();
+        }
 
         String encodedPassword = securityConfiguration.encode(request.getPassword());
         Account accountToSave = Account

@@ -28,6 +28,7 @@ public class Category {
     private String description;
 
     @OneToMany(mappedBy = "category")
+    @Builder.Default
     private Set<Product> products = new LinkedHashSet<>();
 
 }

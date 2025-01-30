@@ -6,6 +6,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.Accessors;
+import org.hibernate.spatial.dialect.postgis.PGGeographyJdbcType;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -28,19 +29,18 @@ public class Warehouse {
 
     private String description;
 
+    private PGGeographyJdbcType location;
+
     @OneToMany(mappedBy = "originWarehouse")
+    @Builder.Default
     private Set<WarehouseLedger> warehouseLedgersOrigin = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "destinationWarehouse")
+    @Builder.Default
     private Set<WarehouseLedger> warehouseLedgersDestination = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "warehouse")
+    @Builder.Default
     private Set<WarehouseProduct> warehouseProducts = new LinkedHashSet<>();
 
-/*
- TODO [Reverse Engineering] create field to map the 'location' column
- Available actions: Define target Java type | Uncomment as is | Remove column mapping
-    @Column(name = "location", columnDefinition = "geography")
-    private Object location;
-*/
 }
