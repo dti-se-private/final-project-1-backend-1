@@ -125,9 +125,7 @@ public class RegisterAuthenticationUseCase {
 
         try {
             idToken = googleIdTokenVerifier.verify(request.getIdToken());
-        } catch (GeneralSecurityException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
+        } catch (GeneralSecurityException | IOException e) {
             throw new RuntimeException(e);
         }
 
@@ -136,9 +134,12 @@ public class RegisterAuthenticationUseCase {
         String name = payload.get("name").toString();
         String picture = payload.get("picture").toString();
 
-        Account foundAccount = accountRepository
-                .findByEmail(email)
-                .orElseThrow(AccountExistsException::new);
+        Optional<Account> foundAccount = accountRepository
+                .findByEmail(email);
+
+        if (foundAccount.isPresent()) {
+            throw new AccountExistsException();
+        }
 
         Account accountToSave = Account
                 .builder()

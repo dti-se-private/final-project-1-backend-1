@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +17,6 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import java.util.Objects;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -44,12 +44,13 @@ public class AccountRestTest extends TestConfiguration {
 
     @Test
     public void testSaveOne() throws Exception {
+        String encodedPassword = securityConfiguration.encode(rawPassword);
         Account accountCreator = Account
                 .builder()
                 .id(UUID.randomUUID())
                 .name(String.format("name-%s", UUID.randomUUID()))
                 .email(String.format("email-%s", UUID.randomUUID()))
-                .password(String.format("password-%s", UUID.randomUUID()))
+                .password(rawPassword)
                 .phone(String.format("phone-%s", UUID.randomUUID()))
                 .build();
 
@@ -65,7 +66,7 @@ public class AccountRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<Account> body = objectMapper.readValue(content, new TypeReference<>() {
+        ResponseBody<AccountResponse> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
         assert body.getMessage().equals("Account saved.");
@@ -73,10 +74,11 @@ public class AccountRestTest extends TestConfiguration {
         assert body.getData().getId() != null;
         assert body.getData().getName().equals(accountCreator.getName());
         assert body.getData().getEmail().equals(accountCreator.getEmail());
-        assert securityConfiguration.matches(accountCreator.getPassword(), body.getData().getPassword());
+        assert body.getData().getPassword().equals(encodedPassword);
         assert body.getData().getPhone().equals(accountCreator.getPhone());
 
-        fakeAccounts.add(body.getData());
+        accountCreator.setPassword(encodedPassword);
+        fakeAccounts.add(accountCreator);
     }
 
     @Test
@@ -93,13 +95,12 @@ public class AccountRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<Account> body = objectMapper.readValue(content, new TypeReference<>() {
+        ResponseBody<AccountResponse> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
         assert body.getMessage().equals("Account found.");
-
         assert body.getData() != null;
-        assert Objects.equals(body.getData().getId(), realAccount.getId());
+        assert body.getData().getId().equals(realAccount.getId());
         assert body.getData().getName().equals(realAccount.getName());
         assert body.getData().getEmail().equals(realAccount.getEmail());
         assert body.getData().getPassword().equals(realAccount.getPassword());
@@ -109,12 +110,13 @@ public class AccountRestTest extends TestConfiguration {
     @Test
     public void testPatchOneById() throws Exception {
         Account realAccount = fakeAccounts.getFirst();
+        String encodedPassword = securityConfiguration.encode(rawPassword);
         Account accountPatcher = Account
                 .builder()
                 .id(realAccount.getId())
                 .name(String.format("name-%s", UUID.randomUUID()))
                 .email(String.format("email-%s", UUID.randomUUID()))
-                .password(String.format("password-%s", UUID.randomUUID()))
+                .password(rawPassword)
                 .phone(String.format("phone-%s", UUID.randomUUID()))
                 .build();
 
@@ -130,18 +132,19 @@ public class AccountRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<Account> body = objectMapper.readValue(content, new TypeReference<>() {
+        ResponseBody<AccountResponse> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
         assert body.getMessage().equals("Account patched.");
         assert body.getData() != null;
-        assert Objects.equals(body.getData().getId(), accountPatcher.getId());
+        assert body.getData().getId().equals(accountPatcher.getId());
         assert body.getData().getName().equals(accountPatcher.getName());
         assert body.getData().getEmail().equals(accountPatcher.getEmail());
-        assert securityConfiguration.matches(accountPatcher.getPassword(), body.getData().getPassword());
+        assert body.getData().getPassword().equals(encodedPassword);
         assert body.getData().getPhone().equals(accountPatcher.getPhone());
 
-        fakeAccounts.set(fakeAccounts.indexOf(realAccount), body.getData());
+        accountPatcher.setPassword(encodedPassword);
+        fakeAccounts.set(fakeAccounts.indexOf(realAccount), accountPatcher);
     }
 
     @Test

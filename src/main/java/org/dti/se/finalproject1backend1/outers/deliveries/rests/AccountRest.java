@@ -1,6 +1,5 @@
 package org.dti.se.finalproject1backend1.outers.deliveries.rests;
 
-import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
@@ -22,26 +21,26 @@ public class AccountRest {
     private BasicAccountUseCase basicAccountUseCase;
 
     @PostMapping
-    public ResponseEntity<ResponseBody<Void>> saveOne(
+    public ResponseEntity<ResponseBody<AccountResponse>> saveOne(
             @RequestBody AccountRequest request
     ) {
         try {
-            basicAccountUseCase.saveOne(request);
+            AccountResponse savedAccount = basicAccountUseCase.saveOne(request);
             return ResponseBody
-                    .<Void>builder()
+                    .<AccountResponse>builder()
                     .message("Account saved.")
-                    .data(null)
+                    .data(savedAccount)
                     .build()
                     .toEntity(HttpStatus.CREATED);
         } catch (AccountExistsException e) {
             return ResponseBody
-                    .<Void>builder()
+                    .<AccountResponse>builder()
                     .message("Account already exists.")
                     .build()
                     .toEntity(HttpStatus.CONFLICT);
         } catch (Exception e) {
             return ResponseBody
-                    .<Void>builder()
+                    .<AccountResponse>builder()
                     .message("Internal server error.")
                     .exception(e)
                     .build()
@@ -79,28 +78,28 @@ public class AccountRest {
     }
 
     @PatchMapping(value = "/{id}")
-    public ResponseEntity<ResponseBody<Void>> patchOneById(
+    public ResponseEntity<ResponseBody<AccountResponse>> patchOneById(
             @PathVariable("id") UUID id,
             @RequestBody AccountRequest request
     ) {
         try {
-            basicAccountUseCase.patchOneById(id, request);
+            AccountResponse patchedAccount = basicAccountUseCase.patchOneById(id, request);
             return ResponseBody
-                    .<Void>builder()
+                    .<AccountResponse>builder()
                     .message("Account patched.")
-                    .data(null)
+                    .data(patchedAccount)
                     .build()
                     .toEntity(HttpStatus.OK);
         } catch (AccountNotFoundException e) {
             return ResponseBody
-                    .<Void>builder()
+                    .<AccountResponse>builder()
                     .message("Account not found.")
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             return ResponseBody
-                    .<Void>builder()
+                    .<AccountResponse>builder()
                     .message("Internal server error.")
                     .exception(e)
                     .build()

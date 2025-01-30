@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -58,7 +59,7 @@ public class CartRestTest extends TestConfiguration {
                 .get("/carts")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .param("page", "0")
-                .param("size", "10");
+                .param("size", String.valueOf(realCartItems.size()));
 
         MvcResult result = mockMvc
                 .perform(request)
@@ -99,7 +100,7 @@ public class CartRestTest extends TestConfiguration {
         AddCartItemRequest requestBody = AddCartItemRequest
                 .builder()
                 .productId(realCartItem.getProduct().getId())
-                .quantity(1.0)
+                .quantity(Math.ceil(Math.random() * 10))
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
@@ -130,7 +131,7 @@ public class CartRestTest extends TestConfiguration {
         assert foundCartItem != null;
         assert foundCartItem.getAccount().getId().equals(authenticatedAccount.getId());
         assert foundCartItem.getProduct().getId().equals(realCartItem.getProduct().getId());
-        assert foundCartItem.getQuantity().equals(1.0);
+        assert foundCartItem.getQuantity().equals(realCartItem.getQuantity() + requestBody.getQuantity());
     }
 
     @Test
@@ -169,10 +170,9 @@ public class CartRestTest extends TestConfiguration {
         assert responseBody.getMessage().equals("Item removed from cart.");
         assert responseBody.getData() == null;
 
-        CartItem foundCartItem = cartItemRepository
-                .findByAccountIdAndProductId(authenticatedAccount.getId(), realCartItem.getProduct().getId())
-                .orElseThrow(CartItemNotFoundException::new);
+        Optional<CartItem> foundCartItem = cartItemRepository
+                .findByAccountIdAndProductId(authenticatedAccount.getId(), realCartItem.getProduct().getId());
 
-        assert foundCartItem == null;
+        assert foundCartItem.isEmpty();
     }
 }

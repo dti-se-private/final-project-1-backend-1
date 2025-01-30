@@ -5,11 +5,13 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Product;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.carts.AddCartItemRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.carts.CartItemResponse;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.carts.RemoveCartItemRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.products.ProductInsufficientException;
 import org.dti.se.finalproject1backend1.outers.exceptions.products.ProductNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.CartCustomRepository;
+import org.dti.se.finalproject1backend1.outers.repositories.customs.ProductCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.CartItemRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.ProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,7 +23,7 @@ public class CartUseCase {
     @Autowired
     CartCustomRepository cartCustomRepository;
     @Autowired
-    CartItemRepository cartItemRepository;
+    ProductCustomRepository productCustomRepository;
     @Autowired
     ProductRepository productRepository;
     @Autowired
@@ -48,6 +50,11 @@ public class CartUseCase {
         Product product = productRepository
                 .findById(request.getProductId())
                 .orElseThrow(ProductNotFoundException::new);
+        ProductResponse allWarehouseProduct = productCustomRepository.getAllWarehouseProduct(product.getId());
+
+        if (allWarehouseProduct.getTotalQuantity() < request.getQuantity()) {
+            throw new ProductInsufficientException();
+        }
 
         cartCustomRepository.addCartItem(foundAccount.getId(), product.getId(), request.getQuantity());
     }

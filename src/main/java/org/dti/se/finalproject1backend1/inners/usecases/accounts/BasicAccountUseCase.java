@@ -19,7 +19,7 @@ public class BasicAccountUseCase {
     @Autowired
     SecurityConfiguration securityConfiguration;
 
-    public void saveOne(AccountRequest request) {
+    public AccountResponse saveOne(AccountRequest request) {
         String encodedPassword = securityConfiguration.encode(request.getPassword());
         Account account = Account
                 .builder()
@@ -31,7 +31,18 @@ public class BasicAccountUseCase {
                 .isVerified(false)
                 .image(request.getImage())
                 .build();
-        accountRepository.save(account);
+        Account savedAccount = accountRepository.save(account);
+
+        return AccountResponse
+                .builder()
+                .id(savedAccount.getId())
+                .email(savedAccount.getEmail())
+                .password(savedAccount.getPassword())
+                .name(savedAccount.getName())
+                .phone(savedAccount.getPhone())
+                .isVerified(savedAccount.getIsVerified())
+                .image(savedAccount.getImage())
+                .build();
     }
 
     public AccountResponse findOneById(UUID id) {
@@ -43,6 +54,7 @@ public class BasicAccountUseCase {
                 .builder()
                 .id(foundAccount.getId())
                 .email(foundAccount.getEmail())
+                .password(foundAccount.getPassword())
                 .name(foundAccount.getName())
                 .phone(foundAccount.getPhone())
                 .isVerified(foundAccount.getIsVerified())
@@ -62,17 +74,28 @@ public class BasicAccountUseCase {
                 .orElseThrow(AccountNotFoundException::new);
     }
 
-    public void patchOneById(UUID id, AccountRequest request) {
+    public AccountResponse patchOneById(UUID id, AccountRequest request) {
         Account accountToPatch = accountRepository
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);
-        String encodedPassword = securityConfiguration.encode(accountToPatch.getPassword());
+        String encodedPassword = securityConfiguration.encode(request.getPassword());
         accountToPatch.setEmail(request.getEmail());
         accountToPatch.setName(request.getName());
         accountToPatch.setPhone(request.getPhone());
         accountToPatch.setImage(request.getImage());
         accountToPatch.setPassword(encodedPassword);
-        accountRepository.save(accountToPatch);
+        Account patchedAccount = accountRepository.save(accountToPatch);
+
+        return AccountResponse
+                .builder()
+                .id(patchedAccount.getId())
+                .email(patchedAccount.getEmail())
+                .password(patchedAccount.getPassword())
+                .name(patchedAccount.getName())
+                .phone(patchedAccount.getPhone())
+                .isVerified(patchedAccount.getIsVerified())
+                .image(patchedAccount.getImage())
+                .build();
     }
 
     public void deleteOneById(UUID id) {

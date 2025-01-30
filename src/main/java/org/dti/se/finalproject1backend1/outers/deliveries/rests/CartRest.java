@@ -8,7 +8,9 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.carts.CartIte
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.carts.RemoveCartItemRequest;
 import org.dti.se.finalproject1backend1.inners.usecases.carts.CartUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.products.ProductInsufficientException;
 import org.dti.se.finalproject1backend1.outers.exceptions.products.ProductNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,6 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CartRest {
 
+    @Autowired
     CartUseCase cartUseCase;
 
     @GetMapping("")
@@ -40,6 +43,13 @@ public class CartRest {
                     .data(cartItems)
                     .build()
                     .toEntity(HttpStatus.OK);
+        } catch (AccountNotFoundException e) {
+            return ResponseBody
+                    .<List<CartItemResponse>>builder()
+                    .message("Account not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             return ResponseBody
                     .<List<CartItemResponse>>builder()
@@ -77,6 +87,13 @@ public class CartRest {
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
+        } catch (ProductInsufficientException e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Product insufficient.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
                     .<Void>builder()
@@ -96,7 +113,7 @@ public class CartRest {
             cartUseCase.removeCartItem(account, request);
             return ResponseBody
                     .<Void>builder()
-                    .message("Item added to cart.")
+                    .message("Item removed from cart.")
                     .data(null)
                     .build()
                     .toEntity(HttpStatus.OK);

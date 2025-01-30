@@ -133,7 +133,7 @@ public class TestConfiguration {
                         .id(UUID.randomUUID())
                         .warehouse(warehouse)
                         .product(product)
-                        .quantity(Math.random() * 1000)
+                        .quantity(Math.ceil(Math.random() * 1000))
                         .build();
                 fakeWarehouseProducts.add(newWarehouseProduct);
             });
@@ -147,7 +147,7 @@ public class TestConfiguration {
                         .id(UUID.randomUUID())
                         .account(account)
                         .product(product)
-                        .quantity(Math.random() * 100)
+                        .quantity(Math.ceil(Math.random() * 100))
                         .build();
                 fakeCartItems.add(newCartItem);
             });
