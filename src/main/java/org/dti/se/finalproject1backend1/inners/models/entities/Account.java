@@ -21,7 +21,6 @@ import java.util.UUID;
 @Entity
 public class Account extends Model {
     @Id
-    @Column(name = "id", nullable = false)
     private UUID id;
 
     private String name;
@@ -33,7 +32,6 @@ public class Account extends Model {
     private String phone;
 
     @ColumnDefault("false")
-    @Column(name = "is_verified")
     private Boolean isVerified;
 
     private byte[] image;

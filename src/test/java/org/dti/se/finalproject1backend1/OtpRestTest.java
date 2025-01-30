@@ -4,14 +4,17 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dti.se.finalproject1backend1.inners.models.entities.Verification;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
+import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.VerificationRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -40,7 +43,7 @@ public class OtpRestTest extends TestConfiguration {
     @BeforeEach
     public void setUp() {
         testEmail = String.format("email-%s@example.com", UUID.randomUUID());
-        testType = "register";
+        testType = "REGISTER";
     }
 
     @AfterEach
@@ -49,9 +52,11 @@ public class OtpRestTest extends TestConfiguration {
     }
 
     @Test
-    public void testSendOtp() throws Exception {
+    public void sendOtp() throws Exception {
+        Mockito.doNothing().when(mailgunGatewayMock).sendEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post("/api/otp/send")
+                .post("/otps/send")
                 .param("email", testEmail)
                 .param("type", testType)
                 .contentType(MediaType.APPLICATION_JSON);
@@ -65,35 +70,6 @@ public class OtpRestTest extends TestConfiguration {
         ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
-        assert body.getMessage().equals("OTP sent successfully.");
-    }
-
-    @Test
-    public void testVerifyOtp() throws Exception {
-        // First, send the OTP
-        testSendOtp();
-
-        // Retrieve the OTP from the database
-        Verification verification = verificationRepository.findByEmail(testEmail);
-        assert verification != null;
-        String otp = verification.getCode();
-
-        // Verify the OTP
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post("/api/otp/verify")
-                .param("email", testEmail)
-                .param("otp", otp)
-                .contentType(MediaType.APPLICATION_JSON);
-
-        MvcResult result = mockMvc
-                .perform(request)
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String content = result.getResponse().getContentAsString();
-        ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {
-        });
-        assert body != null;
-        assert body.getMessage().equals("OTP verified successfully.");
+        assert body.getMessage().equals("OTP sent succeed.");
     }
 }

@@ -16,16 +16,13 @@ import java.util.UUID;
 @Table(name = "warehouse_product")
 public class WarehouseProduct {
     @Id
-    @Column(name = "id", nullable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "warehouse_id", nullable = false)
     private Warehouse warehouse;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 

@@ -15,7 +15,6 @@ import java.util.UUID;
 @Table(name = "warehouse")
 public class Warehouse {
     @Id
-    @Column(name = "id", nullable = false)
     private UUID id;
 
     private String name;

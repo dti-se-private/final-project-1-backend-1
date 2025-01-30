@@ -16,18 +16,15 @@ import java.util.UUID;
 @Table(name = "order_item")
 public class OrderItem {
     @Id
-    @Column(name = "id", nullable = false)
     private UUID id;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 

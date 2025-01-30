@@ -18,11 +18,9 @@ import java.util.UUID;
 @Table(name = "product")
 public class Product {
     @Id
-    @Column(name = "id", nullable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.SET_NULL)
     @JoinColumn(name = "category_id")
     private Category category;
 

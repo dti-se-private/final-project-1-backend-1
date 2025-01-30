@@ -16,12 +16,10 @@ import java.util.UUID;
 @Table(name = "provider")
 public class Provider {
     @Id
-    @Column(name = "id", nullable = false)
     private UUID id;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "account_id", nullable = false)
     private Account account;
 

@@ -1,4 +1,4 @@
-package org.dti.se.finalproject1backend1.inners.usecases.authentications;
+package org.dti.se.finalproject1backend1.outers.deliveries.gateways;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -10,7 +10,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 @Service
-public class MailgunUseCase {
+public class MailgunGateway {
     @Value("${mailgun.api.key}")
     private String apiKey;
 

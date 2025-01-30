@@ -1,6 +1,7 @@
 package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.Verification;
+import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.VerificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,7 @@ public class OtpUseCase {
     private VerificationRepository verificationRepository;
 
     @Autowired
-    private MailgunUseCase mailgunUseCase;
+    private MailgunGateway mailgunGateway;
 
     public void sendOtp(String email, String type) {
         String otp = generateOtp();
@@ -32,7 +33,8 @@ public class OtpUseCase {
         verification.setEndTime(endTime);
 
         verificationRepository.save(verification);
-        mailgunUseCase.sendEmail(email, "Your Commerce OTP Code", "Your OTP code is: " + otp);
+
+        mailgunGateway.sendEmail(email, "Your Commerce OTP Code", "Your OTP code is: " + otp);
     }
 
     private String generateOtp() {

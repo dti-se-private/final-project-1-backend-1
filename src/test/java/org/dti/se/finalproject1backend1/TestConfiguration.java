@@ -2,17 +2,27 @@ package org.dti.se.finalproject1backend1;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.testing.http.MockHttpTransport;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
+import org.dti.se.finalproject1backend1.inners.models.entities.Verification;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
+import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
+import org.dti.se.finalproject1backend1.outers.repositories.ones.VerificationRepository;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -21,6 +31,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,6 +46,12 @@ public class TestConfiguration {
 
     @Autowired
     protected AccountRepository accountRepository;
+
+    @Autowired
+    protected VerificationRepository verificationRepository;
+
+    @MockitoBean
+    protected MailgunGateway mailgunGatewayMock;
 
     @Autowired
     protected SecurityConfiguration securityConfiguration;
@@ -168,5 +185,31 @@ public class TestConfiguration {
         assert body != null;
         assert body.getMessage().equals("Logout succeed.");
         return body;
+    }
+
+    protected Verification getVerification(String email, String type) throws Exception {
+        Mockito.doNothing().when(mailgunGatewayMock).sendEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/otps/send")
+                .param("email", email)
+                .param("type", type)
+                .contentType(MediaType.APPLICATION_JSON);
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
+        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+        assert body != null;
+        assert body.getMessage().equals("OTP sent succeed.");
+        assert body.getData() == null;
+
+        Thread.sleep(3000);
+        return verificationRepository.findFirstByEmailAndType(email, type);
     }
 }

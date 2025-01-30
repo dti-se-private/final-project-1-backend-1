@@ -22,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.UUID;
@@ -42,6 +44,9 @@ public class RegisterAuthenticationUseCase {
 
     @Autowired
     SecurityConfiguration securityConfiguration;
+
+    @Autowired
+    GoogleIdTokenVerifier googleIdTokenVerifier;
 
     @Transactional
     public Account registerByEmailAndPassword(RegisterByEmailAndPasswordRequest request) {
@@ -64,7 +69,7 @@ public class RegisterAuthenticationUseCase {
 
     @Transactional
     public Account registerByInternal(RegisterByEmailAndPasswordRequest request) {
-        Verification verification = verificationRepository.findByEmailAndCodeAndType(request.getEmail(), request.getOtp(), "REGISTER");
+        Verification verification = verificationRepository.findFirstByEmailAndCodeAndType(request.getEmail(), request.getOtp(), "REGISTER");
         if (verification == null || OffsetDateTime.now().isAfter(verification.getEndTime())) {
             throw new OtpInvalidException();
         }
@@ -107,58 +112,54 @@ public class RegisterAuthenticationUseCase {
 
     @Transactional
     public Account registerByExternal(RegisterByExternalRequest request) {
-        try {
-            String idTokenString = request.getIdToken();
-            if (idTokenString == null || idTokenString.isEmpty()) {
-                throw new RuntimeException("ID token is null or empty");
-            }
+        GoogleIdToken idToken;
 
-            GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(
-                    GoogleNetHttpTransport.newTrustedTransport(),
-                    JacksonFactory.getDefaultInstance()
-            ).setAudience(Collections.singletonList(System.getenv("GOOGLE_CLIENT_ID")))
-                    .build();
-
-            GoogleIdToken idToken = verifier.verify(request.getIdToken());
-            if (idToken == null) {
-                throw new RuntimeException("Invalid ID token");
-            }
-
-            GoogleIdToken.Payload payload = idToken.getPayload();
-            String email = payload.getEmail();
-            String name = (String) payload.get("name");
-            String profile = (String) payload.get("picture");
-
-            Account foundAccount = accountRepository.findFirstByEmail(email);
-            if (foundAccount != null) {
-                throw new AccountExistsException();
-            }
-
-            Account accountToSave = Account
-                    .builder()
-                    .id(UUID.randomUUID())
-                    .name(name)
-                    .email(email)
-                    .isVerified(true)
-                    .image(profile.getBytes())
-                    .build();
-            Account savedAccount = accountRepository.save(accountToSave);
-
-            Provider accountProvider = new Provider();
-            accountProvider.setId(UUID.randomUUID());
-            accountProvider.setAccount(savedAccount);
-            accountProvider.setName("EXTERNAL");
-            providerRepository.save(accountProvider);
-
-            AccountPermission accountPermission = new AccountPermission();
-            accountPermission.setId(UUID.randomUUID());
-            accountPermission.setAccount(savedAccount);
-            accountPermission.setPermission("CUSTOMER");
-            accountPermissionRepository.save(accountPermission);
-
-            return savedAccount;
-        } catch (Exception e) {
-            throw new RuntimeException("Error verifying Google ID token", e);
+        String idTokenString = request.getIdToken();
+        if (idTokenString == null || idTokenString.isEmpty()) {
+            throw new RuntimeException("ID token is null or empty");
         }
+
+        try {
+            idToken = googleIdTokenVerifier.verify(request.getIdToken());
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        GoogleIdToken.Payload payload = idToken.getPayload();
+        String email = payload.getEmail();
+        String name = payload.get("name").toString();
+        String picture = payload.get("picture").toString();
+
+        Account foundAccount = accountRepository.findFirstByEmail(email);
+        if (foundAccount != null) {
+            throw new AccountExistsException();
+        }
+
+        Account accountToSave = Account
+                .builder()
+                .id(UUID.randomUUID())
+                .name(name)
+                .email(email)
+                .isVerified(true)
+                .image(picture.getBytes())
+                .build();
+        Account savedAccount = accountRepository.save(accountToSave);
+
+        Provider accountProvider = new Provider();
+        accountProvider.setId(UUID.randomUUID());
+        accountProvider.setAccount(savedAccount);
+        accountProvider.setName("EXTERNAL");
+        providerRepository.save(accountProvider);
+
+        AccountPermission accountPermission = new AccountPermission();
+        accountPermission.setId(UUID.randomUUID());
+        accountPermission.setAccount(savedAccount);
+        accountPermission.setPermission("CUSTOMER");
+        accountPermissionRepository.save(accountPermission);
+
+        return savedAccount;
+
     }
 }

@@ -14,7 +14,6 @@ import java.util.UUID;
 @Table(name = "verification")
 public class Verification {
     @Id
-    @Column(name = "id", nullable = false)
     private UUID id;
 
     private String email;
@@ -23,12 +22,8 @@ public class Verification {
 
     private String code;
 
-    @NotNull
-    @Column(name = "init_time", nullable = false)
     private OffsetDateTime initTime;
 
-    @NotNull
-    @Column(name = "end_time", nullable = false)
     private OffsetDateTime endTime;
 
 }

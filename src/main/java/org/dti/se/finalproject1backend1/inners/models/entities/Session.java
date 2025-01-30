@@ -15,11 +15,9 @@ import java.util.UUID;
 @Table(name = "session")
 public class Session {
     @Id
-    @Column(name = "id", nullable = false)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "account_id")
     private Account account;
 
