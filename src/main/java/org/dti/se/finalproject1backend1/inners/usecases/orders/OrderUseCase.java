@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class OrderUseCase {
@@ -42,11 +41,4 @@ public class OrderUseCase {
         return orderCustomRepository
                 .getOrders(page, size, filters, search);
     }
-
-
-    public OrderResponse getOrder(UUID orderId) {
-        return orderCustomRepository
-                .getOrder(orderId);
-    }
-
 }
