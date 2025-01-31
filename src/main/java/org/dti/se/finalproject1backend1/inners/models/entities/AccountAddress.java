@@ -3,7 +3,7 @@ package org.dti.se.finalproject1backend1.inners.models.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.Accessors;
-import org.hibernate.spatial.dialect.postgis.PGGeographyJdbcType;
+import org.locationtech.jts.geom.Point;
 
 import java.util.UUID;
 
@@ -30,5 +30,5 @@ public class AccountAddress {
     @Builder.Default
     private Boolean isPrimary = false;
 
-    private PGGeographyJdbcType location;
+    private Point location;
 }

@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -62,6 +63,7 @@ public class WarehouseLedgerUseCase {
         if (originProduct.getQuantity() < 0) {
             throw new RuntimeException("Insufficient stock in origin warehouse");
         }
+        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
         // Create ledger entry
         WarehouseLedger ledger = new WarehouseLedger();
@@ -71,7 +73,7 @@ public class WarehouseLedgerUseCase {
         ledger.setDestinationWarehouse(destinationWarehouse);
         ledger.setPreQuantity(originProduct.getQuantity());
         ledger.setPostQuantity(originProduct.getQuantity() - quantity);
-        ledger.setTime(OffsetDateTime.now());
+        ledger.setTime(now);
         ledger.setStatus("WAITING_APPROVAL");
 
         return warehouseLedgerRepository.save(ledger);

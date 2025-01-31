@@ -11,6 +11,8 @@ import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfigurat
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -50,6 +52,12 @@ public class TestConfiguration {
     @Autowired
     protected CartItemRepository cartItemRepository;
     @Autowired
+    protected OrderRepository orderRepository;
+    @Autowired
+    protected OrderItemRepository orderItemRepository;
+    @Autowired
+    protected OrderStatusRepository orderStatusRepository;
+    @Autowired
     protected VerificationRepository verificationRepository;
 
     @MockitoBean
@@ -64,6 +72,9 @@ public class TestConfiguration {
     protected List<Product> fakeProducts = new ArrayList<>();
     protected List<WarehouseProduct> fakeWarehouseProducts = new ArrayList<>();
     protected List<CartItem> fakeCartItems = new ArrayList<>();
+    protected List<Order> fakeOrders = new ArrayList<>();
+    protected List<OrderItem> fakeOrderItems = new ArrayList<>();
+    protected List<OrderStatus> fakeOrderStatuses = new ArrayList<>();
 
     protected String rawPassword = String.format("password-%s", UUID.randomUUID());
     protected Account authenticatedAccount;
@@ -153,6 +164,50 @@ public class TestConfiguration {
             });
         });
         fakeCartItems = cartItemRepository.saveAll(fakeCartItems);
+
+        GeometryFactory geometryFactory = new GeometryFactory();
+        fakeAccounts.forEach(account -> {
+            for (int i = 0; i < 4; i++) {
+                Order newOrder = Order
+                        .builder()
+                        .id(UUID.randomUUID())
+                        .account(account)
+                        .totalPrice(Math.ceil(Math.random() * 1000000))
+                        .shipmentOrigin(geometryFactory.createPoint(new Coordinate(Math.random() * 10, Math.random() * 10)))
+                        .shipmentDestination(geometryFactory.createPoint(new Coordinate(Math.random() * 10, Math.random() * 10)))
+                        .shipmentPrice(Math.ceil(Math.random() * 1000000))
+                        .itemPrice(Math.ceil(Math.random() * 1000000))
+                        .build();
+                fakeOrders.add(newOrder);
+            }
+        });
+        fakeOrders = orderRepository.saveAll(fakeOrders);
+
+        fakeOrders.forEach(order -> {
+            fakeProducts.forEach(product -> {
+                OrderItem newOrderItem = OrderItem
+                        .builder()
+                        .id(UUID.randomUUID())
+                        .order(order)
+                        .product(product)
+                        .quantity(Math.ceil(Math.random() * 100))
+                        .build();
+                fakeOrderItems.add(newOrderItem);
+            });
+
+            for (int i = 0; i < 4; i++) {
+                OrderStatus newOrderStatus = OrderStatus
+                        .builder()
+                        .id(UUID.randomUUID())
+                        .order(order)
+                        .status(String.format("status-%s", UUID.randomUUID()))
+                        .time(now.plusHours(i))
+                        .build();
+                fakeOrderStatuses.add(newOrderStatus);
+            }
+        });
+        fakeOrderItems = orderItemRepository.saveAll(fakeOrderItems);
+        fakeOrderStatuses = orderStatusRepository.saveAll(fakeOrderStatuses);
     }
 
     public void depopulate() {

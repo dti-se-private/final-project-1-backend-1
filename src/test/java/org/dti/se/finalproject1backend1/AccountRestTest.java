@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,9 +46,8 @@ public class AccountRestTest extends TestConfiguration {
     @Test
     public void testSaveOne() throws Exception {
         String encodedPassword = securityConfiguration.encode(rawPassword);
-        Account accountCreator = Account
+        AccountRequest accountCreator = AccountRequest
                 .builder()
-                .id(UUID.randomUUID())
                 .name(String.format("name-%s", UUID.randomUUID()))
                 .email(String.format("email-%s", UUID.randomUUID()))
                 .password(rawPassword)
@@ -77,8 +77,16 @@ public class AccountRestTest extends TestConfiguration {
         assert body.getData().getPassword().equals(encodedPassword);
         assert body.getData().getPhone().equals(accountCreator.getPhone());
 
-        accountCreator.setPassword(encodedPassword);
-        fakeAccounts.add(accountCreator);
+        Account savedAccount = Account
+                .builder()
+                .id(body.getData().getId())
+                .name(body.getData().getName())
+                .email(body.getData().getEmail())
+                .password(body.getData().getPassword())
+                .phone(body.getData().getPhone())
+                .image(body.getData().getImage())
+                .build();
+        fakeAccounts.add(savedAccount);
     }
 
     @Test
@@ -111,9 +119,8 @@ public class AccountRestTest extends TestConfiguration {
     public void testPatchOneById() throws Exception {
         Account realAccount = fakeAccounts.getFirst();
         String encodedPassword = securityConfiguration.encode(rawPassword);
-        Account accountPatcher = Account
+        AccountRequest accountPatcher = AccountRequest
                 .builder()
-                .id(realAccount.getId())
                 .name(String.format("name-%s", UUID.randomUUID()))
                 .email(String.format("email-%s", UUID.randomUUID()))
                 .password(rawPassword)
@@ -137,14 +144,22 @@ public class AccountRestTest extends TestConfiguration {
         assert body != null;
         assert body.getMessage().equals("Account patched.");
         assert body.getData() != null;
-        assert body.getData().getId().equals(accountPatcher.getId());
+        assert body.getData().getId().equals(realAccount.getId());
         assert body.getData().getName().equals(accountPatcher.getName());
         assert body.getData().getEmail().equals(accountPatcher.getEmail());
         assert body.getData().getPassword().equals(encodedPassword);
         assert body.getData().getPhone().equals(accountPatcher.getPhone());
 
-        accountPatcher.setPassword(encodedPassword);
-        fakeAccounts.set(fakeAccounts.indexOf(realAccount), accountPatcher);
+        Account patchedAccount = Account
+                .builder()
+                .id(body.getData().getId())
+                .name(body.getData().getName())
+                .email(body.getData().getEmail())
+                .password(body.getData().getPassword())
+                .phone(body.getData().getPhone())
+                .image(body.getData().getImage())
+                .build();
+        fakeAccounts.set(fakeAccounts.indexOf(realAccount), patchedAccount);
     }
 
     @Test

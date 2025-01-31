@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Random;
 import java.util.UUID;
 
@@ -21,15 +22,15 @@ public class OtpUseCase {
 
     public void sendOtp(String email, String type) {
         String otp = generateOtp();
-        OffsetDateTime initTime = OffsetDateTime.now();
-        OffsetDateTime endTime = initTime.plusHours(1);
+        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+        OffsetDateTime endTime = now.plusHours(1);
 
         Verification verification = new Verification();
         verification.setId(UUID.randomUUID());
         verification.setEmail(email);
         verification.setType(type);
         verification.setCode(otp);
-        verification.setInitTime(initTime);
+        verification.setInitTime(now);
         verification.setEndTime(endTime);
 
         verificationRepository.save(verification);

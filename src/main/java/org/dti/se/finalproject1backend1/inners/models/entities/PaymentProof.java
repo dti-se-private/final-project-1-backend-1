@@ -1,8 +1,10 @@
 package org.dti.se.finalproject1backend1.inners.models.entities;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.Accessors;
+import org.dti.se.finalproject1backend1.outers.configurations.serdes.HexStringDeserializer;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -24,6 +26,7 @@ public class PaymentProof {
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
 
+    @JsonDeserialize(using = HexStringDeserializer.class)
     private byte[] file;
 
     private String extension;
