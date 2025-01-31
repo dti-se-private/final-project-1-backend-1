@@ -53,8 +53,12 @@ public class OrderCustomRepository {
                                     'status', order_status.status,
                                     'time', order_status.time
                                 ))
-                                FROM order_status
-                                WHERE order_status.order_id = "order".id
+                                FROM (
+                                    SELECT *
+                                    FROM order_status
+                                    WHERE order_status.order_id = "order".id
+                                    ORDER BY order_status.time
+                                ) as order_status
                             ),
                             'items', (
                                 SELECT json_agg(json_build_object(
@@ -126,8 +130,12 @@ public class OrderCustomRepository {
                                     'status', order_status.status,
                                     'time', order_status.time
                                 ))
-                                FROM order_status
-                                WHERE order_status.order_id = "order".id
+                                FROM (
+                                    SELECT *
+                                    FROM order_status
+                                    WHERE order_status.order_id = "order".id
+                                    ORDER BY order_status.time
+                                ) as order_status
                             ),
                             'items', (
                                 SELECT json_agg(json_build_object(

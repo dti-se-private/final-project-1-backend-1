@@ -75,7 +75,8 @@ public class OrderRest {
                     .data(orders)
                     .build()
                     .toEntity(HttpStatus.OK);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return ResponseBody
                     .<List<OrderResponse>>builder()
                     .message("Internal server error.")
