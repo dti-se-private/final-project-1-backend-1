@@ -34,33 +34,33 @@ public class AuthenticationRest {
     @Autowired
     private RegisterAuthenticationUseCase registerAuthenticationUseCase;
 
-    @PostMapping(value = "/logins/email-password")
-    public ResponseEntity<ResponseBody<Session>> loginByEmailAndPassword(
-            @RequestBody LoginByEmailAndPasswordRequest request
-    ) {
-        try {
-            Session session = loginAuthenticationUseCase.loginByEmailAndPassword(request.getEmail(), request.getPassword());
-            return ResponseBody
-                    .<Session>builder()
-                    .message("Login succeed.")
-                    .data(session)
-                    .build()
-                    .toEntity(HttpStatus.OK);
-        } catch (AccountCredentialsInvalidException e) {
-            return ResponseBody
-                    .<Session>builder()
-                    .message("Account credentials invalid.")
-                    .build()
-                    .toEntity(HttpStatus.UNAUTHORIZED);
-        } catch (Exception e) {
-            return ResponseBody
-                    .<Session>builder()
-                    .message("Internal server error.")
-                    .exception(e)
-                    .build()
-                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+//    @PostMapping(value = "/logins/email-password")
+//    public ResponseEntity<ResponseBody<Session>> loginByEmailAndPassword(
+//            @RequestBody LoginByEmailAndPasswordRequest request
+//    ) {
+//        try {
+//            Session session = loginAuthenticationUseCase.loginByEmailAndPassword(request.getEmail(), request.getPassword());
+//            return ResponseBody
+//                    .<Session>builder()
+//                    .message("Login succeed.")
+//                    .data(session)
+//                    .build()
+//                    .toEntity(HttpStatus.OK);
+//        } catch (AccountCredentialsInvalidException e) {
+//            return ResponseBody
+//                    .<Session>builder()
+//                    .message("Account credentials invalid.")
+//                    .build()
+//                    .toEntity(HttpStatus.UNAUTHORIZED);
+//        } catch (Exception e) {
+//            return ResponseBody
+//                    .<Session>builder()
+//                    .message("Internal server error.")
+//                    .exception(e)
+//                    .build()
+//                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
 
     @PostMapping(value = "/registers/email-password")
     public ResponseEntity<ResponseBody<Account>> registerByEmailAndPassword(
@@ -150,6 +150,35 @@ public class AuthenticationRest {
                     .build()
                     .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    @PostMapping(value = "/logins/internal")
+    public ResponseEntity<ResponseBody<Session>> loginByInternal(
+            @RequestBody LoginByEmailAndPasswordRequest request
+    ) {
+//        try {
+            Session session = loginAuthenticationUseCase.loginByInternal(request.getEmail(), request.getPassword());
+            return ResponseBody
+                    .<Session>builder()
+                    .message("Login succeed.")
+                    .data(session)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+//        }
+//        catch (AccountCredentialsInvalidException e) {
+//            return ResponseBody
+//                    .<Session>builder()
+//                    .message("Account credentials invalid.")
+//                    .build()
+//                    .toEntity(HttpStatus.UNAUTHORIZED);
+//        } catch (Exception e) {
+//            return ResponseBody
+//                    .<Session>builder()
+//                    .message("Internal server error.")
+//                    .exception(e)
+//                    .build()
+//                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
     }
 
     @PostMapping(value = "/logouts/session")
