@@ -2,10 +2,13 @@ package org.dti.se.finalproject1backend1;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import org.dti.se.finalproject1backend1.inners.models.entities.*;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
@@ -54,6 +57,8 @@ public class TestConfiguration {
 
     @MockitoBean
     protected MailgunGateway mailgunGatewayMock;
+    @MockitoBean
+    private GoogleIdTokenVerifier googleIdTokenVerifier;
 
     @Autowired
     protected SecurityConfiguration securityConfiguration;
@@ -171,7 +176,7 @@ public class TestConfiguration {
     }
 
     public void auth() throws Exception {
-        authenticatedAccount = register().getData();
+        authenticatedAccount = registerInternal().getData();
         fakeAccounts.add(authenticatedAccount);
         authenticatedSession = login(authenticatedAccount).getData();
     }
@@ -185,7 +190,7 @@ public class TestConfiguration {
         logout(authenticatedSession);
     }
 
-    protected ResponseBody<Account> register() throws Exception {
+    protected ResponseBody<Account> registerInternal() throws Exception {
         RegisterByEmailAndPasswordRequest requestBody = RegisterByEmailAndPasswordRequest
                 .builder()
                 .name(String.format("name-%s", UUID.randomUUID()))
@@ -215,6 +220,51 @@ public class TestConfiguration {
         assert body.getData().getEmail().equals(requestBody.getEmail());
         assert securityConfiguration.matches(requestBody.getPassword(), body.getData().getPassword());
         assert body.getData().getPhone().equals(requestBody.getPhone());
+        return body;
+    }
+
+    protected ResponseBody<Account> registerExternal() throws Exception {
+        String mockIdToken = "mock-id-token";
+        String email = String.format("email-%s", UUID.randomUUID());
+        String name = String.format("name-%s", UUID.randomUUID());
+        String picture = "http://example.com/picture.jpg";
+
+        GoogleIdToken.Payload payload = Mockito.mock(GoogleIdToken.Payload.class);
+        Mockito.when(payload.getEmail()).thenReturn(email);
+        Mockito.when(payload.get("name")).thenReturn(name);
+        Mockito.when(payload.get("picture")).thenReturn(picture.getBytes());
+
+        GoogleIdToken idToken = Mockito.mock(GoogleIdToken.class);
+        Mockito.when(idToken.getPayload()).thenReturn(payload);
+
+        Mockito.when(googleIdTokenVerifier.verify(mockIdToken)).thenReturn(idToken);
+
+        RegisterAndLoginByExternalRequest requestBody = RegisterAndLoginByExternalRequest
+                .builder()
+                .idToken(mockIdToken)
+                .build();
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/authentications/registers/external")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        ResponseBody<Account> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
+        assert body != null;
+        assert body.getMessage().equals("Register succeed.");
+        assert body.getData() != null;
+        assert body.getData().getId() != null;
+        assert body.getData().getName().equals(name);
+        assert body.getData().getEmail().equals(email);
+        assert body.getData().getImage() != null;
+
         return body;
     }
 

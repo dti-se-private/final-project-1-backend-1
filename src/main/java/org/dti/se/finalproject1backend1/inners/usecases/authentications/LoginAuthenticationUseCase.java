@@ -1,5 +1,7 @@
 package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
@@ -16,6 +18,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -39,35 +43,43 @@ public class LoginAuthenticationUseCase {
     AccountPermissionRepository accountPermissionRepository;
 
     @Autowired
-    AuthenticationManagerImpl authenticationManager;
+    GoogleIdTokenVerifier googleIdTokenVerifier;
 
-//    public Session loginByEmailAndPassword(String email, String password) {
-//        Account account = accountRepository.findFirstByEmailAndPassword(email, securityConfiguration.encode(password));
-//        if (account == null) {
-//            throw new AccountCredentialsInvalidException();
-//        }
-//
-//        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
-//        OffsetDateTime accessTokenExpiredAt = now.plusSeconds(30);
-//        OffsetDateTime refreshTokenExpiredAt = now.plusDays(3);
-//        Session session = Session
-//                .builder()
-//                .accountId(account.getId())
-//                .accessToken(jwtAuthenticationUseCase.generate(account, accessTokenExpiredAt))
-//                .refreshToken(jwtAuthenticationUseCase.generate(account, refreshTokenExpiredAt))
-//                .accessTokenExpiredAt(accessTokenExpiredAt)
-//                .refreshTokenExpiredAt(refreshTokenExpiredAt)
-//                .build();
-//
-//        sessionRepository.setByAccessToken(session);
-//        return session;
-//    }
+    @Autowired
+    AuthenticationManagerImpl authenticationManager;
 
     public Session loginByInternal(String email, String password) {
         Account account = accountRepository
                 .findByEmailAndPassword(email, securityConfiguration.encode(password))
                 .orElseThrow(AccountCredentialsInvalidException::new);
 
+        return getSession(account);
+    }
+
+    public Session loginByExternal(String googleCredential){
+        GoogleIdToken idToken;
+
+        if (googleCredential == null || googleCredential.isEmpty()) {
+            throw new RuntimeException("ID token is null or empty");
+        }
+
+        try {
+            idToken = googleIdTokenVerifier.verify(googleCredential);
+        } catch (GeneralSecurityException | IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        GoogleIdToken.Payload payload = idToken.getPayload();
+        String email = payload.getEmail();
+
+        Account account = accountRepository
+                .findByEmail(email)
+                .orElseThrow(AccountCredentialsInvalidException::new);
+
+        return getSession(account);
+    }
+
+    private Session getSession(Account account) {
         AccountResponse accountResponse = AccountResponse
                 .builder()
                 .id(account.getId())
