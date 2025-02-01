@@ -30,6 +30,8 @@ public class OrderResponse extends Model {
 
     private List<OrderItemResponse> items;
 
+    private List<PaymentProofResponse> paymentProofs;
+
     private Point shipmentOrigin;
 
     private Point shipmentDestination;

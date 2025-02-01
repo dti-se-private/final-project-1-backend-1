@@ -4,7 +4,6 @@ import lombok.*;
 import lombok.experimental.Accessors;
 import org.dti.se.finalproject1backend1.inners.models.Model;
 
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Data
@@ -13,8 +12,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class OrderStatusResponse extends Model {
-    private UUID id;
-    private String status;
-    private OffsetDateTime time;
+public class OrderProcessRequest extends Model {
+    private UUID orderId;
+    private String action;
 }

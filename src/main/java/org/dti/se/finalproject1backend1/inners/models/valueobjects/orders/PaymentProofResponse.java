@@ -13,8 +13,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class OrderStatusResponse extends Model {
+public class PaymentProofResponse extends Model {
     private UUID id;
-    private String status;
+    private byte[] file;
+    private String extension;
     private OffsetDateTime time;
 }

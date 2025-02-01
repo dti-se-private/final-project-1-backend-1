@@ -58,6 +58,8 @@ public class TestConfiguration {
     @Autowired
     protected OrderStatusRepository orderStatusRepository;
     @Autowired
+    protected WarehouseLedgerRepository warehouseLedgerRepository;
+    @Autowired
     protected VerificationRepository verificationRepository;
 
     @MockitoBean
@@ -75,6 +77,7 @@ public class TestConfiguration {
     protected List<Order> fakeOrders = new ArrayList<>();
     protected List<OrderItem> fakeOrderItems = new ArrayList<>();
     protected List<OrderStatus> fakeOrderStatuses = new ArrayList<>();
+    protected List<WarehouseLedger> fakeWarehouseLedger = new ArrayList<>();
 
     protected String rawPassword = String.format("password-%s", UUID.randomUUID());
     protected Account authenticatedAccount;
@@ -85,7 +88,7 @@ public class TestConfiguration {
 
     public void populate() {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
             Account newAccount = Account
                     .builder()
                     .id(UUID.randomUUID())
@@ -97,9 +100,9 @@ public class TestConfiguration {
             fakeAccounts.add(newAccount);
 
         }
-        fakeAccounts = accountRepository.saveAll(fakeAccounts);
+        accountRepository.saveAll(fakeAccounts);
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
             Warehouse newWarehouse = Warehouse
                     .builder()
                     .id(UUID.randomUUID())
@@ -108,9 +111,9 @@ public class TestConfiguration {
                     .build();
             fakeWarehouses.add(newWarehouse);
         }
-        fakeWarehouses = warehouseRepository.saveAll(fakeWarehouses);
+        warehouseRepository.saveAll(fakeWarehouses);
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
             Category newCategory = Category
                     .builder()
                     .id(UUID.randomUUID())
@@ -119,10 +122,10 @@ public class TestConfiguration {
                     .build();
             fakeCategories.add(newCategory);
         }
-        fakeCategories = categoryRepository.saveAll(fakeCategories);
+        categoryRepository.saveAll(fakeCategories);
 
         fakeCategories.forEach(category -> {
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 5; i++) {
                 Product newProduct = Product
                         .builder()
                         .id(UUID.randomUUID())
@@ -135,7 +138,7 @@ public class TestConfiguration {
                 fakeProducts.add(newProduct);
             }
         });
-        fakeProducts = productRepository.saveAll(fakeProducts);
+        productRepository.saveAll(fakeProducts);
 
         fakeProducts.forEach(product -> {
             fakeWarehouses.forEach(warehouse -> {
@@ -149,7 +152,7 @@ public class TestConfiguration {
                 fakeWarehouseProducts.add(newWarehouseProduct);
             });
         });
-        fakeWarehouseProducts = warehouseProductRepository.saveAll(fakeWarehouseProducts);
+        warehouseProductRepository.saveAll(fakeWarehouseProducts);
 
         fakeAccounts.forEach(account -> {
             fakeProducts.forEach(product -> {
@@ -163,11 +166,25 @@ public class TestConfiguration {
                 fakeCartItems.add(newCartItem);
             });
         });
-        fakeCartItems = cartItemRepository.saveAll(fakeCartItems);
+        cartItemRepository.saveAll(fakeCartItems);
 
         GeometryFactory geometryFactory = new GeometryFactory();
+        List<String> ledgerStatuses = List.of(
+                "WAITING_FOR_APPROVAL",
+                "APPROVED",
+                "REJECTED"
+        );
+        List<String> orderStatuses = List.of(
+                "WAITING_FOR_PAYMENT",
+                "WAITING_FOR_PAYMENT_CONFIRMATION",
+                "PROCESSING",
+                "SHIPPING",
+                "ORDER_CONFIRMED",
+                "CANCELED"
+        );
+
         fakeAccounts.forEach(account -> {
-            for (int i = 0; i < 4; i++) {
+            for (int i = 0; i < 5; i++) {
                 Order newOrder = Order
                         .builder()
                         .id(UUID.randomUUID())
@@ -179,38 +196,69 @@ public class TestConfiguration {
                         .itemPrice(Math.ceil(Math.random() * 1000000))
                         .build();
                 fakeOrders.add(newOrder);
+
+                for (int j = 0; j < orderStatuses.size() - i; j++) {
+                    OrderStatus newOrderStatus = OrderStatus
+                            .builder()
+                            .id(UUID.randomUUID())
+                            .order(newOrder)
+                            .status(orderStatuses.get(j))
+                            .time(now.plusNanos(j * 1000))
+                            .build();
+                    fakeOrderStatuses.add(newOrderStatus);
+                }
+
+                fakeProducts.forEach(product -> {
+                    int originWarehouseIndex = (int) Math.floor(Math.random() * fakeWarehouses.size());
+                    Warehouse originWarehouse = fakeWarehouses.get(originWarehouseIndex);
+                    int destinationWarehouseIndex = (int) Math.floor(Math.random() * fakeWarehouses.size());
+                    Warehouse destinationWarehouse = fakeWarehouses.get(destinationWarehouseIndex);
+
+                    int ledgerStatusIndex = (int) Math.floor(Math.random() * ledgerStatuses.size());
+                    String ledgerStatus = ledgerStatuses.get(ledgerStatusIndex);
+
+                    WarehouseLedger newWarehouseLedger = WarehouseLedger
+                            .builder()
+                            .id(UUID.randomUUID())
+                            .product(product)
+                            .originWarehouse(originWarehouse)
+                            .destinationWarehouse(destinationWarehouse)
+                            .originPreQuantity(Math.ceil(Math.random() * 100))
+                            .originPostQuantity(Math.ceil(Math.random() * 100))
+                            .destinationPreQuantity(Math.ceil(Math.random() * 100))
+                            .destinationPostQuantity(Math.ceil(Math.random() * 100))
+                            .time(now)
+                            .status(ledgerStatus)
+                            .build();
+                    fakeWarehouseLedger.add(newWarehouseLedger);
+
+                    OrderItem newOrderItem = OrderItem
+                            .builder()
+                            .id(UUID.randomUUID())
+                            .order(newOrder)
+                            .product(product)
+                            .quantity(Math.ceil(Math.random() * 100))
+                            .warehouseLedger(newWarehouseLedger)
+                            .build();
+                    fakeOrderItems.add(newOrderItem);
+                });
             }
         });
-        fakeOrders = orderRepository.saveAll(fakeOrders);
-
-        fakeOrders.forEach(order -> {
-            fakeProducts.forEach(product -> {
-                OrderItem newOrderItem = OrderItem
-                        .builder()
-                        .id(UUID.randomUUID())
-                        .order(order)
-                        .product(product)
-                        .quantity(Math.ceil(Math.random() * 100))
-                        .build();
-                fakeOrderItems.add(newOrderItem);
-            });
-
-            for (int i = 0; i < 4; i++) {
-                OrderStatus newOrderStatus = OrderStatus
-                        .builder()
-                        .id(UUID.randomUUID())
-                        .order(order)
-                        .status(String.format("status-%s", UUID.randomUUID()))
-                        .time(now.plusHours(i))
-                        .build();
-                fakeOrderStatuses.add(newOrderStatus);
-            }
-        });
-        fakeOrderItems = orderItemRepository.saveAll(fakeOrderItems);
-        fakeOrderStatuses = orderStatusRepository.saveAll(fakeOrderStatuses);
+        orderRepository.saveAll(fakeOrders);
+        orderStatusRepository.saveAll(fakeOrderStatuses);
+        warehouseLedgerRepository.saveAll(fakeWarehouseLedger);
+        orderItemRepository.saveAll(fakeOrderItems);
     }
 
     public void depopulate() {
+        orderStatusRepository.deleteAll(fakeOrderStatuses);
+        fakeOrderStatuses.clear();
+        orderItemRepository.deleteAll(fakeOrderItems);
+        fakeOrderItems.clear();
+        warehouseLedgerRepository.deleteAll(fakeWarehouseLedger);
+        fakeWarehouseLedger.clear();
+        orderRepository.deleteAll(fakeOrders);
+        fakeOrders.clear();
         cartItemRepository.deleteAll(fakeCartItems);
         fakeCartItems.clear();
         warehouseProductRepository.deleteAll(fakeWarehouseProducts);

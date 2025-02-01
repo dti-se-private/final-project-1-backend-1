@@ -7,5 +7,6 @@ import java.util.List;
 import java.util.UUID;
 
 public interface OrderStatusRepository extends JpaRepository<OrderStatus, UUID> {
-    List<OrderStatus> findAllByOrderId(UUID id);
+    List<OrderStatus> findAllByOrderIdOrderByTimeAsc(UUID id);
+
 }

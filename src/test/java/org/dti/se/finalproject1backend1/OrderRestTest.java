@@ -7,6 +7,7 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Order;
 import org.dti.se.finalproject1backend1.inners.models.entities.OrderItem;
 import org.dti.se.finalproject1backend1.inners.models.entities.OrderStatus;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderProcessRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -150,4 +152,187 @@ public class OrderRestTest extends TestConfiguration {
         assert responseBody.getData() != null;
         assert responseBody.getData().size() == realOrders.size();
     }
+
+    @Test
+    public void testGetPaymentConfirmations() throws Exception {
+        List<Order> realOrders = fakeOrders
+                .stream()
+                .filter(order -> order
+                        .getOrderStatuses()
+                        .stream()
+                        .anyMatch(orderStatus -> orderStatus.getStatus().equals("WAITING_FOR_PAYMENT_CONFIRMATION"))
+                )
+                .toList();
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .get("/orders/payment-confirmations")
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
+                .param("page", "0")
+                .param("size", String.valueOf(realOrders.size()));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ResponseBody<List<OrderResponse>> responseBody = objectMapper
+                .readValue(
+                        result.getResponse().getContentAsString(),
+                        new TypeReference<>() {
+                        }
+                );
+
+        assert responseBody.getMessage().equals("Payment confirmation orders found.");
+        assert responseBody.getData() != null;
+        assert responseBody.getData().size() == realOrders.size();
+    }
+
+
+    @Test
+    public void testApprovePaymentConfirmationOrder() throws Exception {
+        Order realOrder = fakeOrders
+                .stream()
+                .filter(order -> {
+                    List<OrderStatus> orderStatuses = fakeOrderStatuses
+                            .stream()
+                            .filter(orderStatus -> orderStatus.getOrder().getId().equals(order.getId()))
+                            .sorted((a, b) -> a.getTime().compareTo(b.getTime()))
+                            .toList();
+
+                    return orderStatuses.getLast().getStatus().equals("WAITING_FOR_PAYMENT_CONFIRMATION");
+                })
+                .findFirst()
+                .orElseThrow();
+
+        OrderProcessRequest requestBody = OrderProcessRequest
+                .builder()
+                .orderId(realOrder.getId())
+                .action("APPROVE")
+                .build();
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/orders/payment-confirmations/process")
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ResponseBody<Void> responseBody = objectMapper
+                .readValue(
+                        result.getResponse().getContentAsString(),
+                        new TypeReference<>() {
+                        }
+                );
+
+        assert responseBody.getMessage().equals("Order payment confirmation processed.");
+        assert responseBody.getData() == null;
+
+        List<OrderStatus> updatedOrderStatuses = orderStatusRepository
+                .findAllByOrderIdOrderByTimeAsc(realOrder.getId());
+
+        assert updatedOrderStatuses.getLast().getStatus().equals("PROCESSING");
+    }
+
+    @Test
+    public void testRejectPaymentConfirmationOrder() throws Exception {
+        Order realOrder = fakeOrders
+                .stream()
+                .filter(order -> {
+                    List<OrderStatus> orderStatuses = fakeOrderStatuses
+                            .stream()
+                            .filter(orderStatus -> orderStatus.getOrder().getId().equals(order.getId()))
+                            .sorted((a, b) -> a.getTime().compareTo(b.getTime()))
+                            .toList();
+
+                    return orderStatuses.getLast().getStatus().equals("WAITING_FOR_PAYMENT_CONFIRMATION");
+                })
+                .findFirst()
+                .orElseThrow();
+
+        OrderProcessRequest requestBody = OrderProcessRequest
+                .builder()
+                .orderId(realOrder.getId())
+                .action("REJECT")
+                .build();
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/orders/payment-confirmations/process")
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ResponseBody<Void> responseBody = objectMapper
+                .readValue(
+                        result.getResponse().getContentAsString(),
+                        new TypeReference<>() {
+                        }
+                );
+
+        assert responseBody.getMessage().equals("Order payment confirmation processed.");
+        assert responseBody.getData() == null;
+
+        List<OrderStatus> updatedOrderStatuses = orderStatusRepository
+                .findAllByOrderIdOrderByTimeAsc(realOrder.getId());
+
+        assert updatedOrderStatuses.getLast().getStatus().equals("WAITING_FOR_PAYMENT");
+    }
+
+    @Test
+    public void testCancelOrder() throws Exception {
+        List<OrderStatus> shippingOrderStatuses = fakeOrderStatuses
+                .stream()
+                .filter(orderStatus -> orderStatus.getStatus().equals("SHIPPING"))
+                .toList();
+
+        Order realOrder = fakeOrders
+                .stream()
+                .filter(order -> shippingOrderStatuses
+                        .stream()
+                        .noneMatch(orderStatus -> orderStatus.getOrder().getId().equals(order.getId()))
+                )
+                .findFirst()
+                .orElseThrow();
+
+        OrderProcessRequest requestBody = OrderProcessRequest
+                .builder()
+                .orderId(realOrder.getId())
+                .action("CANCEL")
+                .build();
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/orders/cancellations/process")
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ResponseBody<Void> responseBody = objectMapper
+                .readValue(
+                        result.getResponse().getContentAsString(),
+                        new TypeReference<>() {
+                        }
+                );
+
+        assert responseBody.getMessage().equals("Order cancellation processed.");
+        assert responseBody.getData() == null;
+
+        List<OrderStatus> updatedOrderStatuses = orderStatusRepository
+                .findAllByOrderIdOrderByTimeAsc(realOrder.getId());
+
+        assert updatedOrderStatuses.getLast().getStatus().equals("PROCESSING");
+    }
+
 }
