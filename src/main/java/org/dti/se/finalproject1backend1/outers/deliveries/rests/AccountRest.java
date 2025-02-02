@@ -9,6 +9,7 @@ import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFou
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -48,6 +49,7 @@ public class AccountRest {
         }
     }
 
+    @PreAuthorize("hasAnyAuthority('CUSTOMER')")
     @GetMapping(value = "/{id}")
     public ResponseEntity<ResponseBody<AccountResponse>> findOneById(
             @PathVariable("id") UUID id

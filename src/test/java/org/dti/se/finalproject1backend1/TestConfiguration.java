@@ -14,6 +14,7 @@ import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfigurat
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.mockito.Mockito;
@@ -279,31 +280,37 @@ public class TestConfiguration {
     }
 
     public void auth() throws Exception {
-        authenticatedAccount = registerInternal().getData();
+        authenticatedAccount = registerByInternal().getData();
         fakeAccounts.add(authenticatedAccount);
-        authenticatedSession = login(authenticatedAccount).getData();
+        authenticatedSession = loginByInternal(authenticatedAccount).getData();
     }
 
     public void auth(Account account) throws Exception {
         authenticatedAccount = account;
-        authenticatedSession = login(account).getData();
+        authenticatedSession = loginByInternal(account).getData();
     }
 
     public void deauth() throws Exception {
         logout(authenticatedSession);
     }
 
-    protected ResponseBody<Account> registerInternal() throws Exception {
+    protected ResponseBody<Account> registerByInternal() throws Exception {
+        String email = String.format("email-%s", UUID.randomUUID());
+        String type = "REGISTER";
+
+        Verification verification = getVerification(email, type);
+
         RegisterByEmailAndPasswordRequest requestBody = RegisterByEmailAndPasswordRequest
                 .builder()
                 .name(String.format("name-%s", UUID.randomUUID()))
-                .email(String.format("email-%s", UUID.randomUUID()))
+                .email(email)
                 .password(rawPassword)
                 .phone(String.format("phone-%s", UUID.randomUUID()))
+                .otp(verification.getCode())
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post("/authentications/registers/email-password")
+                .post("/authentications/registers/internal")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
@@ -326,7 +333,7 @@ public class TestConfiguration {
         return body;
     }
 
-    protected ResponseBody<Account> registerExternal() throws Exception {
+    protected ResponseBody<Account> registerByExternal() throws Exception {
         String mockIdToken = "mock-id-token";
         String email = String.format("email-%s", UUID.randomUUID());
         String name = String.format("name-%s", UUID.randomUUID());
@@ -371,7 +378,7 @@ public class TestConfiguration {
         return body;
     }
 
-    protected ResponseBody<Session> login(Account account) throws Exception {
+    protected ResponseBody<Session> loginByInternal(Account account) throws Exception {
         LoginByEmailAndPasswordRequest requestBody = LoginByEmailAndPasswordRequest
                 .builder()
                 .email(account.getEmail())
@@ -379,7 +386,7 @@ public class TestConfiguration {
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post("/authentications/logins/email-password")
+                .post("/authentications/logins/internal")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 

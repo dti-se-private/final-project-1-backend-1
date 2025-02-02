@@ -32,9 +32,6 @@ public class RegisterAuthenticationUseCase {
     AccountRepository accountRepository;
 
     @Autowired
-    VerificationRepository verificationRepository;
-
-    @Autowired
     AccountPermissionRepository accountPermissionRepository;
 
     @Autowired
@@ -45,6 +42,9 @@ public class RegisterAuthenticationUseCase {
 
     @Autowired
     GoogleIdTokenVerifier googleIdTokenVerifier;
+
+    @Autowired
+    OtpUseCase otpUseCase;
 
 
     public Account registerByEmailAndPassword(RegisterByEmailAndPasswordRequest request) {
@@ -69,16 +69,11 @@ public class RegisterAuthenticationUseCase {
 
 
     public Account registerByInternal(RegisterByEmailAndPasswordRequest request) {
-        Verification verification = verificationRepository
-                .findByEmailAndCodeAndType(request.getEmail(), request.getOtp(), "REGISTER")
-                .orElseThrow(VerificationNotFoundException::new);
+        boolean isOtpVerified = otpUseCase.verifyOtp(request.getEmail(), request.getOtp(), "REGISTER");
 
-        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
-        if (now.isAfter(verification.getEndTime())) {
-            throw new VerificationExpiredException();
+        if (!isOtpVerified) {
+            throw new VerificationNotFoundException();
         }
-
-        verificationRepository.delete(verification);
 
         Optional<Account> foundAccount = accountRepository
                 .findByEmail(request.getEmail());
@@ -110,8 +105,6 @@ public class RegisterAuthenticationUseCase {
         accountPermission.setAccount(savedAccount);
         accountPermission.setPermission("CUSTOMER");
         accountPermissionRepository.save(accountPermission);
-
-        verificationRepository.delete(verification);
 
         return savedAccount;
     }

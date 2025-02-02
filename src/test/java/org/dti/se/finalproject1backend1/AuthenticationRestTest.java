@@ -14,6 +14,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.authenticatio
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -55,48 +56,12 @@ public class AuthenticationRestTest extends TestConfiguration {
     }
 
     @Test
-    public void testRegisterByEmailAndPassword() throws Exception {
-        RegisterByEmailAndPasswordRequest requestBody = RegisterByEmailAndPasswordRequest
-                .builder()
-                .name(String.format("name-%s", UUID.randomUUID()))
-                .email(String.format("email-%s", UUID.randomUUID()))
-                .password(rawPassword)
-                .phone(String.format("phone-%s", UUID.randomUUID()))
-                .build();
-
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post("/authentications/registers/email-password")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody));
-
-        MvcResult result = mockMvc
-                .perform(request)
-                .andExpect(status().isCreated())
-                .andReturn();
-
-        String content = result.getResponse().getContentAsString();
-        ResponseBody<Account> body = objectMapper.readValue(content, new TypeReference<>() {
-        });
-        assert body != null;
-        assert body.getMessage().equals("Register succeed.");
-        assert body.getData() != null;
-        assert body.getData().getId() != null;
-        assert body.getData().getName().equals(requestBody.getName());
-        assert body.getData().getEmail().equals(requestBody.getEmail());
-        assert securityConfiguration.matches(requestBody.getPassword(), body.getData().getPassword());
-        assert body.getData().getPhone().equals(requestBody.getPhone());
-
-        fakeAccounts.add(body.getData());
-    }
-
-    @Test
     public void testRegisterByInternal() throws Exception {
         String email = String.format("email-%s", UUID.randomUUID());
         String type = "REGISTER";
 
         Verification verification = getVerification(email, type);
 
-        Thread.sleep(3000);
         RegisterByEmailAndPasswordRequest requestBody = RegisterByEmailAndPasswordRequest
                 .builder()
                 .name(String.format("name-%s", UUID.randomUUID()))
@@ -132,6 +97,7 @@ public class AuthenticationRestTest extends TestConfiguration {
     }
 
     @Test
+    @ResourceLock(value= "mockToken")
     public void testRegisterByExternal() throws Exception {
         String mockIdToken = "mock-id-token";
         String email = String.format("email-%s", UUID.randomUUID());
@@ -179,7 +145,7 @@ public class AuthenticationRestTest extends TestConfiguration {
 
     @Test
     public void testLoginByInternal() throws Exception {
-        ResponseBody<Account> registerResponse = registerInternal();
+        ResponseBody<Account> registerResponse = registerByInternal();
         Account realAccount = registerResponse.getData();
         LoginByEmailAndPasswordRequest requestBody = LoginByEmailAndPasswordRequest
                 .builder()
@@ -212,8 +178,9 @@ public class AuthenticationRestTest extends TestConfiguration {
     }
 
     @Test
+    @ResourceLock(value= "mockToken")
     public void testLoginByExternal() throws Exception {
-        ResponseBody<Account> registerResponse = registerExternal();
+        ResponseBody<Account> registerResponse = registerByExternal();
         Account realAccount = registerResponse.getData();
 
         RegisterAndLoginByExternalRequest requestBody = RegisterAndLoginByExternalRequest

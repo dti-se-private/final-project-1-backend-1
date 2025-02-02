@@ -92,7 +92,7 @@ public class LoginAuthenticationUseCase {
 
         List<AccountPermission> permissionsList =accountPermissionRepository
                 .findByAccountId(account.getId())
-                .orElseThrow(AccountUnAuthorizedException::new);
+                .orElseThrow(AccountUnAuthorizedException::new); // ganti ke permission not found exception
 
         List<String> permissions = permissionsList
                 .stream()
