@@ -5,7 +5,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -21,7 +20,5 @@ public interface WarehouseProductRepository extends JpaRepository<WarehouseProdu
     @Query("SELECT wp FROM WarehouseProduct wp WHERE wp.quantity >0")
     Page<WarehouseProduct> findWithFilters(String filters, Pageable pageable);
 
-    // method to update the quantity in the warehouse
-    @Query("SELECT wp FROM WarehouseProduct wp WHERE wp.product.id = :productId AND wp.warehouse.id = :warehouseId")
-    Optional<WarehouseProduct> findByProductAndWarehouse(@Param("productId") UUID productId, @Param("warehouseId") UUID warehouseId);
+    Optional<WarehouseProduct> findByProductIdAndWarehouseId(UUID productId, UUID warehouseId);
 }

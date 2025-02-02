@@ -3,7 +3,7 @@ package org.dti.se.finalproject1backend1.inners.models.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.Accessors;
-import org.hibernate.spatial.dialect.postgis.PGGeographyJdbcType;
+import org.locationtech.jts.geom.Point;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -16,7 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Accessors(chain = true)
 @Entity
-@Table(name = "order")
+@Table(name = "\"order\"")
 public class Order {
     @Id
     private UUID id;
@@ -43,7 +43,7 @@ public class Order {
     @Builder.Default
     private Set<PaymentProof> paymentProofs = new LinkedHashSet<>();
 
-    private PGGeographyJdbcType shipmentOrigin;
+    private Point shipmentOrigin;
 
-    private PGGeographyJdbcType shipmentDestination;
+    private Point shipmentDestination;
 }

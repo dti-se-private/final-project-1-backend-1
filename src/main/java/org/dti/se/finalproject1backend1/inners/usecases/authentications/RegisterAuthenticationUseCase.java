@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -72,7 +73,8 @@ public class RegisterAuthenticationUseCase {
                 .findByEmailAndCodeAndType(request.getEmail(), request.getOtp(), "REGISTER")
                 .orElseThrow(VerificationNotFoundException::new);
 
-        if (OffsetDateTime.now().isAfter(verification.getEndTime())) {
+        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+        if (now.isAfter(verification.getEndTime())) {
             throw new VerificationExpiredException();
         }
 

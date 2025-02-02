@@ -6,7 +6,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.Accessors;
-import org.hibernate.spatial.dialect.postgis.PGGeographyJdbcType;
+import org.locationtech.jts.geom.Point;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -29,7 +29,7 @@ public class Warehouse {
 
     private String description;
 
-    private PGGeographyJdbcType location;
+    private Point location;
 
     @OneToMany(mappedBy = "originWarehouse")
     @Builder.Default
