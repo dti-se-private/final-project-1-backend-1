@@ -139,6 +139,7 @@ public class TestConfiguration {
                     .id(UUID.randomUUID())
                     .name(String.format("name-%s", UUID.randomUUID()))
                     .description(String.format("description-%s", UUID.randomUUID()))
+                    .location(geometryFactory.createPoint(new Coordinate(Math.random() * 10, Math.random() * 10)))
                     .build();
             fakeWarehouses.add(newWarehouse);
         }
