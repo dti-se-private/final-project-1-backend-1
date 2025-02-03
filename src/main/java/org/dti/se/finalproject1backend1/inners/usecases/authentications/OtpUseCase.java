@@ -37,7 +37,7 @@ public class OtpUseCase {
 
         verificationRepository.save(verification);
 
-        mailgunGateway.sendEmail(email, "Your Commerce OTP Code", "Your " + type.toLowerCase().replace("_", " ") +" OTP code is: " + otp);
+        mailgunGateway.sendEmail(email, "Your Commerce OTP Code", "Your " + type.toLowerCase().replace("_", " ") + " OTP code is: " + otp);
     }
 
     public boolean verifyOtp(String email, String otp, String type) {

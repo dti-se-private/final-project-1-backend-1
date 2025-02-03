@@ -9,6 +9,7 @@ import org.dti.se.finalproject1backend1.inners.usecases.orders.CancellationUseCa
 import org.dti.se.finalproject1backend1.inners.usecases.orders.OrderUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.orders.PaymentConfirmationUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderActionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderStatusInvalidException;
@@ -16,6 +17,7 @@ import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehousePr
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -68,7 +70,9 @@ public class OrderRest {
     }
 
     @GetMapping("")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")
     public ResponseEntity<ResponseBody<List<OrderResponse>>> getOrders(
+            @AuthenticationPrincipal Account account,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "") List<String> filters,
@@ -76,13 +80,20 @@ public class OrderRest {
     ) {
         try {
             List<OrderResponse> orders = orderUseCase
-                    .getOrders(page, size, filters, search);
+                    .getOrders(account, page, size, filters, search);
             return ResponseBody
                     .<List<OrderResponse>>builder()
                     .message("Orders found.")
                     .data(orders)
                     .build()
                     .toEntity(HttpStatus.OK);
+        } catch (AccountPermissionInvalidException e) {
+            return ResponseBody
+                    .<List<OrderResponse>>builder()
+                    .message("Account permission invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.FORBIDDEN);
         } catch (Exception e) {
             return ResponseBody
                     .<List<OrderResponse>>builder()
@@ -94,7 +105,9 @@ public class OrderRest {
     }
 
     @GetMapping("/payment-confirmations")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")
     public ResponseEntity<ResponseBody<List<OrderResponse>>> getPaymentConfirmationOrders(
+            @AuthenticationPrincipal Account account,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "") List<String> filters,
@@ -102,13 +115,20 @@ public class OrderRest {
     ) {
         try {
             List<OrderResponse> orders = paymentConfirmationUseCase
-                    .getPaymentConfirmationOrders(page, size, filters, search);
+                    .getPaymentConfirmationOrders(account, page, size, filters, search);
             return ResponseBody
                     .<List<OrderResponse>>builder()
                     .message("Payment confirmation orders found.")
                     .data(orders)
                     .build()
                     .toEntity(HttpStatus.OK);
+        } catch (AccountPermissionInvalidException e) {
+            return ResponseBody
+                    .<List<OrderResponse>>builder()
+                    .message("Account permission invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.FORBIDDEN);
         } catch (Exception e) {
             return ResponseBody
                     .<List<OrderResponse>>builder()

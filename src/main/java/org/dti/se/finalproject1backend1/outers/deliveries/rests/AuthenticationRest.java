@@ -6,8 +6,8 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.BasicAuthenticationUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.LoginAuthenticationUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.RegisterAuthenticationUseCase;
@@ -129,13 +129,13 @@ public class AuthenticationRest {
             @RequestBody LoginByEmailAndPasswordRequest request
     ) {
 //        try {
-            Session session = loginAuthenticationUseCase.loginByInternal(request.getEmail(), request.getPassword());
-            return ResponseBody
-                    .<Session>builder()
-                    .message("Login succeed.")
-                    .data(session)
-                    .build()
-                    .toEntity(HttpStatus.OK);
+        Session session = loginAuthenticationUseCase.loginByInternal(request.getEmail(), request.getPassword());
+        return ResponseBody
+                .<Session>builder()
+                .message("Login succeed.")
+                .data(session)
+                .build()
+                .toEntity(HttpStatus.OK);
 //        }
 //        catch (AccountCredentialsInvalidException e) {
 //            return ResponseBody
@@ -154,7 +154,7 @@ public class AuthenticationRest {
     }
 
     @PostMapping(value = "/logins/external")
-    public ResponseEntity<ResponseBody<Session>> loginByExternal (
+    public ResponseEntity<ResponseBody<Session>> loginByExternal(
             @RequestBody RegisterAndLoginByExternalRequest request
     ) {
         try {

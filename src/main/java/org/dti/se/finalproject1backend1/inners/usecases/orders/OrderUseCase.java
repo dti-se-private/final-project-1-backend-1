@@ -3,6 +3,7 @@ package org.dti.se.finalproject1backend1.inners.usecases.orders;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.OrderCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,12 +34,28 @@ public class OrderUseCase {
     }
 
     public List<OrderResponse> getOrders(
+            Account account,
             Integer page,
             Integer size,
             List<String> filters,
             String search
     ) {
-        return orderCustomRepository
-                .getOrders(page, size, filters, search);
+        if (account
+                .getAccountPermissions()
+                .stream()
+                .anyMatch(permission -> permission.getPermission().equals("SUPER_ADMIN"))
+        ) {
+            return orderCustomRepository
+                    .getOrders(page, size, filters, search);
+        } else if (account
+                .getAccountPermissions()
+                .stream()
+                .anyMatch(permission -> permission.getPermission().equals("WAREHOUSE_ADMIN"))
+        ) {
+            return orderCustomRepository
+                    .getOrders(account, page, size, filters, search);
+        } else {
+            throw new AccountPermissionInvalidException();
+        }
     }
 }

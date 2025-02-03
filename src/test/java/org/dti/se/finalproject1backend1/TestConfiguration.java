@@ -14,7 +14,6 @@ import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfigurat
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
-import org.junit.jupiter.api.parallel.ResourceLock;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.mockito.Mockito;
@@ -46,6 +45,8 @@ public class TestConfiguration {
     @Autowired
     protected AccountRepository accountRepository;
     @Autowired
+    private AccountPermissionRepository accountPermissionRepository;
+    @Autowired
     protected WarehouseRepository warehouseRepository;
     @Autowired
     protected CategoryRepository categoryRepository;
@@ -75,6 +76,7 @@ public class TestConfiguration {
     protected SecurityConfiguration securityConfiguration;
 
     protected List<Account> fakeAccounts = new ArrayList<>();
+    protected List<AccountPermission> fakePermissions = new ArrayList<>();
     protected List<Warehouse> fakeWarehouses = new ArrayList<>();
     protected List<Category> fakeCategories = new ArrayList<>();
     protected List<Product> fakeProducts = new ArrayList<>();
@@ -94,6 +96,7 @@ public class TestConfiguration {
 
     public void populate() {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+
         for (int i = 0; i < 5; i++) {
             Account newAccount = Account
                     .builder()
@@ -105,8 +108,16 @@ public class TestConfiguration {
                     .build();
             fakeAccounts.add(newAccount);
 
+            AccountPermission newPermission = AccountPermission
+                    .builder()
+                    .id(UUID.randomUUID())
+                    .account(newAccount)
+                    .permission("SUPER_ADMIN")
+                    .build();
+            fakePermissions.add(newPermission);
         }
         accountRepository.saveAll(fakeAccounts);
+        accountPermissionRepository.saveAll(fakePermissions);
 
         for (int i = 0; i < 5; i++) {
             Warehouse newWarehouse = Warehouse
