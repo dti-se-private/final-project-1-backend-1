@@ -3,8 +3,10 @@ package org.dti.se.finalproject1backend1.inners.usecases.accounts;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
+import org.dti.se.finalproject1backend1.inners.usecases.authentications.OtpUseCase;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,9 @@ public class BasicAccountUseCase {
 
     @Autowired
     SecurityConfiguration securityConfiguration;
+
+    @Autowired
+    OtpUseCase otpUseCase;
 
     public AccountResponse saveOne(AccountRequest request) {
         String encodedPassword = securityConfiguration.encode(request.getPassword());
@@ -78,8 +83,15 @@ public class BasicAccountUseCase {
         Account accountToPatch = accountRepository
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);
+
+        if (request.getEmail() != null && !request.getEmail().equals(accountToPatch.getEmail())) {
+            if (!otpUseCase.verifyOtp(request.getEmail(), request.getOtp(), "UPDATE_EMAIL")) {
+                throw new VerificationNotFoundException("Invalid OTP for email update");
+            }
+            accountToPatch.setEmail(request.getEmail());
+        }
+
         String encodedPassword = securityConfiguration.encode(request.getPassword());
-        accountToPatch.setEmail(request.getEmail());
         accountToPatch.setName(request.getName());
         accountToPatch.setPhone(request.getPhone());
         accountToPatch.setImage(request.getImage());

@@ -11,6 +11,6 @@ import lombok.experimental.Accessors;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class RegisterByExternalRequest {
+public class RegisterAndLoginByExternalRequest {
     private String idToken;
 }
