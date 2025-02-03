@@ -6,9 +6,11 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.Acco
 import org.dti.se.finalproject1backend1.inners.usecases.accounts.BasicAccountUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -48,6 +50,7 @@ public class AccountRest {
         }
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/{id}")
     public ResponseEntity<ResponseBody<AccountResponse>> findOneById(
             @PathVariable("id") UUID id
@@ -77,6 +80,7 @@ public class AccountRest {
         }
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PatchMapping(value = "/{id}")
     public ResponseEntity<ResponseBody<AccountResponse>> patchOneById(
             @PathVariable("id") UUID id,
@@ -94,6 +98,13 @@ public class AccountRest {
             return ResponseBody
                     .<AccountResponse>builder()
                     .message("Account not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (VerificationNotFoundException e) {
+            return ResponseBody
+                    .<AccountResponse>builder()
+                    .message("Invalid OTP for email update.")
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);

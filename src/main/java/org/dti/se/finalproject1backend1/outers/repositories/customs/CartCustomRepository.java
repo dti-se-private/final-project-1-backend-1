@@ -1,9 +1,10 @@
 package org.dti.se.finalproject1backend1.outers.repositories.customs;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.carts.CartItemResponse;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.categories.CategoryResponse;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -18,7 +19,10 @@ public class CartCustomRepository {
 
     @Autowired
     @Qualifier("oneTemplate")
-    private JdbcTemplate oneTemplate;
+    JdbcTemplate oneTemplate;
+
+    @Autowired
+    ObjectMapper objectMapper;
 
     public List<CartItemResponse> getCartItems(
             Account account,
@@ -33,59 +37,49 @@ public class CartCustomRepository {
                 .collect(Collectors.joining("+"));
 
         if (order.isEmpty()) {
-            order = "cart_item_id";
+            order = "cart_item.id";
         }
 
         String query = String.format("""
-                SELECT
-                p.id as product_id,
-                p.category_id as category_id,
-                p.name as product_name,
-                p.description as product_description,
-                p.price as product_price,
-                p.image as product_image,
-                c.id as category_id,
-                c.name as category_name,
-                c.description as category_description,
-                ci.id as cart_item_id,
-                ci.quantity as cart_item_quantity
-                FROM cart_item ci
-                JOIN product p ON ci.product_id = p.id
-                JOIN category c ON p.category_id = c.id
-                WHERE ci.account_id = ?
+                SELECT json_build_object(
+                        'id', cart_item.id,
+                        'quantity', cart_item.quantity,
+                        'product', json_build_object(
+                            'id', product.id,
+                            'name', product.name,
+                            'description', product.description,
+                            'price', product.price,
+                            'image', product.image,
+                            'category', json_build_object(
+                                'id', category.id,
+                                'name', category.name,
+                                'description', category.description
+                            )
+                        )
+                    ) as item
+                FROM cart_item
+                JOIN product ON cart_item.product_id =product.id
+                JOIN category ON product.category_id = category.id
+                WHERE account_id = ?
                 ORDER BY %s
                 LIMIT ?
                 OFFSET ?
                 """, order);
+
         return oneTemplate
                 .query(query,
                         (rs, rowNum) -> {
-                            CategoryResponse category = CategoryResponse
-                                    .builder()
-                                    .id(rs.getObject("category_id", java.util.UUID.class))
-                                    .name(rs.getString("category_name"))
-                                    .description(rs.getString("category_description"))
-                                    .build();
-                            ProductResponse product = ProductResponse
-                                    .builder()
-                                    .id(rs.getObject("product_id", java.util.UUID.class))
-                                    .category(category)
-                                    .name(rs.getString("product_name"))
-                                    .description(rs.getString("product_description"))
-                                    .price(rs.getDouble("product_price"))
-                                    .image(rs.getBytes("product_image"))
-                                    .build();
-                            return CartItemResponse.builder()
-                                    .id(rs.getObject("cart_item_id", java.util.UUID.class))
-                                    .quantity(rs.getDouble("cart_item_quantity"))
-                                    .product(product)
-                                    .build();
+                            try {
+                                return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
+                                });
+                            } catch (JsonProcessingException e) {
+                                throw new RuntimeException(e);
+                            }
                         },
                         account.getId(),
                         size,
                         page * size
                 );
-
     }
 
     public void addCartItem(UUID accountId, UUID productId, Double quantity) {

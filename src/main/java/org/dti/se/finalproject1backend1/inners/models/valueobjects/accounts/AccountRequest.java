@@ -13,6 +13,7 @@ import org.dti.se.finalproject1backend1.inners.models.Model;
 public class AccountRequest extends Model {
     private String name;
     private String email;
+    private String otp;
     private String password;
     private String phone;
     private byte[] image;

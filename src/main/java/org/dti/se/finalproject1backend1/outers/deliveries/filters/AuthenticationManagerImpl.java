@@ -11,9 +11,13 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Component
 public class AuthenticationManagerImpl implements AuthenticationManager { // Changed to AuthenticationManager
@@ -32,10 +36,14 @@ public class AuthenticationManagerImpl implements AuthenticationManager { // Cha
                 .findById(accountId)
                 .orElseThrow(AccountNotFoundException::new);
 
+        List<GrantedAuthority> authorities = session.getPermissions().stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+
         return new UsernamePasswordAuthenticationToken(
                 account,
                 authentication.getCredentials(),
-                null
+                authorities
         );
     }
 }

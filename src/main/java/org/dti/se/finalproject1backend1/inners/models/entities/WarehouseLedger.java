@@ -32,9 +32,16 @@ public class WarehouseLedger {
     @JoinColumn(name = "destination_warehouse_id", nullable = false)
     private Warehouse destinationWarehouse;
 
-    private Double preQuantity;
+    @OneToOne(mappedBy = "warehouseLedger")
+    private OrderItem orderItem;
 
-    private Double postQuantity;
+    private Double originPreQuantity;
+
+    private Double originPostQuantity;
+
+    private Double destinationPreQuantity;
+
+    private Double destinationPostQuantity;
 
     private OffsetDateTime time;
 

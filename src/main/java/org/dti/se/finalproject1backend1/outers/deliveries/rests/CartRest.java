@@ -13,6 +13,7 @@ import org.dti.se.finalproject1backend1.outers.exceptions.products.ProductNotFou
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +28,7 @@ public class CartRest {
     CartUseCase cartUseCase;
 
     @GetMapping("")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
     public ResponseEntity<ResponseBody<List<CartItemResponse>>> getCartItems(
             @AuthenticationPrincipal Account account,
             @RequestParam(defaultValue = "0") Integer page,
@@ -61,6 +63,7 @@ public class CartRest {
     }
 
     @PostMapping("/add")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
     public ResponseEntity<ResponseBody<Void>> addCartItem(
             @AuthenticationPrincipal Account account,
             @RequestBody AddCartItemRequest request
@@ -105,6 +108,7 @@ public class CartRest {
     }
 
     @PostMapping("/remove")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
     public ResponseEntity<ResponseBody<Void>> removeCartItem(
             @AuthenticationPrincipal Account account,
             @RequestBody RemoveCartItemRequest request
