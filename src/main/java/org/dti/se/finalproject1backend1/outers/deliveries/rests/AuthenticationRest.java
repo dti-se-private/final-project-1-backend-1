@@ -5,7 +5,7 @@ import com.auth0.jwt.exceptions.TokenExpiredException;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.ResetPasswordRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.ResetPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
@@ -15,12 +15,16 @@ import org.dti.se.finalproject1backend1.inners.usecases.authentications.LoginAut
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.RegisterAuthenticationUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountCredentialsInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
+import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationExpiredException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.nio.file.ProviderNotFoundException;
 
 @RestController
 @RequestMapping(value = "/authentications")
@@ -123,6 +127,24 @@ public class AuthenticationRest {
                     .message("Account exists.")
                     .build()
                     .toEntity(HttpStatus.CONFLICT);
+        } catch (VerificationNotFoundException e) {
+            return ResponseBody
+                    .<Account>builder()
+                    .message("OTP not found.")
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (VerificationExpiredException e) {
+            return ResponseBody
+                    .<Account>builder()
+                    .message("OTP expired.")
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (VerificationInvalidException e) {
+            return ResponseBody
+                    .<Account>builder()
+                    .message("Invalid Google ID token")
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
                     .<Account>builder()
@@ -133,31 +155,49 @@ public class AuthenticationRest {
         }
     }
 
-    @PatchMapping("/reset-password")
+    @PostMapping("/reset-password")
     public ResponseEntity<ResponseBody<Void>> resetPassword(
             @RequestBody ResetPasswordRequest request
     ) {
-//        try {
+        try {
         resetPasswordUseCase.resetPassword(request.getEmail(), request.getNewPassword(), request.getOtp());
         return ResponseBody
                 .<Void>builder()
                 .message("Password reset successfully.")
                 .build()
                 .toEntity(HttpStatus.OK);
-//        } catch (IllegalArgumentException e) {
-//            return ResponseBody
-//                    .<Void>builder()
-//                    .message(e.getMessage())
-//                    .build()
-//                    .toEntity(HttpStatus.BAD_REQUEST);
-//        } catch (Exception e) {
-//            return ResponseBody
-//                    .<Void>builder()
-//                    .message("Internal server error.")
-//                    .exception(e)
-//                    .build()
-//                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
+        } catch (AccountNotFoundException e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Account not found.")
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (ProviderNotFoundException e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Provider not found.")
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (VerificationNotFoundException e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("OTP not found.")
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message(e.getMessage())
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping(value = "/logins/internal")
