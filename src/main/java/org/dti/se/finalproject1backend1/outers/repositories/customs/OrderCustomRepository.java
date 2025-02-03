@@ -352,7 +352,12 @@ public class OrderCustomRepository {
                 WHERE "order".id in (
                     SELECT order_status.order_id
                     FROM order_status
-                    WHERE order_status.status = 'WAITING_FOR_PAYMENT_CONFIRMATION'
+                    WHERE order_status.id in (
+                        SELECT DISTINCT ON (order_status.order_id) order_status.id
+                        FROM order_status
+                        ORDER BY order_status.order_id, order_status.time DESC
+                    )
+                    AND order_status.status = 'WAITING_FOR_PAYMENT_CONFIRMATION'
                 )
                 ORDER BY %s
                 LIMIT ?
