@@ -11,6 +11,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.authenticatio
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationExpiredException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountPermissionRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
@@ -115,13 +116,13 @@ public class RegisterAuthenticationUseCase {
 
         String idTokenString = request.getIdToken();
         if (idTokenString == null || idTokenString.isEmpty()) {
-            throw new RuntimeException("ID token is null or empty");
+            throw new VerificationNotFoundException("ID token is null or empty");
         }
 
         try {
             idToken = googleIdTokenVerifier.verify(request.getIdToken());
         } catch (GeneralSecurityException | IOException e) {
-            throw new RuntimeException(e);
+            throw new VerificationInvalidException("Invalid Google ID token");
         }
 
         GoogleIdToken.Payload payload = idToken.getPayload();
