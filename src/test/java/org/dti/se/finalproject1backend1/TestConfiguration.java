@@ -164,7 +164,7 @@ public class TestConfiguration {
                         .id(UUID.randomUUID())
                         .warehouse(warehouse)
                         .product(product)
-                        .quantity(Math.ceil(Math.random() * 1000))
+                        .quantity(200 + Math.ceil(Math.random() * 1000))
                         .build();
                 fakeWarehouseProducts.add(newWarehouseProduct);
             });

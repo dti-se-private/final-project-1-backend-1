@@ -1,6 +1,7 @@
 package org.dti.se.finalproject1backend1.inners.usecases.orders;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
+import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
@@ -40,18 +41,16 @@ public class OrderUseCase {
             List<String> filters,
             String search
     ) {
-        if (account
+        List<String> accountPermissions = account
                 .getAccountPermissions()
                 .stream()
-                .anyMatch(permission -> permission.getPermission().equals("SUPER_ADMIN"))
-        ) {
+                .map(AccountPermission::getPermission)
+                .toList();
+
+        if (accountPermissions.contains("SUPER_ADMIN")) {
             return orderCustomRepository
                     .getOrders(page, size, filters, search);
-        } else if (account
-                .getAccountPermissions()
-                .stream()
-                .anyMatch(permission -> permission.getPermission().equals("WAREHOUSE_ADMIN"))
-        ) {
+        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
             return orderCustomRepository
                     .getOrders(account, page, size, filters, search);
         } else {

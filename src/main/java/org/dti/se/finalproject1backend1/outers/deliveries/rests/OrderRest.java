@@ -13,6 +13,7 @@ import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermis
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderActionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderStatusInvalidException;
+import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductInsufficientException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -36,6 +37,7 @@ public class OrderRest {
     CancellationUseCase cancellationUseCase;
 
     @GetMapping("/customer")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
     public ResponseEntity<ResponseBody<List<OrderResponse>>> getCustomerOrders(
             @AuthenticationPrincipal Account account,
             @RequestParam(defaultValue = "0") Integer page,
@@ -140,6 +142,7 @@ public class OrderRest {
     }
 
     @PostMapping("/payment-confirmations/process")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")
     public ResponseEntity<ResponseBody<Void>> processPaymentConfirmation(
             @RequestBody OrderProcessRequest request
     ) {
@@ -182,11 +185,13 @@ public class OrderRest {
     }
 
     @PostMapping("/cancellations/process")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
     public ResponseEntity<ResponseBody<Void>> processCancellation(
+            @AuthenticationPrincipal Account account,
             @RequestBody OrderProcessRequest request
     ) {
         try {
-            cancellationUseCase.processCancellation(request);
+            cancellationUseCase.processCancellation(account, request);
             return ResponseBody
                     .<Void>builder()
                     .message("Order cancellation processed.")
@@ -206,6 +211,13 @@ public class OrderRest {
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (AccountPermissionInvalidException e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Account permission invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (WarehouseProductNotFoundException e) {
             return ResponseBody
                     .<Void>builder()
@@ -213,6 +225,13 @@ public class OrderRest {
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
+        } catch (WarehouseProductInsufficientException e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Warehouse product insufficient.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
                     .<Void>builder()

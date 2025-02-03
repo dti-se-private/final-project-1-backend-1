@@ -332,7 +332,7 @@ public class OrderRestTest extends TestConfiguration {
         List<OrderStatus> updatedOrderStatuses = orderStatusRepository
                 .findAllByOrderIdOrderByTimeAsc(realOrder.getId());
 
-        assert updatedOrderStatuses.getLast().getStatus().equals("PROCESSING");
+        assert updatedOrderStatuses.getLast().getStatus().equals("CANCELED");
     }
 
 }
