@@ -42,19 +42,19 @@ public interface WarehouseLedgerRepository extends JpaRepository<WarehouseLedger
 
 
     // for product statistics
-    @Query("""
-    SELECT CAST(SUM(wl.postQuantity) AS double), wl.time
-    FROM WarehouseLedger wl
-    WHERE wl.warehouse.id IN :warehouseIds
-      AND wl.product.id IN :productIds
-      AND wl.time BETWEEN :startTime AND :endTime
-    GROUP BY wl.time
-    ORDER BY wl.time ASC
-""")
-    List<Object[]> getProductStockStatistics(
-            @Param("warehouseIds") List<UUID> warehouseIds,
-            @Param("productIds") List<UUID> productIds,
-            @Param("startTime") OffsetDateTime startTime,
-            @Param("endTime") OffsetDateTime endTime
-    );
+//    @Query("""
+//    SELECT CAST(SUM(wl.postQuantity) AS double), wl.time
+//    FROM WarehouseLedger wl
+//    WHERE wl.warehouse.id IN :warehouseIds
+//      AND wl.product.id IN :productIds
+//      AND wl.time BETWEEN :startTime AND :endTime
+//    GROUP BY wl.time
+//    ORDER BY wl.time ASC
+//""")
+//    List<Object[]> getProductStockStatistics(
+//            @Param("warehouseIds") List<UUID> warehouseIds,
+//            @Param("productIds") List<UUID> productIds,
+//            @Param("startTime") OffsetDateTime startTime,
+//            @Param("endTime") OffsetDateTime endTime
+//    );
 }
