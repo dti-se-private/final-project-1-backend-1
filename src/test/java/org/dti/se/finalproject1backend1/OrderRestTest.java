@@ -8,13 +8,17 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderI
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderProcessRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
+import org.dti.se.finalproject1backend1.outers.repositories.customs.LocationCustomRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -31,6 +35,9 @@ public class OrderRestTest extends TestConfiguration {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    protected LocationCustomRepository locationCustomRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -50,6 +57,11 @@ public class OrderRestTest extends TestConfiguration {
 
     @Test
     public void testCheckout() throws Exception {
+        Mockito.when(locationCustomRepository.getNearestWarehouse(Mockito.any()))
+                .thenReturn(fakeWarehouses.getFirst());
+        Mockito.when(locationCustomRepository.getNearestExistingWarehouseProduct(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(fakeWarehouseProducts.getFirst());
+
         AccountAddress realAddress = fakeAccountAddresses
                 .stream()
                 .filter(accountAddress -> accountAddress.getAccount().getId().equals(authenticatedAccount.getId()))

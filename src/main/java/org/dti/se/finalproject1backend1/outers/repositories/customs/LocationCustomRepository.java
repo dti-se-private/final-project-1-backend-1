@@ -29,6 +29,7 @@ public class LocationCustomRepository {
                 SELECT json_build_object(
                     'id', id,
                     'name', name,
+                    'description', description,
                     'location', location
                 ) AS item
                 FROM warehouse

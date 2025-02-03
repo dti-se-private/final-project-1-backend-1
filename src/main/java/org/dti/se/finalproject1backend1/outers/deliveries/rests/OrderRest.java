@@ -10,14 +10,11 @@ import org.dti.se.finalproject1backend1.inners.usecases.orders.CancellationUseCa
 import org.dti.se.finalproject1backend1.inners.usecases.orders.CheckoutUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.orders.OrderUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.orders.PaymentConfirmationUseCase;
-import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountAddressNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
-import org.dti.se.finalproject1backend1.outers.exceptions.carts.CartItemInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderActionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderStatusInvalidException;
-import org.dti.se.finalproject1backend1.outers.exceptions.orders.PaymentMethodInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductInsufficientException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,13 +48,13 @@ public class OrderRest {
             @RequestBody OrderRequest request
     ) {
 //        try {
-            OrderResponse order = checkoutUseCase.checkout(account, request);
-            return ResponseBody
-                    .<OrderResponse>builder()
-                    .message("Order checked out.")
-                    .data(order)
-                    .build()
-                    .toEntity(HttpStatus.OK);
+        OrderResponse order = checkoutUseCase.checkout(account, request);
+        return ResponseBody
+                .<OrderResponse>builder()
+                .message("Order checked out.")
+                .data(order)
+                .build()
+                .toEntity(HttpStatus.OK);
 //        } catch (AccountNotFoundException e) {
 //            return ResponseBody
 //                    .<OrderResponse>builder()
