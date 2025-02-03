@@ -7,6 +7,7 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -40,7 +41,7 @@ public class OrderCustomRepository {
             order = "\"order\".id";
         }
 
-        String query = String.format("""
+        String sql = String.format("""
                         SELECT json_build_object(
                             'id', "order".id,
                             'totalPrice', "order".total_price,
@@ -102,7 +103,7 @@ public class OrderCustomRepository {
                 """, order);
 
         return oneTemplate
-                .query(query,
+                .query(sql,
                         (rs, rowNum) -> {
                             try {
                                 return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
@@ -127,7 +128,7 @@ public class OrderCustomRepository {
             order = "\"order\".id";
         }
 
-        String query = String.format("""
+        String sql = String.format("""
                 SELECT json_build_object(
                             'id', "order".id,
                             'totalPrice', "order".total_price,
@@ -196,7 +197,7 @@ public class OrderCustomRepository {
                 """, order);
 
         return oneTemplate
-                .query(query,
+                .query(sql,
                         (rs, rowNum) -> {
                             try {
                                 return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
@@ -221,7 +222,7 @@ public class OrderCustomRepository {
             order = "\"order\".id";
         }
 
-        String query = String.format("""
+        String sql = String.format("""
                 SELECT json_build_object(
                             'id', "order".id,
                             'totalPrice', "order".total_price,
@@ -282,7 +283,7 @@ public class OrderCustomRepository {
                 """, order);
 
         return oneTemplate
-                .query(query,
+                .query(sql,
                         (rs, rowNum) -> {
                             try {
                                 return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
@@ -297,7 +298,7 @@ public class OrderCustomRepository {
     }
 
     public OrderResponse getOrder(UUID orderId) {
-        String query = """
+        String sql = """
                         SELECT json_build_object(
                             'id', "order".id,
                             'totalPrice', "order".total_price,
@@ -364,18 +365,22 @@ public class OrderCustomRepository {
                 WHERE "order".id = ?
                 """;
 
-        return oneTemplate
-                .queryForObject(query,
-                        (rs, rowNum) -> {
-                            try {
-                                return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
-                                });
-                            } catch (JsonProcessingException e) {
-                                throw new RuntimeException(e);
-                            }
-                        },
-                        orderId
-                );
+        try {
+            return oneTemplate
+                    .queryForObject(sql,
+                            (rs, rowNum) -> {
+                                try {
+                                    return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
+                                    });
+                                } catch (JsonProcessingException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            },
+                            orderId
+                    );
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     public List<OrderResponse> getPaymentConfirmationOrders(Account account, Integer page, Integer size, List<String> filters, String search) {
@@ -388,7 +393,7 @@ public class OrderCustomRepository {
             order = "\"order\".id";
         }
 
-        String query = String.format("""
+        String sql = String.format("""
                 SELECT json_build_object(
                             'id', "order".id,
                             'totalPrice', "order".total_price,
@@ -467,7 +472,7 @@ public class OrderCustomRepository {
                 """, order);
 
         return oneTemplate
-                .query(query,
+                .query(sql,
                         (rs, rowNum) -> {
                             try {
                                 return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
@@ -493,7 +498,7 @@ public class OrderCustomRepository {
             order = "\"order\".id";
         }
 
-        String query = String.format("""
+        String sql = String.format("""
                 SELECT json_build_object(
                             'id', "order".id,
                             'totalPrice', "order".total_price,
@@ -564,7 +569,7 @@ public class OrderCustomRepository {
                 """, order);
 
         return oneTemplate
-                .query(query,
+                .query(sql,
                         (rs, rowNum) -> {
                             try {
                                 return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
