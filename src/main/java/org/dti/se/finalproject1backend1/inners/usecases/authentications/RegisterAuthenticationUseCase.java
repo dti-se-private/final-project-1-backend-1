@@ -65,7 +65,7 @@ public class RegisterAuthenticationUseCase {
                 .password(encodedPassword)
                 .phone(request.getPhone())
                 .build();
-        return accountRepository.save(accountToSave);
+        return accountRepository.saveAndFlush(accountToSave);
     }
 
 
@@ -93,19 +93,19 @@ public class RegisterAuthenticationUseCase {
                 .phone(request.getPhone())
                 .isVerified(true)
                 .build();
-        Account savedAccount = accountRepository.save(accountToSave);
+        Account savedAccount = accountRepository.saveAndFlush(accountToSave);
 
         Provider accountProvider = new Provider();
         accountProvider.setId(UUID.randomUUID());
         accountProvider.setAccount(savedAccount);
         accountProvider.setName("INTERNAL");
-        providerRepository.save(accountProvider);
+        providerRepository.saveAndFlush(accountProvider);
 
         AccountPermission accountPermission = new AccountPermission();
         accountPermission.setId(UUID.randomUUID());
         accountPermission.setAccount(savedAccount);
         accountPermission.setPermission("CUSTOMER");
-        accountPermissionRepository.save(accountPermission);
+        accountPermissionRepository.saveAndFlush(accountPermission);
 
         return savedAccount;
     }
@@ -145,19 +145,19 @@ public class RegisterAuthenticationUseCase {
                 .isVerified(true)
                 .image(picture.getBytes())
                 .build();
-        Account savedAccount = accountRepository.save(accountToSave);
+        Account savedAccount = accountRepository.saveAndFlush(accountToSave);
 
         Provider accountProvider = new Provider();
         accountProvider.setId(UUID.randomUUID());
         accountProvider.setAccount(savedAccount);
         accountProvider.setName("EXTERNAL");
-        providerRepository.save(accountProvider);
+        providerRepository.saveAndFlush(accountProvider);
 
         AccountPermission accountPermission = new AccountPermission();
         accountPermission.setId(UUID.randomUUID());
         accountPermission.setAccount(savedAccount);
         accountPermission.setPermission("CUSTOMER");
-        accountPermissionRepository.save(accountPermission);
+        accountPermissionRepository.saveAndFlush(accountPermission);
 
         return savedAccount;
 
