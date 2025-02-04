@@ -2,18 +2,19 @@ package org.dti.se.finalproject1backend1.inners.models.valueobjects.warehousepro
 
 import lombok.*;
 import lombok.experimental.Accessors;
+import org.dti.se.finalproject1backend1.inners.models.Model;
 import org.dti.se.finalproject1backend1.inners.models.entities.Product;
 import org.dti.se.finalproject1backend1.inners.models.entities.Warehouse;
 
 import java.util.UUID;
 
 @Data
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class WarehouseProductResponse {
+public class WarehouseProductResponse extends Model {
     private UUID id;
     private Warehouse warehouse;
     private Product product;
