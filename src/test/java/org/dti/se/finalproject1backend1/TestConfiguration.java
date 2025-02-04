@@ -14,7 +14,6 @@ import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfigurat
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
-import org.junit.jupiter.api.parallel.ResourceLock;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.mockito.Mockito;
@@ -46,6 +45,10 @@ public class TestConfiguration {
     @Autowired
     protected AccountRepository accountRepository;
     @Autowired
+    protected AccountAddressRepository accountAddressRepository;
+    @Autowired
+    private AccountPermissionRepository accountPermissionRepository;
+    @Autowired
     protected WarehouseRepository warehouseRepository;
     @Autowired
     protected CategoryRepository categoryRepository;
@@ -75,6 +78,8 @@ public class TestConfiguration {
     protected SecurityConfiguration securityConfiguration;
 
     protected List<Account> fakeAccounts = new ArrayList<>();
+    protected List<AccountAddress> fakeAccountAddresses = new ArrayList<>();
+    protected List<AccountPermission> fakePermissions = new ArrayList<>();
     protected List<Warehouse> fakeWarehouses = new ArrayList<>();
     protected List<Category> fakeCategories = new ArrayList<>();
     protected List<Product> fakeProducts = new ArrayList<>();
@@ -93,7 +98,9 @@ public class TestConfiguration {
     protected ObjectMapper objectMapper;
 
     public void populate() {
+        GeometryFactory geometryFactory = new GeometryFactory();
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+
         for (int i = 0; i < 5; i++) {
             Account newAccount = Account
                     .builder()
@@ -105,8 +112,26 @@ public class TestConfiguration {
                     .build();
             fakeAccounts.add(newAccount);
 
+            AccountAddress newAccountAddress = AccountAddress
+                    .builder()
+                    .id(UUID.randomUUID())
+                    .account(newAccount)
+                    .name(String.format("name-%s", UUID.randomUUID()))
+                    .location(geometryFactory.createPoint(new Coordinate(Math.random() * 10, Math.random() * 10)))
+                    .build();
+            fakeAccountAddresses.add(newAccountAddress);
+
+            AccountPermission newPermission = AccountPermission
+                    .builder()
+                    .id(UUID.randomUUID())
+                    .account(newAccount)
+                    .permission("SUPER_ADMIN")
+                    .build();
+            fakePermissions.add(newPermission);
         }
         accountRepository.saveAll(fakeAccounts);
+        accountAddressRepository.saveAll(fakeAccountAddresses);
+        accountPermissionRepository.saveAll(fakePermissions);
 
         for (int i = 0; i < 5; i++) {
             Warehouse newWarehouse = Warehouse
@@ -114,6 +139,7 @@ public class TestConfiguration {
                     .id(UUID.randomUUID())
                     .name(String.format("name-%s", UUID.randomUUID()))
                     .description(String.format("description-%s", UUID.randomUUID()))
+                    .location(geometryFactory.createPoint(new Coordinate(Math.random() * 10, Math.random() * 10)))
                     .build();
             fakeWarehouses.add(newWarehouse);
         }
@@ -153,7 +179,7 @@ public class TestConfiguration {
                         .id(UUID.randomUUID())
                         .warehouse(warehouse)
                         .product(product)
-                        .quantity(Math.ceil(Math.random() * 1000))
+                        .quantity(200 + Math.ceil(Math.random() * 1000))
                         .build();
                 fakeWarehouseProducts.add(newWarehouseProduct);
             });
@@ -174,7 +200,6 @@ public class TestConfiguration {
         });
         cartItemRepository.saveAll(fakeCartItems);
 
-        GeometryFactory geometryFactory = new GeometryFactory();
         List<String> ledgerStatuses = List.of(
                 "WAITING_FOR_APPROVAL",
                 "APPROVED",
@@ -191,6 +216,7 @@ public class TestConfiguration {
 
         fakeAccounts.forEach(account -> {
             for (int i = 0; i < 5; i++) {
+                Warehouse orderOriginWarehouse = fakeWarehouses.get((int) Math.floor(Math.random() * fakeWarehouses.size()));
                 Order newOrder = Order
                         .builder()
                         .id(UUID.randomUUID())
@@ -200,6 +226,7 @@ public class TestConfiguration {
                         .shipmentDestination(geometryFactory.createPoint(new Coordinate(Math.random() * 10, Math.random() * 10)))
                         .shipmentPrice(Math.ceil(Math.random() * 1000000))
                         .itemPrice(Math.ceil(Math.random() * 1000000))
+                        .originWarehouse(orderOriginWarehouse)
                         .build();
                 fakeOrders.add(newOrder);
 
@@ -215,20 +242,14 @@ public class TestConfiguration {
                 }
 
                 fakeProducts.forEach(product -> {
-                    int originWarehouseIndex = (int) Math.floor(Math.random() * fakeWarehouses.size());
-                    Warehouse originWarehouse = fakeWarehouses.get(originWarehouseIndex);
-                    int destinationWarehouseIndex = (int) Math.floor(Math.random() * fakeWarehouses.size());
-                    Warehouse destinationWarehouse = fakeWarehouses.get(destinationWarehouseIndex);
-
-                    int ledgerStatusIndex = (int) Math.floor(Math.random() * ledgerStatuses.size());
-                    String ledgerStatus = ledgerStatuses.get(ledgerStatusIndex);
-
+                    Warehouse originWarehouse = fakeWarehouses.get((int) Math.floor(Math.random() * fakeWarehouses.size()));
+                    String ledgerStatus = ledgerStatuses.get((int) Math.floor(Math.random() * ledgerStatuses.size()));
                     WarehouseLedger newWarehouseLedger = WarehouseLedger
                             .builder()
                             .id(UUID.randomUUID())
                             .product(product)
                             .originWarehouse(originWarehouse)
-                            .destinationWarehouse(destinationWarehouse)
+                            .destinationWarehouse(orderOriginWarehouse)
                             .originPreQuantity(Math.ceil(Math.random() * 100))
                             .originPostQuantity(Math.ceil(Math.random() * 100))
                             .destinationPreQuantity(Math.ceil(Math.random() * 100))
@@ -275,6 +296,10 @@ public class TestConfiguration {
         fakeCategories.clear();
         warehouseRepository.deleteAll(fakeWarehouses);
         fakeWarehouses.clear();
+        accountPermissionRepository.deleteAll(fakePermissions);
+        fakePermissions.clear();
+        accountAddressRepository.deleteAll(fakeAccountAddresses);
+        fakeAccountAddresses.clear();
         accountRepository.deleteAll(fakeAccounts);
         fakeAccounts.clear();
     }

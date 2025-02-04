@@ -2,20 +2,23 @@ package org.dti.se.finalproject1backend1;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.dti.se.finalproject1backend1.inners.models.entities.Account;
-import org.dti.se.finalproject1backend1.inners.models.entities.Order;
-import org.dti.se.finalproject1backend1.inners.models.entities.OrderItem;
-import org.dti.se.finalproject1backend1.inners.models.entities.OrderStatus;
+import org.dti.se.finalproject1backend1.inners.models.entities.*;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderItemRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderProcessRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
+import org.dti.se.finalproject1backend1.outers.repositories.customs.LocationCustomRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -33,6 +36,9 @@ public class OrderRestTest extends TestConfiguration {
     @Autowired
     private MockMvc mockMvc;
 
+    @MockitoBean
+    protected LocationCustomRepository locationCustomRepository;
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -46,6 +52,60 @@ public class OrderRestTest extends TestConfiguration {
     @AfterEach
     public void afterEach() {
         depopulate();
+    }
+
+
+    @Test
+    public void testCheckout() throws Exception {
+        Mockito.when(locationCustomRepository.getNearestWarehouse(Mockito.any()))
+                .thenReturn(fakeWarehouses.getFirst());
+        Mockito.when(locationCustomRepository.getNearestExistingWarehouseProduct(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(fakeWarehouseProducts.getFirst());
+
+        AccountAddress realAddress = fakeAccountAddresses
+                .stream()
+                .filter(accountAddress -> accountAddress.getAccount().getId().equals(authenticatedAccount.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        List<OrderItemRequest> orderItemRequests = fakeCartItems
+                .stream()
+                .filter(cartItem -> cartItem.getAccount().getId().equals(authenticatedAccount.getId()))
+                .map(cartItem -> OrderItemRequest
+                        .builder()
+                        .productId(cartItem.getProduct().getId())
+                        .quantity(cartItem.getQuantity())
+                        .build()
+                )
+                .toList();
+
+        OrderRequest requestBody = OrderRequest
+                .builder()
+                .addressId(realAddress.getId())
+                .paymentMethod("AUTOMATIC")
+                .items(orderItemRequests)
+                .build();
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/orders/checkout")
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ResponseBody<OrderResponse> responseBody = objectMapper
+                .readValue(
+                        result.getResponse().getContentAsString(),
+                        new TypeReference<>() {
+                        }
+                );
+
+        assert responseBody.getMessage().equals("Order checked out.");
+        assert responseBody.getData() != null;
     }
 
     @Test
@@ -332,7 +392,7 @@ public class OrderRestTest extends TestConfiguration {
         List<OrderStatus> updatedOrderStatuses = orderStatusRepository
                 .findAllByOrderIdOrderByTimeAsc(realOrder.getId());
 
-        assert updatedOrderStatuses.getLast().getStatus().equals("PROCESSING");
+        assert updatedOrderStatuses.getLast().getStatus().equals("CANCELED");
     }
 
 }

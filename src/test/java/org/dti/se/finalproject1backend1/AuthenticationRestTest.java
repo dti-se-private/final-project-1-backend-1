@@ -10,8 +10,8 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.ResetPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -98,7 +98,7 @@ public class AuthenticationRestTest extends TestConfiguration {
     }
 
     @Test
-    @ResourceLock(value= "mockToken")
+    @ResourceLock(value = "mockToken")
     public void testRegisterByExternal() throws Exception {
         String mockIdToken = "mock-id-token";
         String email = String.format("email-%s", UUID.randomUUID());
@@ -179,7 +179,7 @@ public class AuthenticationRestTest extends TestConfiguration {
     }
 
     @Test
-    @ResourceLock(value= "mockToken")
+    @ResourceLock(value = "mockToken")
     public void testLoginByExternal() throws Exception {
         ResponseBody<Account> registerResponse = registerByExternal();
         Account realAccount = registerResponse.getData();

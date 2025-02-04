@@ -14,8 +14,6 @@ import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountPermissi
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.twos.SessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -56,7 +54,7 @@ public class LoginAuthenticationUseCase {
         return getSession(account);
     }
 
-    public Session loginByExternal(String googleCredential){
+    public Session loginByExternal(String googleCredential) {
         GoogleIdToken idToken;
 
         if (googleCredential == null || googleCredential.isEmpty()) {
@@ -90,7 +88,7 @@ public class LoginAuthenticationUseCase {
                 .isVerified(account.getIsVerified())
                 .build();
 
-        List<AccountPermission> permissionsList =accountPermissionRepository
+        List<AccountPermission> permissionsList = accountPermissionRepository
                 .findByAccountId(account.getId())
                 .orElseThrow(AccountUnAuthorizedException::new); // ganti ke permission not found exception
 

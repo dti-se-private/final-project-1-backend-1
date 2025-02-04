@@ -1,9 +1,12 @@
 package org.dti.se.finalproject1backend1.inners.usecases.orders;
 
+import org.dti.se.finalproject1backend1.inners.models.entities.Account;
+import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
 import org.dti.se.finalproject1backend1.inners.models.entities.Order;
 import org.dti.se.finalproject1backend1.inners.models.entities.OrderStatus;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderProcessRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
+import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderActionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderStatusInvalidException;
@@ -28,13 +31,27 @@ public class PaymentConfirmationUseCase {
     private OrderStatusRepository orderStatusRepository;
 
     public List<OrderResponse> getPaymentConfirmationOrders(
+            Account account,
             Integer page,
             Integer size,
             List<String> filters,
             String search
     ) {
-        return orderCustomRepository
-                .getPaymentConfirmationOrders(page, size, filters, search);
+        List<String> accountPermissions = account
+                .getAccountPermissions()
+                .stream()
+                .map(AccountPermission::getPermission)
+                .toList();
+
+        if (accountPermissions.contains("SUPER_ADMIN")) {
+            return orderCustomRepository
+                    .getPaymentConfirmationOrders(page, size, filters, search);
+        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+            return orderCustomRepository
+                    .getPaymentConfirmationOrders(account, page, size, filters, search);
+        } else {
+            throw new AccountPermissionInvalidException();
+        }
     }
 
     public void processPaymentConfirmation(

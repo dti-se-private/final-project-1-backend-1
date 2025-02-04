@@ -46,4 +46,8 @@ public class Order {
     private Point shipmentOrigin;
 
     private Point shipmentDestination;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "origin_warehouse_id", nullable = false)
+    private Warehouse originWarehouse;
 }

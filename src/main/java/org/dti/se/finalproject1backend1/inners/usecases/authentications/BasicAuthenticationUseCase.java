@@ -62,7 +62,7 @@ public class BasicAuthenticationUseCase {
                 .isVerified(account.getIsVerified())
                 .build();
 
-        List<AccountPermission> permissionsList =accountPermissionRepository
+        List<AccountPermission> permissionsList = accountPermissionRepository
                 .findByAccountId(account.getId())
                 .orElseThrow(AccountUnAuthorizedException::new);
 
