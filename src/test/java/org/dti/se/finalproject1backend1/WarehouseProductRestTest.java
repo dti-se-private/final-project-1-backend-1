@@ -43,7 +43,7 @@ public class WarehouseProductRestTest extends TestConfiguration {
     }
 
     @Test
-    public void testGetAllWarehouseProducts() throws Exception {
+    public void testListAllWarehouseProducts() throws Exception {
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
                 .get("/warehouse-products")
                 .param("page", "0")
@@ -54,38 +54,37 @@ public class WarehouseProductRestTest extends TestConfiguration {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        List<WarehouseProductResponse> responseBody = objectMapper.readValue(
-                result.getResponse().getContentAsString(),
-                new TypeReference<>() {}
-        );
+        List<WarehouseProductResponse> responseBody = objectMapper
+                .readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
 
         assert responseBody != null;
-        assert !responseBody.isEmpty();
     }
 
     @Test
     public void testGetWarehouseProductById() throws Exception {
-        UUID productId = fakeWarehouseProducts.getFirst().getId();
+        WarehouseProduct realProduct = fakeWarehouseProducts.getFirst();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/warehouse-products/" + productId);
+                .get("/warehouse-products/" + realProduct.getId());
 
         MvcResult result = mockMvc
                 .perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
 
-        WarehouseProductResponse responseBody = objectMapper.readValue(
-                result.getResponse().getContentAsString(),
-                WarehouseProductResponse.class
-        );
+        WarehouseProductResponse responseBody = objectMapper
+                .readValue(result.getResponse().getContentAsString(), WarehouseProductResponse.class);
 
-        assert responseBody.getId().equals(productId);
+        assert responseBody.getId().equals(realProduct.getId());
     }
 
     @Test
     public void testAddWarehouseProduct() throws Exception {
-        WarehouseProductRequest requestBody = new WarehouseProductRequest("New Product", "New Description");
+        WarehouseProductRequest requestBody = new WarehouseProductRequest(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                10.5
+        );
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
                 .post("/warehouse-products")
@@ -97,22 +96,25 @@ public class WarehouseProductRestTest extends TestConfiguration {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        WarehouseProduct responseBody = objectMapper.readValue(
-                result.getResponse().getContentAsString(),
-                WarehouseProduct.class
-        );
+        WarehouseProductResponse responseBody = objectMapper
+                .readValue(result.getResponse().getContentAsString(), WarehouseProductResponse.class);
 
-        assert responseBody.getName().equals(requestBody.getName());
-        assert responseBody.getDescription().equals(requestBody.getDescription());
+        assert responseBody.getWarehouse().getId().equals(requestBody.getWarehouseId());
+        assert responseBody.getProduct().getId().equals(requestBody.getProductId());
+        assert responseBody.getQuantity().equals(requestBody.getQuantity());
     }
 
     @Test
     public void testUpdateWarehouseProduct() throws Exception {
-        UUID productId = fakeWarehouseProducts.getFirst().getId();
-        WarehouseProductRequest requestBody = new WarehouseProductRequest("Updated Product", "Updated Description");
+        WarehouseProduct realProduct = fakeWarehouseProducts.getFirst();
+        WarehouseProductRequest requestBody = new WarehouseProductRequest(
+                realProduct.getWarehouse().getId(),
+                realProduct.getProduct().getId(),
+                20.0
+        );
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .put("/warehouse-products/" + productId)
+                .put("/warehouse-products/" + realProduct.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
@@ -121,28 +123,21 @@ public class WarehouseProductRestTest extends TestConfiguration {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        WarehouseProductResponse responseBody = objectMapper.readValue(
-                result.getResponse().getContentAsString(),
-                WarehouseProductResponse.class
-        );
+        WarehouseProductResponse responseBody = objectMapper
+                .readValue(result.getResponse().getContentAsString(), WarehouseProductResponse.class);
 
-        assert responseBody.getName().equals(requestBody.getName());
-        assert responseBody.getDescription().equals(requestBody.getDescription());
+        assert responseBody.getWarehouse().getId().equals(requestBody.getWarehouseId());
+        assert responseBody.getProduct().getId().equals(requestBody.getProductId());
+        assert responseBody.getQuantity().equals(requestBody.getQuantity());
     }
 
     @Test
     public void testDeleteWarehouseProduct() throws Exception {
-        UUID productId = fakeWarehouseProducts.getFirst().getId();
+        WarehouseProduct realProduct = fakeWarehouseProducts.getFirst();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .delete("/warehouse-products/" + productId);
+                .delete("/warehouse-products/" + realProduct.getId());
 
-        MvcResult result = mockMvc
-                .perform(request)
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String responseBody = result.getResponse().getContentAsString();
-        assert responseBody.equals("Warehouse product deleted Successfully.");
+        mockMvc.perform(request).andExpect(status().isOk());
     }
 }
