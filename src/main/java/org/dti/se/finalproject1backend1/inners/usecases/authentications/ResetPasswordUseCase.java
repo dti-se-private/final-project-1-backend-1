@@ -41,7 +41,7 @@ public class ResetPasswordUseCase {
         if (otpUseCase.verifyOtp(email, otp, "RESET_PASSWORD")) {
             String encodedPassword = securityConfiguration.encode(newPassword);
             account.setPassword(encodedPassword);
-            accountRepository.save(account);
+            accountRepository.saveAndFlush(account);
         } else {
             throw new VerificationNotFoundException("Invalid OTP");
         }

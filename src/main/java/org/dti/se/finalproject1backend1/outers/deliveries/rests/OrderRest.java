@@ -15,6 +15,7 @@ import org.dti.se.finalproject1backend1.outers.exceptions.carts.CartItemInvalidE
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderActionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderStatusInvalidException;
+import org.dti.se.finalproject1backend1.outers.exceptions.orders.PaymentMethodInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductInsufficientException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,48 +94,48 @@ public class OrderRest {
     public ResponseEntity<ResponseBody<OrderResponse>> processPayment(
             @RequestBody PaymentProcessRequest request
     ) {
-//        try {
-        OrderResponse order = paymentUseCase.processPayment(request);
-        return ResponseBody
-                .<OrderResponse>builder()
-                .message("Order payment processed.")
-                .data(order)
-                .build()
-                .toEntity(HttpStatus.OK);
-//        } catch (OrderNotFoundException e) {
-//            return ResponseBody
-//                    .<OrderResponse>builder()
-//                    .message("Order not found.")
-//                    .exception(e)
-//                    .build()
-//                    .toEntity(HttpStatus.NOT_FOUND);
-//        } catch (PaymentMethodInvalidException e) {
-//            return ResponseBody
-//                    .<OrderResponse>builder()
-//                    .message("Payment method invalid.")
-//                    .exception(e)
-//                    .build()
-//                    .toEntity(HttpStatus.BAD_REQUEST);
-//        } catch (WarehouseProductNotFoundException e) {
-//            return ResponseBody
-//                    .<OrderResponse>builder()
-//                    .message("Warehouse product not found.")
-//                    .exception(e)
-//                    .build()
-//                    .toEntity(HttpStatus.NOT_FOUND);
-//        } catch (Exception e) {
-//            return ResponseBody
-//                    .<OrderResponse>builder()
-//                    .message("Internal server error.")
-//                    .exception(e)
-//                    .build()
-//                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
+        try {
+            OrderResponse order = paymentUseCase.processPayment(request);
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Order payment processed.")
+                    .data(order)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (OrderNotFoundException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Order not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (PaymentMethodInvalidException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Payment method invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (WarehouseProductNotFoundException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Warehouse product not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @GetMapping("")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
-    public ResponseEntity<ResponseBody<List<OrderResponse>>> getCustomerOrders(
+    public ResponseEntity<ResponseBody<List<OrderResponse>>> getOrders(
             @AuthenticationPrincipal Account account,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
