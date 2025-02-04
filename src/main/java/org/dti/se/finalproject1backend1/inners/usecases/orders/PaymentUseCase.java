@@ -6,10 +6,12 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Order;
 import org.dti.se.finalproject1backend1.inners.models.entities.OrderStatus;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderProcessRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.PaymentProcessRequest;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderActionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderStatusInvalidException;
+import org.dti.se.finalproject1backend1.outers.exceptions.orders.PaymentMethodInvalidException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.OrderCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.OrderRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.OrderStatusRepository;
@@ -22,13 +24,40 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class PaymentConfirmationUseCase {
+public class PaymentUseCase {
+    @Autowired
+    OrderUseCase orderUseCase;
     @Autowired
     OrderCustomRepository orderCustomRepository;
     @Autowired
     OrderRepository orderRepository;
     @Autowired
-    private OrderStatusRepository orderStatusRepository;
+    OrderStatusRepository orderStatusRepository;
+
+    public OrderResponse processPayment(PaymentProcessRequest request) {
+        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+
+        Order foundOrder = orderRepository
+                .findById(request.getOrderId())
+                .orElseThrow(OrderNotFoundException::new);
+
+        if (request.getPaymentMethod().equals("AUTOMATIC")) {
+            orderUseCase.processOrderProcessing(request.getOrderId(), "APPROVED");
+        } else if (request.getPaymentMethod().equals("MANUAL")) {
+            OrderStatus newOrderStatus = OrderStatus
+                    .builder()
+                    .id(UUID.randomUUID())
+                    .order(foundOrder)
+                    .status("WAITING_FOR_PAYMENT_CONFIRMATION")
+                    .time(now)
+                    .build();
+            orderStatusRepository.saveAndFlush(newOrderStatus);
+        } else {
+            throw new PaymentMethodInvalidException();
+        }
+
+        return orderCustomRepository.getOrder(request.getOrderId());
+    }
 
     public List<OrderResponse> getPaymentConfirmationOrders(
             Account account,
@@ -54,9 +83,7 @@ public class PaymentConfirmationUseCase {
         }
     }
 
-    public void processPaymentConfirmation(
-            OrderProcessRequest request
-    ) {
+    public OrderResponse processPaymentConfirmation(OrderProcessRequest request) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
         Order foundOrder = orderRepository
                 .findById(request.getOrderId())
@@ -78,7 +105,8 @@ public class PaymentConfirmationUseCase {
                     .status("PROCESSING")
                     .time(now)
                     .build();
-            orderStatusRepository.save(newOrderStatus);
+            orderStatusRepository.saveAndFlush(newOrderStatus);
+            orderUseCase.processOrderProcessing(request.getOrderId(), "APPROVED");
         } else if (request.getAction().equals("REJECT")) {
             OrderStatus newOrderStatus = OrderStatus
                     .builder()
@@ -87,9 +115,11 @@ public class PaymentConfirmationUseCase {
                     .status("WAITING_FOR_PAYMENT")
                     .time(now)
                     .build();
-            orderStatusRepository.save(newOrderStatus);
+            orderStatusRepository.saveAndFlush(newOrderStatus);
         } else {
             throw new OrderActionInvalidException();
         }
+
+        return orderCustomRepository.getOrder(request.getOrderId());
     }
 }

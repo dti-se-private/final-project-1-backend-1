@@ -35,7 +35,7 @@ public class OtpUseCase {
         verification.setInitTime(now);
         verification.setEndTime(endTime);
 
-        verificationRepository.save(verification);
+        verificationRepository.saveAndFlush(verification);
 
         mailgunGateway.sendEmail(email, "Your Commerce OTP Code", "Your " + type.toLowerCase().replace("_", " ") + " OTP code is: " + otp);
     }

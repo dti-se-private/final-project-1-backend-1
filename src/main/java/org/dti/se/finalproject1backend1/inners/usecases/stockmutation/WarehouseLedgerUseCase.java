@@ -56,7 +56,7 @@ public class WarehouseLedgerUseCase {
                     newProduct.setWarehouse(destinationWarehouse);
                     newProduct.setProduct(product);
                     newProduct.setQuantity(0.0);
-                    return warehouseProductRepository.save(newProduct);
+                    return warehouseProductRepository.saveAndFlush(newProduct);
                 });
 
         // Ensure there's enough stock in origin
@@ -76,7 +76,7 @@ public class WarehouseLedgerUseCase {
         ledger.setTime(now);
         ledger.setStatus("WAITING_APPROVAL");
 
-        return warehouseLedgerRepository.save(ledger);
+        return warehouseLedgerRepository.saveAndFlush(ledger);
     }
 
     public WarehouseLedger approveLedgerMutation(UUID ledgerId) {
@@ -96,12 +96,12 @@ public class WarehouseLedgerUseCase {
         originProduct.setQuantity(originProduct.getQuantity() - ledger.getOriginPostQuantity());
         destinationProduct.setQuantity(destinationProduct.getQuantity() + ledger.getOriginPostQuantity());
 
-        warehouseProductRepository.save(originProduct);
-        warehouseProductRepository.save(destinationProduct);
+        warehouseProductRepository.saveAndFlush(originProduct);
+        warehouseProductRepository.saveAndFlush(destinationProduct);
 
         // Update ledger status
         ledger.setStatus("APPROVED");
-        return warehouseLedgerRepository.save(ledger);
+        return warehouseLedgerRepository.saveAndFlush(ledger);
     }
 
     public WarehouseLedger rejectLedgerMutation(UUID ledgerId) {
@@ -114,7 +114,7 @@ public class WarehouseLedgerUseCase {
 
         // Simply mark the ledger as rejected
         ledger.setStatus("REJECTED");
-        return warehouseLedgerRepository.save(ledger);
+        return warehouseLedgerRepository.saveAndFlush(ledger);
     }
 }
 

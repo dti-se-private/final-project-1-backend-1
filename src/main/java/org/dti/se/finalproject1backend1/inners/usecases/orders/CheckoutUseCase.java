@@ -6,7 +6,6 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderR
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountAddressNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.carts.CartItemInvalidException;
-import org.dti.se.finalproject1backend1.outers.exceptions.orders.PaymentMethodInvalidException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.CartCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.LocationCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.OrderCustomRepository;
@@ -14,7 +13,9 @@ import org.dti.se.finalproject1backend1.outers.repositories.customs.ProductCusto
 import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
 import org.locationtech.jts.geom.Point;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -46,11 +47,15 @@ public class CheckoutUseCase {
     @Autowired
     AccountAddressRepository accountAddressRepository;
     @Autowired
-    private OrderItemRepository orderItemRepository;
+    OrderItemRepository orderItemRepository;
     @Autowired
-    private ProductCustomRepository productCustomRepository;
+    ProductCustomRepository productCustomRepository;
     @Autowired
-    private CartCustomRepository cartCustomRepository;
+    CartCustomRepository cartCustomRepository;
+
+    @Autowired
+    @Qualifier("oneTransactionManager")
+    PlatformTransactionManager transactionManager;
 
     public OrderResponse checkout(Account account, OrderRequest request) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
@@ -88,21 +93,16 @@ public class CheckoutUseCase {
                 .shipmentDestination(shipmentDestination)
                 .originWarehouse(nearestWarehouse)
                 .build();
-        orderRepository.save(newOrder);
+        orderRepository.saveAndFlush(newOrder);
 
-        String orderStatus = switch (request.getPaymentMethod()) {
-            case "MANUAL" -> "WAITING_FOR_PAYMENT_CONFIRMATION";
-            case "AUTOMATIC" -> "PROCESSING";
-            default -> throw new PaymentMethodInvalidException();
-        };
         OrderStatus newOrderStatus = OrderStatus
                 .builder()
                 .id(UUID.randomUUID())
                 .order(newOrder)
-                .status(orderStatus)
+                .status("WAITING_FOR_PAYMENT")
                 .time(now)
                 .build();
-        orderStatusRepository.save(newOrderStatus);
+        orderStatusRepository.saveAndFlush(newOrderStatus);
 
         List<OrderItem> newOrderItems = new ArrayList<>();
         for (CartItem foundCartItem : foundCartItems) {
@@ -116,14 +116,7 @@ public class CheckoutUseCase {
                     .build();
             newOrderItems.add(newOrderItem);
         }
-        orderItemRepository.saveAll(newOrderItems);
-
-        String ledgerStatus = switch (request.getPaymentMethod()) {
-            case "MANUAL" -> "WAITING_FOR_APPROVAL";
-            case "AUTOMATIC" -> "APPROVED";
-            default -> throw new PaymentMethodInvalidException();
-        };
-        orderUseCase.processOrder(newOrder.getId(), ledgerStatus);
+        orderItemRepository.saveAllAndFlush(newOrderItems);
 
         return orderCustomRepository.getOrder(newOrder.getId());
     }

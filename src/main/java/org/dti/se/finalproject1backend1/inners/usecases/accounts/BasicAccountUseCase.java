@@ -36,7 +36,7 @@ public class BasicAccountUseCase {
                 .isVerified(false)
                 .image(request.getImage())
                 .build();
-        Account savedAccount = accountRepository.save(account);
+        Account savedAccount = accountRepository.saveAndFlush(account);
 
         return AccountResponse
                 .builder()
@@ -96,7 +96,7 @@ public class BasicAccountUseCase {
         accountToPatch.setPhone(request.getPhone());
         accountToPatch.setImage(request.getImage());
         accountToPatch.setPassword(encodedPassword);
-        Account patchedAccount = accountRepository.save(accountToPatch);
+        Account patchedAccount = accountRepository.saveAndFlush(accountToPatch);
 
         return AccountResponse
                 .builder()
