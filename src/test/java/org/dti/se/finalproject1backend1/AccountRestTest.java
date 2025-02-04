@@ -3,6 +3,7 @@ package org.dti.se.finalproject1backend1;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
+import org.dti.se.finalproject1backend1.inners.models.entities.Verification;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
@@ -119,10 +120,17 @@ public class AccountRestTest extends TestConfiguration {
     public void testPatchOneById() throws Exception {
         Account realAccount = fakeAccounts.getFirst();
         String encodedPassword = securityConfiguration.encode(rawPassword);
+
+        String newEmail = "new-email@example.com";
+        String otpType = "UPDATE_EMAIL";
+        Verification verification = getVerification(newEmail, otpType);
+        String updateEmailOtp = verification.getCode();
+
         AccountRequest accountPatcher = AccountRequest
                 .builder()
                 .name(String.format("name-%s", UUID.randomUUID()))
-                .email(String.format("email-%s", UUID.randomUUID()))
+                .email(newEmail)
+                .otp(updateEmailOtp)
                 .password(rawPassword)
                 .phone(String.format("phone-%s", UUID.randomUUID()))
                 .build();

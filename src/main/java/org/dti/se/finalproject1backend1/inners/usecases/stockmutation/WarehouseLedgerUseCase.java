@@ -45,10 +45,10 @@ public class WarehouseLedgerUseCase {
                 .orElseThrow(() -> new RuntimeException("Destination warehouse not found"));
 
         // Fetch warehouse product for origin and destination
-        WarehouseProduct originProduct = warehouseProductRepository.findByProductAndWarehouse(originWarehouse.getId(), product.getId())
+        WarehouseProduct originProduct = warehouseProductRepository.findByProductIdAndWarehouseId(originWarehouse.getId(), product.getId())
                 .orElseThrow(() -> new RuntimeException("Product not found in origin warehouse"));
 
-        WarehouseProduct destinationProduct = warehouseProductRepository.findByProductAndWarehouse(destinationWarehouse.getId(), product.getId())
+        WarehouseProduct destinationProduct = warehouseProductRepository.findByProductIdAndWarehouseId(destinationWarehouse.getId(), product.getId())
                 .orElseGet(() -> {
                     // If product doesn't exist in destination warehouse, create a new record
                     WarehouseProduct newProduct = new WarehouseProduct();
@@ -71,8 +71,8 @@ public class WarehouseLedgerUseCase {
         ledger.setProduct(product);
         ledger.setOriginWarehouse(originWarehouse);
         ledger.setDestinationWarehouse(destinationWarehouse);
-        ledger.setPreQuantity(originProduct.getQuantity());
-        ledger.setPostQuantity(originProduct.getQuantity() - quantity);
+        ledger.setOriginPreQuantity(originProduct.getQuantity());
+        ledger.setOriginPostQuantity(originProduct.getQuantity() - quantity);
         ledger.setTime(now);
         ledger.setStatus("WAITING_APPROVAL");
 
@@ -88,13 +88,13 @@ public class WarehouseLedgerUseCase {
         }
 
         // Update warehouse product stock
-        WarehouseProduct originProduct = warehouseProductRepository.findByProductAndWarehouse(ledger.getOriginWarehouse().getId(), ledger.getProduct().getId())
+        WarehouseProduct originProduct = warehouseProductRepository.findByProductIdAndWarehouseId(ledger.getOriginWarehouse().getId(), ledger.getProduct().getId())
                 .orElseThrow(() -> new RuntimeException("Origin warehouse product not found"));
-        WarehouseProduct destinationProduct = warehouseProductRepository.findByProductAndWarehouse(ledger.getDestinationWarehouse().getId(), ledger.getProduct().getId())
+        WarehouseProduct destinationProduct = warehouseProductRepository.findByProductIdAndWarehouseId(ledger.getDestinationWarehouse().getId(), ledger.getProduct().getId())
                 .orElseThrow(() -> new RuntimeException("Destination warehouse product not found"));
 
-        originProduct.setQuantity(originProduct.getQuantity() - ledger.getPostQuantity());
-        destinationProduct.setQuantity(destinationProduct.getQuantity() + ledger.getPostQuantity());
+        originProduct.setQuantity(originProduct.getQuantity() - ledger.getOriginPostQuantity());
+        destinationProduct.setQuantity(destinationProduct.getQuantity() + ledger.getOriginPostQuantity());
 
         warehouseProductRepository.save(originProduct);
         warehouseProductRepository.save(destinationProduct);

@@ -5,24 +5,19 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
 import org.dti.se.finalproject1backend1.inners.models.entities.Provider;
-import org.dti.se.finalproject1backend1.inners.models.entities.Verification;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByExternalRequest;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
-import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationExpiredException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountPermissionRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.ProviderRepository;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.VerificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -30,9 +25,6 @@ import java.util.UUID;
 public class RegisterAuthenticationUseCase {
     @Autowired
     AccountRepository accountRepository;
-
-    @Autowired
-    VerificationRepository verificationRepository;
 
     @Autowired
     AccountPermissionRepository accountPermissionRepository;
@@ -45,6 +37,9 @@ public class RegisterAuthenticationUseCase {
 
     @Autowired
     GoogleIdTokenVerifier googleIdTokenVerifier;
+
+    @Autowired
+    OtpUseCase otpUseCase;
 
 
     public Account registerByEmailAndPassword(RegisterByEmailAndPasswordRequest request) {
@@ -69,16 +64,11 @@ public class RegisterAuthenticationUseCase {
 
 
     public Account registerByInternal(RegisterByEmailAndPasswordRequest request) {
-        Verification verification = verificationRepository
-                .findByEmailAndCodeAndType(request.getEmail(), request.getOtp(), "REGISTER")
-                .orElseThrow(VerificationNotFoundException::new);
+        boolean isOtpVerified = otpUseCase.verifyOtp(request.getEmail(), request.getOtp(), "REGISTER");
 
-        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
-        if (now.isAfter(verification.getEndTime())) {
-            throw new VerificationExpiredException();
+        if (!isOtpVerified) {
+            throw new VerificationNotFoundException();
         }
-
-        verificationRepository.delete(verification);
 
         Optional<Account> foundAccount = accountRepository
                 .findByEmail(request.getEmail());
@@ -111,13 +101,11 @@ public class RegisterAuthenticationUseCase {
         accountPermission.setPermission("CUSTOMER");
         accountPermissionRepository.save(accountPermission);
 
-        verificationRepository.delete(verification);
-
         return savedAccount;
     }
 
 
-    public Account registerByExternal(RegisterByExternalRequest request) {
+    public Account registerByExternal(RegisterAndLoginByExternalRequest request) {
         GoogleIdToken idToken;
 
         String idTokenString = request.getIdToken();
