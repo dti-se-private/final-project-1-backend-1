@@ -214,11 +214,11 @@ public class AuthenticationRestTest extends TestConfiguration {
     }
 
     @Test
+    @ResourceLock(value = "mockTokenResetPassword")
     public void testResetPassword() throws Exception {
         ResponseBody<Account> registerResponse = registerByInternal();
         Account realAccount = registerResponse.getData();
         String newRawPassword = "new-password";
-        String newEncodedPassword = securityConfiguration.encode(newRawPassword);
 
         Verification verification = getVerification(realAccount.getEmail(), "RESET_PASSWORD");
 
