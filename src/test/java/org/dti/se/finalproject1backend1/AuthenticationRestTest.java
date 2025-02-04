@@ -8,6 +8,7 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.Verification;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.ResetPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
@@ -210,6 +211,51 @@ public class AuthenticationRestTest extends TestConfiguration {
         assert body.getData().getRefreshTokenExpiredAt().isAfter(OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS));
 
         fakeAccounts.add(realAccount);
+    }
+
+    @Test
+    @ResourceLock(value = "mockTokenResetPassword")
+    public void testResetPassword() throws Exception {
+        ResponseBody<Account> registerResponse = registerByInternal();
+        Account realAccount = registerResponse.getData();
+        String newRawPassword = "new-password";
+
+        Verification verification = getVerification(realAccount.getEmail(), "RESET_PASSWORD");
+
+        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest
+                .builder()
+                .email(realAccount.getEmail())
+                .otp(verification.getCode())
+                .newPassword(newRawPassword)
+                .build();
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/authentications/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(resetPasswordRequest));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
+        assert body != null;
+        assert body.getMessage().equals("Password reset successfully.");
+        assert body.getData() == null;
+
+        Account resetPasswordAccount = Account
+                .builder()
+                .id(realAccount.getId())
+                .name(realAccount.getName())
+                .email(realAccount.getEmail())
+                .password(realAccount.getPassword())
+                .phone(realAccount.getPhone())
+                .image(realAccount.getImage())
+                .build();
+        fakeAccounts.set(fakeAccounts.indexOf(realAccount), resetPasswordAccount);
     }
 
 //    @Test
