@@ -81,8 +81,8 @@ public class WarehouseProductRestTest extends TestConfiguration {
     @Test
     public void testAddWarehouseProduct() throws Exception {
         WarehouseProductRequest requestBody = new WarehouseProductRequest(
-                UUID.randomUUID(),
-                UUID.randomUUID(),
+                UUID.randomUUID(), // ubah
+                UUID.randomUUID(), // ubah
                 10.5
         );
 

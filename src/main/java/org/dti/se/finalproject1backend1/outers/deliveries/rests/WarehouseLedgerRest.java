@@ -6,6 +6,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.mutations.Add
 import org.dti.se.finalproject1backend1.inners.usecases.stockmutation.WarehouseLedgerUseCase;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -28,6 +29,7 @@ public class WarehouseLedgerRest {
     }
 
     @PostMapping("/mutations/add")
+//    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")
     public ResponseEntity<WarehouseLedger> addMutation(@RequestBody AddMutationRequest request) {
         WarehouseLedger ledger = warehouseLedgerService.addLedgerMutation(
                 request.getProductId(),
@@ -39,11 +41,13 @@ public class WarehouseLedgerRest {
     }
 
     @PostMapping("/mutations/approve")
+//    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     public ResponseEntity<WarehouseLedger> approveMutation(@RequestParam UUID id) {
         return ResponseEntity.ok(warehouseLedgerService.approveLedgerMutation(id));
     }
 
     @PostMapping("/mutations/reject")
+//    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")
     public ResponseEntity<WarehouseLedger> rejectMutation(@RequestParam UUID id) {
         return ResponseEntity.ok(warehouseLedgerService.rejectLedgerMutation(id));
     }

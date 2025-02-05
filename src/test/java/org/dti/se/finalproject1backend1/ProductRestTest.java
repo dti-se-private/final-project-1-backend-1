@@ -45,9 +45,9 @@ public class ProductRestTest extends TestConfiguration {
     @Test
     public void testListAllProducts() throws Exception {
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/products")
+                .get("/products") // fakeproducts
                 .param("page", "0")
-                .param("size", "5");
+                .param("size", "5"); // fake.size
 
         MvcResult result = mockMvc
                 .perform(request)

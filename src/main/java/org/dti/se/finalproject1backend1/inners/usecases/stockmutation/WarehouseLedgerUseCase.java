@@ -38,7 +38,7 @@ public class WarehouseLedgerUseCase {
 
     public WarehouseLedger addLedgerMutation(UUID productId, UUID originWarehouseId, UUID destinationWarehouseId, Double quantity) {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new RuntimeException("Product not found")); // exception based on ID
         Warehouse originWarehouse = warehouseRepository.findById(originWarehouseId)
                 .orElseThrow(() -> new RuntimeException("Origin warehouse not found"));
         Warehouse destinationWarehouse = warehouseRepository.findById(destinationWarehouseId)
