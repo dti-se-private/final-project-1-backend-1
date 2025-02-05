@@ -7,6 +7,7 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -40,7 +41,7 @@ public class OrderCustomRepository {
             order = "\"order\".id";
         }
 
-        String query = String.format("""
+        String sql = String.format("""
                         SELECT json_build_object(
                             'id', "order".id,
                             'totalPrice', "order".total_price,
@@ -102,7 +103,7 @@ public class OrderCustomRepository {
                 """, order);
 
         return oneTemplate
-                .query(query,
+                .query(sql,
                         (rs, rowNum) -> {
                             try {
                                 return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
@@ -127,7 +128,7 @@ public class OrderCustomRepository {
             order = "\"order\".id";
         }
 
-        String query = String.format("""
+        String sql = String.format("""
                 SELECT json_build_object(
                             'id', "order".id,
                             'totalPrice', "order".total_price,
@@ -196,7 +197,7 @@ public class OrderCustomRepository {
                 """, order);
 
         return oneTemplate
-                .query(query,
+                .query(sql,
                         (rs, rowNum) -> {
                             try {
                                 return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
@@ -221,7 +222,7 @@ public class OrderCustomRepository {
             order = "\"order\".id";
         }
 
-        String query = String.format("""
+        String sql = String.format("""
                 SELECT json_build_object(
                             'id', "order".id,
                             'totalPrice', "order".total_price,
@@ -282,7 +283,7 @@ public class OrderCustomRepository {
                 """, order);
 
         return oneTemplate
-                .query(query,
+                .query(sql,
                         (rs, rowNum) -> {
                             try {
                                 return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
@@ -297,85 +298,80 @@ public class OrderCustomRepository {
     }
 
     public OrderResponse getOrder(UUID orderId) {
-        String query = """
-                        SELECT json_build_object(
-                            'id', "order".id,
-                            'totalPrice', "order".total_price,
-                            'shipmentOrigin', "order".shipment_origin,
-                            'shipmentDestination', "order".shipment_destination,
-                            'shipmentPrice', "order".shipment_price,
-                            'itemPrice', "order".item_price,
-                            'statuses', (
-                                SELECT json_agg(json_build_object(
-                                    'id', order_status.id,
-                                    'status', order_status.status,
-                                    'time', order_status.time
-                                    'paymentProofs', (
-                                        SELECT json_agg(json_build_object(
-                                            'id', payment_proof.id,
-                                            'image', payment_proof.image,
-                                            'time', payment_proof.time
-                                        ))
-                                        FROM payment_proof
-                                        WHERE payment_proof.order_status_id = order_status.id
-                                    )
-                                ))
-                                FROM (
-                                    SELECT *
-                                    FROM order_status
-                                    WHERE order_status.order_id = "order".id
-                                    ORDER BY order_status.time
-                                ) as order_status
-                            ),
-                            'items', (
-                                SELECT json_agg(json_build_object(
-                                    'id', order_item.id,
-                                    'quantity', order_item.quantity,
-                                    'product', json_build_object(
-                                        'id', product.id,
-                                        'name', product.name,
-                                        'description', product.description,
-                                        'price', product.price,
-                                        'image', product.image,
-                                        'category', json_build_object(
-                                            'id', category.id,
-                                            'name', category.name,
-                                            'description', category.description
-                                        )
-                                    )
-                                ))
-                                FROM order_item
-                                JOIN product ON order_item.product_id = product.id
-                                JOIN category ON product.category_id = category.id
-                                WHERE order_item.order_id = "order".id
-                            ),
-                             'paymentProofs', (
-                                 SELECT json_agg(json_build_object(
-                                     'id', payment_proof.id,
-                                     'file', payment_proof.file,
-                                     'extension', payment_proof.extension,
-                                     'time', payment_proof.time
-                                 ))
-                                 FROM payment_proof
-                                 WHERE payment_proof.order_id = "order".id
-                             )
-                        ) as item
+        String sql = """
+                SELECT json_build_object(
+                    'id', "order".id,
+                    'totalPrice', "order".total_price,
+                    'shipmentOrigin', "order".shipment_origin,
+                    'shipmentDestination', "order".shipment_destination,
+                    'shipmentPrice', "order".shipment_price,
+                    'itemPrice', "order".item_price,
+                    'statuses', (
+                        SELECT json_agg(json_build_object(
+                            'id', order_status.id,
+                            'status', order_status.status,
+                            'time', order_status.time
+                        ))
+                        FROM (
+                            SELECT *
+                            FROM order_status
+                            WHERE order_status.order_id = "order".id
+                            ORDER BY order_status.time
+                        ) as order_status
+                    ),
+                    'items', (
+                        SELECT json_agg(json_build_object(
+                            'id', order_item.id,
+                            'quantity', order_item.quantity,
+                            'product', json_build_object(
+                                'id', product.id,
+                                'name', product.name,
+                                'description', product.description,
+                                'price', product.price,
+                                'image', product.image,
+                                'category', json_build_object(
+                                    'id', category.id,
+                                    'name', category.name,
+                                    'description', category.description
+                                )
+                            )
+                        ))
+                        FROM order_item
+                        JOIN product ON order_item.product_id = product.id
+                        JOIN category ON product.category_id = category.id
+                        WHERE order_item.order_id = "order".id
+                    ),
+                    'paymentProofs', (
+                        SELECT json_agg(json_build_object(
+                            'id', payment_proof.id,
+                            'file', payment_proof.file,
+                            'extension', payment_proof.extension,
+                            'time', payment_proof.time
+                        ))
+                        FROM payment_proof
+                        WHERE payment_proof.order_id = "order".id
+                    )
+                ) as item
                 FROM "order"
                 WHERE "order".id = ?
                 """;
 
-        return oneTemplate
-                .queryForObject(query,
-                        (rs, rowNum) -> {
-                            try {
-                                return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
-                                });
-                            } catch (JsonProcessingException e) {
-                                throw new RuntimeException(e);
-                            }
-                        },
-                        orderId
-                );
+        try {
+            return oneTemplate
+                    .queryForObject(sql,
+                            (rs, rowNum) -> {
+                                try {
+                                    return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
+                                    });
+                                } catch (JsonProcessingException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            },
+                            orderId
+                    );
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     public List<OrderResponse> getPaymentConfirmationOrders(Account account, Integer page, Integer size, List<String> filters, String search) {
@@ -388,7 +384,7 @@ public class OrderCustomRepository {
             order = "\"order\".id";
         }
 
-        String query = String.format("""
+        String sql = String.format("""
                 SELECT json_build_object(
                             'id', "order".id,
                             'totalPrice', "order".total_price,
@@ -467,7 +463,7 @@ public class OrderCustomRepository {
                 """, order);
 
         return oneTemplate
-                .query(query,
+                .query(sql,
                         (rs, rowNum) -> {
                             try {
                                 return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
@@ -493,7 +489,7 @@ public class OrderCustomRepository {
             order = "\"order\".id";
         }
 
-        String query = String.format("""
+        String sql = String.format("""
                 SELECT json_build_object(
                             'id', "order".id,
                             'totalPrice', "order".total_price,
@@ -564,7 +560,7 @@ public class OrderCustomRepository {
                 """, order);
 
         return oneTemplate
-                .query(query,
+                .query(sql,
                         (rs, rowNum) -> {
                             try {
                                 return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {

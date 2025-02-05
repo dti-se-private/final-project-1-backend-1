@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderProcessRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
 import org.dti.se.finalproject1backend1.inners.usecases.orders.CancellationUseCase;
+import org.dti.se.finalproject1backend1.inners.usecases.orders.CheckoutUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.orders.OrderUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.orders.PaymentConfirmationUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
@@ -30,11 +32,80 @@ import java.util.List;
 public class OrderRest {
 
     @Autowired
+    CheckoutUseCase checkoutUseCase;
+    @Autowired
     OrderUseCase orderUseCase;
     @Autowired
     PaymentConfirmationUseCase paymentConfirmationUseCase;
     @Autowired
     CancellationUseCase cancellationUseCase;
+
+
+    @PostMapping("/checkout")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
+    public ResponseEntity<ResponseBody<OrderResponse>> checkout(
+            @AuthenticationPrincipal Account account,
+            @RequestBody OrderRequest request
+    ) {
+//        try {
+        OrderResponse order = checkoutUseCase.checkout(account, request);
+        return ResponseBody
+                .<OrderResponse>builder()
+                .message("Order checked out.")
+                .data(order)
+                .build()
+                .toEntity(HttpStatus.OK);
+//        } catch (AccountNotFoundException e) {
+//            return ResponseBody
+//                    .<OrderResponse>builder()
+//                    .message("Account not found.")
+//                    .exception(e)
+//                    .build()
+//                    .toEntity(HttpStatus.NOT_FOUND);
+//        } catch (CartItemInvalidException e) {
+//            return ResponseBody
+//                    .<OrderResponse>builder()
+//                    .message("Cart item invalid.")
+//                    .exception(e)
+//                    .build()
+//                    .toEntity(HttpStatus.BAD_REQUEST);
+//        } catch (AccountAddressNotFoundException e) {
+//            return ResponseBody
+//                    .<OrderResponse>builder()
+//                    .message("Account address not found.")
+//                    .exception(e)
+//                    .build()
+//                    .toEntity(HttpStatus.NOT_FOUND);
+//        } catch (PaymentMethodInvalidException e) {
+//            return ResponseBody
+//                    .<OrderResponse>builder()
+//                    .message("Payment method invalid.")
+//                    .exception(e)
+//                    .build()
+//                    .toEntity(HttpStatus.BAD_REQUEST);
+//        } catch (OrderNotFoundException e) {
+//            return ResponseBody
+//                    .<OrderResponse>builder()
+//                    .message("Order not found.")
+//                    .exception(e)
+//                    .build()
+//                    .toEntity(HttpStatus.NOT_FOUND);
+//        } catch (WarehouseProductNotFoundException e) {
+//            return ResponseBody
+//                    .<OrderResponse>builder()
+//                    .message("Warehouse product not found.")
+//                    .exception(e)
+//                    .build()
+//                    .toEntity(HttpStatus.NOT_FOUND);
+//        } catch (Exception e) {
+//            return ResponseBody
+//                    .<OrderResponse>builder()
+//                    .message("Internal server error.")
+//                    .exception(e)
+//                    .build()
+//                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+    }
 
     @GetMapping("/customer")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")

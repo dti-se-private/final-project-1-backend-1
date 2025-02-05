@@ -28,8 +28,8 @@ public class OrderItem {
 
     private Double quantity;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "warehouse_ledger_id", nullable = false)
+    @OneToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "warehouse_ledger_id", nullable = true)
     private WarehouseLedger warehouseLedger;
 
 }

@@ -40,7 +40,7 @@ public class CartCustomRepository {
             order = "cart_item.id";
         }
 
-        String query = String.format("""
+        String sql = String.format("""
                 SELECT json_build_object(
                         'id', cart_item.id,
                         'quantity', cart_item.quantity,
@@ -67,7 +67,7 @@ public class CartCustomRepository {
                 """, order);
 
         return oneTemplate
-                .query(query,
+                .query(sql,
                         (rs, rowNum) -> {
                             try {
                                 return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
@@ -79,6 +79,19 @@ public class CartCustomRepository {
                         account.getId(),
                         size,
                         page * size
+                );
+    }
+
+    public Double getTotalPrice(UUID accountId) {
+        return oneTemplate
+                .queryForObject("""
+                                SELECT SUM(product.price * cart_item.quantity)
+                                FROM cart_item
+                                JOIN product ON cart_item.product_id = product.id
+                                WHERE account_id = ?
+                                """,
+                        Double.class,
+                        accountId
                 );
     }
 
