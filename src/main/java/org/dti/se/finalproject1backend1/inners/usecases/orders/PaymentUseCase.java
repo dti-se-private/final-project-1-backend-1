@@ -1,12 +1,9 @@
 package org.dti.se.finalproject1backend1.inners.usecases.orders;
 
-import org.dti.se.finalproject1backend1.inners.models.entities.Account;
-import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
-import org.dti.se.finalproject1backend1.inners.models.entities.Order;
-import org.dti.se.finalproject1backend1.inners.models.entities.OrderStatus;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderProcessRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.PaymentProcessRequest;
+import org.dti.se.finalproject1backend1.inners.models.entities.*;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.*;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.payments.PaymentLinkResponse;
+import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MidtransGateway;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderActionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
@@ -33,6 +30,41 @@ public class PaymentUseCase {
     OrderRepository orderRepository;
     @Autowired
     OrderStatusRepository orderStatusRepository;
+
+    @Autowired
+    MidtransGateway midtransGateway;
+
+
+    public PaymentGatewayResponse processPaymentGateway(PaymentGatewayRequest request) {
+        Order foundOrder = orderRepository
+                .findById(request.getOrderId())
+                .orElseThrow(OrderNotFoundException::new);
+
+        List<OrderStatus> orderStatuses = orderStatusRepository
+                .findAllByOrderIdOrderByTimeAsc(foundOrder.getId());
+
+        Boolean isLastWaitingForPaymentStatus = orderStatuses.getLast().getStatus().equals("WAITING_FOR_PAYMENT");
+        if (!isLastWaitingForPaymentStatus) {
+            throw new OrderStatusInvalidException();
+        }
+
+        List<OrderItem> orderItems = foundOrder
+                .getOrderItems()
+                .stream()
+                .toList();
+
+        PaymentLinkResponse paymentLinkResponse = midtransGateway
+                .getPaymentLinkUrl(
+                        foundOrder.getId(),
+                        foundOrder.getTotalPrice(),
+                        orderItems
+                );
+
+        return PaymentGatewayResponse
+                .builder()
+                .url(paymentLinkResponse.getPaymentUrl())
+                .build();
+    }
 
     public OrderResponse processPayment(PaymentProcessRequest request) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
@@ -92,8 +124,8 @@ public class PaymentUseCase {
         List<OrderStatus> orderStatuses = orderStatusRepository
                 .findAllByOrderIdOrderByTimeAsc(foundOrder.getId());
 
-        Boolean isLastForPaymentConfirmationStatus = orderStatuses.getLast().getStatus().equals("WAITING_FOR_PAYMENT_CONFIRMATION");
-        if (!isLastForPaymentConfirmationStatus) {
+        Boolean isLastWaitingForPaymentConfirmationStatus = orderStatuses.getLast().getStatus().equals("WAITING_FOR_PAYMENT_CONFIRMATION");
+        if (!isLastWaitingForPaymentConfirmationStatus) {
             throw new OrderStatusInvalidException();
         }
 

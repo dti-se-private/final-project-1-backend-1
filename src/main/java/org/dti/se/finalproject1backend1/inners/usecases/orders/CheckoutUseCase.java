@@ -3,6 +3,8 @@ package org.dti.se.finalproject1backend1.inners.usecases.orders;
 import org.dti.se.finalproject1backend1.inners.models.entities.*;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.shipments.ShipmentRateResponse;
+import org.dti.se.finalproject1backend1.outers.deliveries.gateways.BiteshipGateway;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountAddressNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.carts.CartItemInvalidException;
@@ -57,6 +59,9 @@ public class CheckoutUseCase {
     @Qualifier("oneTransactionManager")
     PlatformTransactionManager transactionManager;
 
+    @Autowired
+    BiteshipGateway biteshipGateway;
+
     public OrderResponse checkout(Account account, OrderRequest request) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
@@ -75,12 +80,20 @@ public class CheckoutUseCase {
                 .findById(request.getAddressId())
                 .orElseThrow(AccountAddressNotFoundException::new);
 
-        Double itemPrice = cartCustomRepository.getTotalPrice(account.getId());
-        Double shipmentPrice = 0.0;
-        Double totalPrice = itemPrice + shipmentPrice;
+
         Point shipmentDestination = foundAccountAddress.getLocation();
         Warehouse nearestWarehouse = locationCustomRepository.getNearestWarehouse(shipmentDestination);
         Point shipmentOrigin = nearestWarehouse.getLocation();
+
+        ShipmentRateResponse shipmentRateResponse = biteshipGateway.getShipmentRate(
+                shipmentOrigin,
+                shipmentDestination,
+                foundCartItems
+        );
+
+        Double itemPrice = cartCustomRepository.getTotalPrice(account.getId());
+        Double shipmentPrice = shipmentRateResponse.getPricing().getFirst().getPrice();
+        Double totalPrice = itemPrice + shipmentPrice;
 
         Order newOrder = Order
                 .builder()

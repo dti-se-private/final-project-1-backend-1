@@ -3,10 +3,7 @@ package org.dti.se.finalproject1backend1.outers.deliveries.rests;
 import lombok.RequiredArgsConstructor;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderProcessRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.PaymentProcessRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.*;
 import org.dti.se.finalproject1backend1.inners.usecases.orders.*;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountAddressNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
@@ -344,6 +341,44 @@ public class OrderRest {
         } catch (Exception e) {
             return ResponseBody
                     .<OrderResponse>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @PostMapping("/payment-gateways/process")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
+    public ResponseEntity<ResponseBody<PaymentGatewayResponse>> processPaymentGateway(
+            @RequestBody PaymentGatewayRequest request
+    ) {
+        try {
+            PaymentGatewayResponse paymentGateway = paymentUseCase.processPaymentGateway(request);
+            return ResponseBody
+                    .<PaymentGatewayResponse>builder()
+                    .message("Order payment gateway processed.")
+                    .data(paymentGateway)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (OrderNotFoundException e) {
+            return ResponseBody
+                    .<PaymentGatewayResponse>builder()
+                    .message("Order not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (OrderStatusInvalidException e) {
+            return ResponseBody
+                    .<PaymentGatewayResponse>builder()
+                    .message("Order status invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<PaymentGatewayResponse>builder()
                     .message("Internal server error.")
                     .exception(e)
                     .build()

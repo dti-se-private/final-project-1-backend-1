@@ -41,13 +41,14 @@ public class OtpUseCase {
     }
 
     public boolean verifyOtp(String email, String otp, String type) {
+        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+
         Verification verification = verificationRepository
                 .findByEmailAndCodeAndType(email, otp, type)
-                .orElseThrow(() -> new VerificationNotFoundException("Invalid OTP"));
+                .orElseThrow(VerificationNotFoundException::new);
 
-        OffsetDateTime now = OffsetDateTime.now();
         if (now.isAfter(verification.getEndTime())) {
-            throw new VerificationExpiredException("OTP has expired");
+            throw new VerificationExpiredException();
         }
 
         verificationRepository.delete(verification);

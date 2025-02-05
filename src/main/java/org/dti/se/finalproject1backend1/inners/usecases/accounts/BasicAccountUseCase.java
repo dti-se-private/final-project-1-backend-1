@@ -6,7 +6,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.Acco
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.OtpUseCase;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
-import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -84,18 +84,18 @@ public class BasicAccountUseCase {
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);
 
-        if (request.getEmail() != null && !request.getEmail().equals(accountToPatch.getEmail())) {
-            if (!otpUseCase.verifyOtp(request.getEmail(), request.getOtp(), "UPDATE_EMAIL")) {
-                throw new VerificationNotFoundException("Invalid OTP for email update");
-            }
-            accountToPatch.setEmail(request.getEmail());
+        Boolean verifyResult = otpUseCase.verifyOtp(request.getEmail(), request.getOtp(), "UPDATE_EMAIL");
+        if (!verifyResult) {
+            throw new VerificationInvalidException();
         }
 
-        String encodedPassword = securityConfiguration.encode(request.getPassword());
+        accountToPatch.setEmail(request.getEmail());
         accountToPatch.setName(request.getName());
         accountToPatch.setPhone(request.getPhone());
         accountToPatch.setImage(request.getImage());
+        String encodedPassword = securityConfiguration.encode(request.getPassword());
         accountToPatch.setPassword(encodedPassword);
+
         Account patchedAccount = accountRepository.saveAndFlush(accountToPatch);
 
         return AccountResponse

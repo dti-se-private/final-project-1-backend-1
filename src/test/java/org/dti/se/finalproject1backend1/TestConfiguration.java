@@ -230,7 +230,7 @@ public class TestConfiguration {
                         .build();
                 fakeOrders.add(newOrder);
 
-                for (int j = 0; j < orderStatuses.size() - i; j++) {
+                for (int j = 0; j < orderStatuses.size() - (i + 1); j++) {
                     OrderStatus newOrderStatus = OrderStatus
                             .builder()
                             .id(UUID.randomUUID())
