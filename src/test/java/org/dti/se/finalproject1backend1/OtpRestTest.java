@@ -3,7 +3,6 @@ package org.dti.se.finalproject1backend1;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.VerificationRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,9 +29,6 @@ public class OtpRestTest extends TestConfiguration {
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Autowired
-    private VerificationRepository verificationRepository;
 
     private String testEmail;
     private String testType;

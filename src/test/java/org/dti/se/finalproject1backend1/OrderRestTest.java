@@ -2,12 +2,18 @@ package org.dti.se.finalproject1backend1;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.dti.se.finalproject1backend1.inners.models.entities.*;
+import org.dti.se.finalproject1backend1.inners.models.entities.Account;
+import org.dti.se.finalproject1backend1.inners.models.entities.AccountAddress;
+import org.dti.se.finalproject1backend1.inners.models.entities.Order;
+import org.dti.se.finalproject1backend1.inners.models.entities.OrderStatus;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderItemRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderProcessRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.*;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.payments.PaymentLinkResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.shipments.ShipmentPricingResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.shipments.ShipmentRateResponse;
+import org.dti.se.finalproject1backend1.outers.deliveries.gateways.BiteshipGateway;
+import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MidtransGateway;
+import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.LocationCustomRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,8 +30,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -38,6 +44,12 @@ public class OrderRestTest extends TestConfiguration {
 
     @MockitoBean
     protected LocationCustomRepository locationCustomRepository;
+
+    @MockitoBean
+    protected BiteshipGateway biteshipGateway;
+
+    @MockitoBean
+    protected MidtransGateway midtransGateway;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -56,11 +68,22 @@ public class OrderRestTest extends TestConfiguration {
 
 
     @Test
+    @ResourceLock("locationCustomRepositoryMock")
     public void testCheckout() throws Exception {
         Mockito.when(locationCustomRepository.getNearestWarehouse(Mockito.any()))
                 .thenReturn(fakeWarehouses.getFirst());
-        Mockito.when(locationCustomRepository.getNearestExistingWarehouseProduct(Mockito.any(), Mockito.any(), Mockito.any()))
-                .thenReturn(fakeWarehouseProducts.getFirst());
+
+        ShipmentRateResponse shipmentRate = ShipmentRateResponse
+                .builder()
+                .pricing(List.of(
+                        ShipmentPricingResponse
+                                .builder()
+                                .price(123456.7)
+                                .build()
+                ))
+                .build();
+        Mockito.when(biteshipGateway.getShipmentRate(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(shipmentRate);
 
         AccountAddress realAddress = fakeAccountAddresses
                 .stream()
@@ -82,7 +105,6 @@ public class OrderRestTest extends TestConfiguration {
         OrderRequest requestBody = OrderRequest
                 .builder()
                 .addressId(realAddress.getId())
-                .paymentMethod("AUTOMATIC")
                 .items(orderItemRequests)
                 .build();
 
@@ -109,82 +131,94 @@ public class OrderRestTest extends TestConfiguration {
     }
 
     @Test
-    public void testGetCustomerOrders() throws Exception {
-        List<Order> realOrders = fakeOrders
+    @ResourceLock("locationCustomRepositoryMock")
+    public void testAutomaticPayment() throws Exception {
+        Mockito.when(locationCustomRepository.getNearestExistingWarehouseProduct(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(fakeWarehouseProducts.getFirst());
+
+        Order realOrder = fakeOrders
                 .stream()
-                .filter(cartItem -> cartItem.getAccount().getId().equals(authenticatedAccount.getId()))
-                .toList();
+                .filter(order -> fakeOrderStatuses
+                        .stream()
+                        .filter(orderStatus -> orderStatus.getOrder().getId().equals(order.getId()))
+                        .noneMatch(orderStatus -> orderStatus.getStatus().equals("WAITING_FOR_PAYMENT_CONFIRMATION"))
+                )
+                .findFirst()
+                .orElseThrow(OrderNotFoundException::new);
+
+        PaymentProcessRequest requestBody = PaymentProcessRequest
+                .builder()
+                .orderId(realOrder.getId())
+                .paymentMethod("AUTOMATIC")
+                .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/orders/customer")
+                .post("/orders/payments/process")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
-                .param("page", "0")
-                .param("size", String.valueOf(realOrders.size()));
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
                 .perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
 
-        ResponseBody<List<OrderResponse>> responseBody = objectMapper
+        ResponseBody<OrderResponse> responseBody = objectMapper
                 .readValue(
                         result.getResponse().getContentAsString(),
                         new TypeReference<>() {
                         }
                 );
 
-        assert responseBody.getMessage().equals("Orders found.");
+        assert responseBody.getMessage().equals("Order payment processed.");
         assert responseBody.getData() != null;
-        assert responseBody.getData().size() == realOrders.size();
-        responseBody.getData().forEach(orderResponse -> {
-            Optional<Order> realOrder = fakeOrders
-                    .stream()
-                    .filter(order -> order.getId().equals(orderResponse.getId()))
-                    .findFirst();
-
-            assert realOrder.isPresent();
-            assert orderResponse.getTotalPrice().equals(realOrder.get().getTotalPrice());
-            assert orderResponse.getShipmentOrigin().equals(realOrder.get().getShipmentOrigin());
-            assert orderResponse.getShipmentDestination().equals(realOrder.get().getShipmentDestination());
-            assert orderResponse.getShipmentPrice().equals(realOrder.get().getShipmentPrice());
-            assert orderResponse.getItemPrice().equals(realOrder.get().getItemPrice());
-
-            List<OrderStatus> realOrderStatuses = fakeOrderStatuses
-                    .stream()
-                    .filter(orderStatus -> orderStatus.getOrder().getId().equals(orderResponse.getId()))
-                    .toList();
-
-            assert orderResponse.getStatuses().size() == realOrderStatuses.size();
-            orderResponse.getStatuses().forEach(orderStatusResponse -> {
-                Optional<OrderStatus> realOrderStatus = fakeOrderStatuses
-                        .stream()
-                        .filter(orderStatus -> orderStatus.getId().equals(orderStatusResponse.getId()))
-                        .findFirst();
-
-                assert realOrderStatus.isPresent();
-                assert orderStatusResponse.getStatus().equals(realOrderStatus.get().getStatus());
-                assert orderStatusResponse.getTime().isEqual(realOrderStatus.get().getTime());
-            });
-
-            List<OrderItem> realOrderItems = fakeOrderItems
-                    .stream()
-                    .filter(orderItem -> orderItem.getOrder().getId().equals(orderResponse.getId()))
-                    .toList();
-
-            assert orderResponse.getItems().size() == realOrderItems.size();
-            orderResponse.getItems().forEach(orderItemResponse -> {
-                Optional<OrderItem> realOrderItem = fakeOrderItems
-                        .stream()
-                        .filter(orderItem -> orderItem.getId().equals(orderItemResponse.getId()))
-                        .findFirst();
-
-                assert realOrderItem.isPresent();
-                assert orderItemResponse.getQuantity().equals(realOrderItem.get().getQuantity());
-                assert orderItemResponse.getProduct().getId().equals(realOrderItem.get().getProduct().getId());
-            });
-        });
+        assert responseBody.getData().getStatuses().getLast().getStatus().equals("SHIPPING");
     }
 
+    @Test
+    @ResourceLock("locationCustomRepositoryMock")
+    public void testManualPayment() throws Exception {
+        Mockito.when(locationCustomRepository.getNearestExistingWarehouseProduct(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(fakeWarehouseProducts.getFirst());
+
+        Order realOrder = fakeOrders
+                .stream()
+                .filter(order -> order
+                        .getOrderStatuses()
+                        .stream()
+                        .noneMatch(orderStatus -> orderStatus.getStatus().equals("WAITING_FOR_PAYMENT_CONFIRMATION"))
+                )
+                .findFirst()
+                .orElseThrow(OrderNotFoundException::new);
+
+        PaymentProcessRequest requestBody = PaymentProcessRequest
+                .builder()
+                .orderId(realOrder.getId())
+                .paymentMethod("MANUAL")
+                .build();
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/orders/payments/process")
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ResponseBody<OrderResponse> responseBody = objectMapper
+                .readValue(
+                        result.getResponse().getContentAsString(),
+                        new TypeReference<>() {
+                        }
+                );
+
+        assert responseBody.getMessage().equals("Order payment processed.");
+        assert responseBody.getData() != null;
+        assert responseBody.getData().getStatuses().getLast().getStatus().equals("WAITING_FOR_PAYMENT_CONFIRMATION");
+    }
 
     @Test
     public void testGetOrders() throws Exception {
@@ -249,14 +283,18 @@ public class OrderRestTest extends TestConfiguration {
 
 
     @Test
+    @ResourceLock("locationCustomRepositoryMock")
     public void testApprovePaymentConfirmationOrder() throws Exception {
+        Mockito.when(locationCustomRepository.getNearestExistingWarehouseProduct(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(fakeWarehouseProducts.getFirst());
+
         Order realOrder = fakeOrders
                 .stream()
                 .filter(order -> {
                     List<OrderStatus> orderStatuses = fakeOrderStatuses
                             .stream()
                             .filter(orderStatus -> orderStatus.getOrder().getId().equals(order.getId()))
-                            .sorted((a, b) -> a.getTime().compareTo(b.getTime()))
+                            .sorted(Comparator.comparing(OrderStatus::getTime))
                             .toList();
 
                     return orderStatuses.getLast().getStatus().equals("WAITING_FOR_PAYMENT_CONFIRMATION");
@@ -281,7 +319,7 @@ public class OrderRestTest extends TestConfiguration {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        ResponseBody<Void> responseBody = objectMapper
+        ResponseBody<OrderResponse> responseBody = objectMapper
                 .readValue(
                         result.getResponse().getContentAsString(),
                         new TypeReference<>() {
@@ -289,12 +327,8 @@ public class OrderRestTest extends TestConfiguration {
                 );
 
         assert responseBody.getMessage().equals("Order payment confirmation processed.");
-        assert responseBody.getData() == null;
-
-        List<OrderStatus> updatedOrderStatuses = orderStatusRepository
-                .findAllByOrderIdOrderByTimeAsc(realOrder.getId());
-
-        assert updatedOrderStatuses.getLast().getStatus().equals("PROCESSING");
+        assert responseBody.getData() != null;
+        assert responseBody.getData().getStatuses().getLast().getStatus().equals("SHIPPING");
     }
 
     @Test
@@ -330,7 +364,7 @@ public class OrderRestTest extends TestConfiguration {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        ResponseBody<Void> responseBody = objectMapper
+        ResponseBody<OrderResponse> responseBody = objectMapper
                 .readValue(
                         result.getResponse().getContentAsString(),
                         new TypeReference<>() {
@@ -338,12 +372,8 @@ public class OrderRestTest extends TestConfiguration {
                 );
 
         assert responseBody.getMessage().equals("Order payment confirmation processed.");
-        assert responseBody.getData() == null;
-
-        List<OrderStatus> updatedOrderStatuses = orderStatusRepository
-                .findAllByOrderIdOrderByTimeAsc(realOrder.getId());
-
-        assert updatedOrderStatuses.getLast().getStatus().equals("WAITING_FOR_PAYMENT");
+        assert responseBody.getData() != null;
+        assert responseBody.getData().getStatuses().getLast().getStatus().equals("WAITING_FOR_PAYMENT");
     }
 
     @Test
@@ -379,7 +409,7 @@ public class OrderRestTest extends TestConfiguration {
                 .andExpect(status().isOk())
                 .andReturn();
 
-        ResponseBody<Void> responseBody = objectMapper
+        ResponseBody<OrderResponse> responseBody = objectMapper
                 .readValue(
                         result.getResponse().getContentAsString(),
                         new TypeReference<>() {
@@ -387,12 +417,57 @@ public class OrderRestTest extends TestConfiguration {
                 );
 
         assert responseBody.getMessage().equals("Order cancellation processed.");
-        assert responseBody.getData() == null;
+        assert responseBody.getData() != null;
+        assert responseBody.getData().getStatuses().getLast().getStatus().equals("CANCELED");
+    }
 
-        List<OrderStatus> updatedOrderStatuses = orderStatusRepository
-                .findAllByOrderIdOrderByTimeAsc(realOrder.getId());
 
-        assert updatedOrderStatuses.getLast().getStatus().equals("CANCELED");
+    @Test
+    public void testProcessPaymentGateway() throws Exception {
+        Order realOrder = fakeOrders
+                .stream()
+                .filter(order -> fakeOrderStatuses
+                        .stream()
+                        .filter(orderStatus -> orderStatus.getOrder().getId().equals(order.getId()))
+                        .noneMatch(orderStatus -> orderStatus.getStatus().equals("WAITING_FOR_PAYMENT_CONFIRMATION"))
+                )
+                .findFirst()
+                .orElseThrow(OrderNotFoundException::new);
+
+        Mockito.when(midtransGateway.getPaymentLinkUrl(Mockito.any(), Mockito.any(), Mockito.any()))
+                .thenReturn(PaymentLinkResponse
+                        .builder()
+                        .orderId(realOrder.getId())
+                        .paymentUrl("https://example.com")
+                        .build()
+                );
+
+        PaymentGatewayRequest requestBody = PaymentGatewayRequest
+                .builder()
+                .orderId(realOrder.getId())
+                .build();
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/orders/payment-gateways/process")
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ResponseBody<PaymentGatewayResponse> responseBody = objectMapper
+                .readValue(
+                        result.getResponse().getContentAsString(),
+                        new TypeReference<>() {
+                        }
+                );
+
+        assert responseBody.getMessage().equals("Order payment gateway processed.");
+        assert responseBody.getData() != null;
+        assert responseBody.getData().getUrl() != null;
     }
 
 }

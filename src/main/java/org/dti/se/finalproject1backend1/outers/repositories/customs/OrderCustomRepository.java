@@ -354,6 +354,7 @@ public class OrderCustomRepository {
                 ) as item
                 FROM "order"
                 WHERE "order".id = ?
+                LIMIT 1
                 """;
 
         try {

@@ -179,7 +179,7 @@ public class TestConfiguration {
                         .id(UUID.randomUUID())
                         .warehouse(warehouse)
                         .product(product)
-                        .quantity(200 + Math.ceil(Math.random() * 1000))
+                        .quantity(2000 + Math.ceil(Math.random() * 1000))
                         .build();
                 fakeWarehouseProducts.add(newWarehouseProduct);
             });
@@ -230,7 +230,7 @@ public class TestConfiguration {
                         .build();
                 fakeOrders.add(newOrder);
 
-                for (int j = 0; j < orderStatuses.size() - i; j++) {
+                for (int j = 0; j < orderStatuses.size() - (i + 1); j++) {
                     OrderStatus newOrderStatus = OrderStatus
                             .builder()
                             .id(UUID.randomUUID())

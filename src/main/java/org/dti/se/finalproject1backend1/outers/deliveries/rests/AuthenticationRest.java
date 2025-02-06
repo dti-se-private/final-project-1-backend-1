@@ -5,14 +5,14 @@ import com.auth0.jwt.exceptions.TokenExpiredException;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.ResetPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
-import org.dti.se.finalproject1backend1.inners.usecases.authentications.ResetPasswordUseCase;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.ResetPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.BasicAuthenticationUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.LoginAuthenticationUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.RegisterAuthenticationUseCase;
+import org.dti.se.finalproject1backend1.inners.usecases.authentications.ResetPasswordUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountCredentialsInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
@@ -22,7 +22,10 @@ import org.dti.se.finalproject1backend1.outers.exceptions.verifications.Verifica
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.file.ProviderNotFoundException;
 
@@ -160,12 +163,12 @@ public class AuthenticationRest {
             @RequestBody ResetPasswordRequest request
     ) {
         try {
-        resetPasswordUseCase.resetPassword(request.getEmail(), request.getNewPassword(), request.getOtp());
-        return ResponseBody
-                .<Void>builder()
-                .message("Password reset successfully.")
-                .build()
-                .toEntity(HttpStatus.OK);
+            resetPasswordUseCase.resetPassword(request.getEmail(), request.getNewPassword(), request.getOtp());
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Password reset successfully.")
+                    .build()
+                    .toEntity(HttpStatus.OK);
         } catch (AccountNotFoundException e) {
             return ResponseBody
                     .<Void>builder()
@@ -229,7 +232,7 @@ public class AuthenticationRest {
     }
 
     @PostMapping(value = "/logins/external")
-    public ResponseEntity<ResponseBody<Session>> loginByExternal (
+    public ResponseEntity<ResponseBody<Session>> loginByExternal(
             @RequestBody RegisterAndLoginByExternalRequest request
     ) {
         try {
