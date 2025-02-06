@@ -7,11 +7,13 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import org.dti.se.finalproject1backend1.inners.models.entities.*;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
+import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
 import org.locationtech.jts.geom.Coordinate;
@@ -305,7 +307,10 @@ public class TestConfiguration {
     }
 
     public void auth() throws Exception {
-        authenticatedAccount = registerByInternal().getData();
+        ResponseBody<AccountResponse> accountResponse = registerByInternal();
+        authenticatedAccount = accountRepository
+                .findById(accountResponse.getData().getId())
+                .orElseThrow(AccountNotFoundException::new);
         fakeAccounts.add(authenticatedAccount);
         authenticatedSession = loginByInternal(authenticatedAccount).getData();
     }
@@ -319,7 +324,7 @@ public class TestConfiguration {
         logout(authenticatedSession);
     }
 
-    protected ResponseBody<Account> registerByInternal() throws Exception {
+    protected ResponseBody<AccountResponse> registerByInternal() throws Exception {
         String email = String.format("email-%s", UUID.randomUUID());
         String type = "REGISTER";
 
@@ -345,16 +350,24 @@ public class TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<Account> body = objectMapper.readValue(content, new TypeReference<>() {
+        ResponseBody<AccountResponse> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
-        assert body.getMessage().equals("Register succeed.");
+        assert body.getMessage().equals("Register by internal succeed.");
         assert body.getData() != null;
         assert body.getData().getId() != null;
         assert body.getData().getName().equals(requestBody.getName());
         assert body.getData().getEmail().equals(requestBody.getEmail());
         assert securityConfiguration.matches(requestBody.getPassword(), body.getData().getPassword());
         assert body.getData().getPhone().equals(requestBody.getPhone());
+        assert body.getData().getImage() == null;
+        assert body.getData().getIsVerified().equals(true);
+
+        Account registeredAccount = accountRepository
+                .findById(body.getData().getId())
+                .orElseThrow(AccountNotFoundException::new);
+        fakeAccounts.add(registeredAccount);
+
         return body;
     }
 
@@ -362,12 +375,12 @@ public class TestConfiguration {
         String mockIdToken = "mock-id-token";
         String email = String.format("email-%s", UUID.randomUUID());
         String name = String.format("name-%s", UUID.randomUUID());
-        String picture = "http://example.com/picture.jpg";
+        String picture = "https://placehold.co/400x400";
 
         GoogleIdToken.Payload payload = Mockito.mock(GoogleIdToken.Payload.class);
         Mockito.when(payload.getEmail()).thenReturn(email);
         Mockito.when(payload.get("name")).thenReturn(name);
-        Mockito.when(payload.get("picture")).thenReturn(picture.getBytes());
+        Mockito.when(payload.get("picture")).thenReturn(picture);
 
         GoogleIdToken idToken = Mockito.mock(GoogleIdToken.class);
         Mockito.when(idToken.getPayload()).thenReturn(payload);
@@ -393,7 +406,7 @@ public class TestConfiguration {
         ResponseBody<Account> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
-        assert body.getMessage().equals("Register succeed.");
+        assert body.getMessage().equals("Register by external succeed.");
         assert body.getData() != null;
         assert body.getData().getId() != null;
         assert body.getData().getName().equals(name);
@@ -479,6 +492,5 @@ public class TestConfiguration {
         return verificationRepository
                 .findByEmailAndType(email, type)
                 .orElseThrow(VerificationNotFoundException::new);
-
     }
 }
