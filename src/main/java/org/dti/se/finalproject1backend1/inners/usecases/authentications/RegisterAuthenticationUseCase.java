@@ -2,34 +2,37 @@ package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import org.apache.commons.codec.binary.Hex;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
 import org.dti.se.finalproject1backend1.inners.models.entities.Provider;
-import org.dti.se.finalproject1backend1.inners.models.entities.Verification;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByExternalRequest;
+import org.dti.se.finalproject1backend1.outers.configurations.GoogleConfiguration;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
-import org.dti.se.finalproject1backend1.outers.exceptions.authentications.OtpInvalidException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountPermissionRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.ProviderRepository;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.VerificationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.GeneralSecurityException;
-import java.time.OffsetDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class RegisterAuthenticationUseCase {
     @Autowired
     AccountRepository accountRepository;
-
-    @Autowired
-    VerificationRepository verificationRepository;
 
     @Autowired
     AccountPermissionRepository accountPermissionRepository;
@@ -43,36 +46,21 @@ public class RegisterAuthenticationUseCase {
     @Autowired
     GoogleIdTokenVerifier googleIdTokenVerifier;
 
+    @Autowired
+    OtpUseCase otpUseCase;
 
-    public Account registerByEmailAndPassword(RegisterByEmailAndPasswordRequest request) {
-        Account foundAccount = accountRepository.findFirstByEmail(request.getEmail());
-        if (foundAccount != null) {
-            throw new AccountExistsException();
+
+    public AccountResponse registerByInternal(RegisterByEmailAndPasswordRequest request) {
+        boolean isOtpVerified = otpUseCase.verifyOtp(request.getEmail(), request.getOtp(), "REGISTER");
+
+        if (!isOtpVerified) {
+            throw new VerificationNotFoundException();
         }
 
-        String encodedPassword = securityConfiguration.encode(request.getPassword());
-        Account accountToSave = Account
-                .builder()
-                .id(UUID.randomUUID())
-                .name(request.getName())
-                .email(request.getEmail())
-                .password(encodedPassword)
-                .phone(request.getPhone())
-                .build();
-        return accountRepository.save(accountToSave);
-    }
+        Optional<Account> foundAccount = accountRepository
+                .findByEmail(request.getEmail());
 
-
-    public Account registerByInternal(RegisterByEmailAndPasswordRequest request) {
-        Verification verification = verificationRepository.findFirstByEmailAndCodeAndType(request.getEmail(), request.getOtp(), "REGISTER");
-        if (verification == null || OffsetDateTime.now().isAfter(verification.getEndTime())) {
-            throw new OtpInvalidException();
-        }
-
-        verificationRepository.delete(verification);
-
-        Account foundAccount = accountRepository.findFirstByEmail(request.getEmail());
-        if (foundAccount != null) {
+        if (foundAccount.isPresent()) {
             throw new AccountExistsException();
         }
 
@@ -86,49 +74,56 @@ public class RegisterAuthenticationUseCase {
                 .phone(request.getPhone())
                 .isVerified(true)
                 .build();
-        Account savedAccount = accountRepository.save(accountToSave);
+        Account savedAccount = accountRepository.saveAndFlush(accountToSave);
 
         Provider accountProvider = new Provider();
         accountProvider.setId(UUID.randomUUID());
         accountProvider.setAccount(savedAccount);
         accountProvider.setName("INTERNAL");
-        providerRepository.save(accountProvider);
+        providerRepository.saveAndFlush(accountProvider);
 
         AccountPermission accountPermission = new AccountPermission();
         accountPermission.setId(UUID.randomUUID());
         accountPermission.setAccount(savedAccount);
         accountPermission.setPermission("CUSTOMER");
-        accountPermissionRepository.save(accountPermission);
+        accountPermissionRepository.saveAndFlush(accountPermission);
 
-        verificationRepository.delete(verification);
-
-        return savedAccount;
+        return AccountResponse
+                .builder()
+                .id(savedAccount.getId())
+                .name(savedAccount.getName())
+                .email(savedAccount.getEmail())
+                .password(savedAccount.getPassword())
+                .phone(savedAccount.getPhone())
+                .isVerified(savedAccount.getIsVerified())
+                .image(savedAccount.getImage())
+                .build();
     }
 
 
-    public Account registerByExternal(RegisterByExternalRequest request) {
+    public AccountResponse registerByExternal(RegisterAndLoginByExternalRequest request) {
         GoogleIdToken idToken;
 
         String idTokenString = request.getIdToken();
         if (idTokenString == null || idTokenString.isEmpty()) {
-            throw new RuntimeException("ID token is null or empty");
+            throw new VerificationNotFoundException("ID token is null or empty");
         }
 
         try {
             idToken = googleIdTokenVerifier.verify(request.getIdToken());
-        } catch (GeneralSecurityException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        } catch (GeneralSecurityException | IOException e) {
+            throw new VerificationInvalidException("Invalid Google ID token");
         }
 
         GoogleIdToken.Payload payload = idToken.getPayload();
         String email = payload.getEmail();
         String name = payload.get("name").toString();
-        String picture = payload.get("picture").toString();
+        String pictureUrl = payload.get("picture").toString();
 
-        Account foundAccount = accountRepository.findFirstByEmail(email);
-        if (foundAccount != null) {
+        Optional<Account> foundAccount = accountRepository
+                .findByEmail(email);
+
+        if (foundAccount.isPresent()) {
             throw new AccountExistsException();
         }
 
@@ -138,23 +133,31 @@ public class RegisterAuthenticationUseCase {
                 .name(name)
                 .email(email)
                 .isVerified(true)
-                .image(picture.getBytes())
+                .image(GoogleConfiguration.convertUrlToHexByte(pictureUrl))
                 .build();
-        Account savedAccount = accountRepository.save(accountToSave);
+        Account savedAccount = accountRepository.saveAndFlush(accountToSave);
 
         Provider accountProvider = new Provider();
         accountProvider.setId(UUID.randomUUID());
         accountProvider.setAccount(savedAccount);
         accountProvider.setName("EXTERNAL");
-        providerRepository.save(accountProvider);
+        providerRepository.saveAndFlush(accountProvider);
 
         AccountPermission accountPermission = new AccountPermission();
         accountPermission.setId(UUID.randomUUID());
         accountPermission.setAccount(savedAccount);
         accountPermission.setPermission("CUSTOMER");
-        accountPermissionRepository.save(accountPermission);
+        accountPermissionRepository.saveAndFlush(accountPermission);
 
-        return savedAccount;
-
+        return AccountResponse
+                .builder()
+                .id(savedAccount.getId())
+                .name(savedAccount.getName())
+                .email(savedAccount.getEmail())
+                .password(savedAccount.getPassword())
+                .phone(savedAccount.getPhone())
+                .isVerified(savedAccount.getIsVerified())
+                .image(savedAccount.getImage())
+                .build();
     }
 }

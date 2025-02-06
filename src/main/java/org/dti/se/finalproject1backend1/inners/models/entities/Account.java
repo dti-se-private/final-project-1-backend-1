@@ -7,16 +7,15 @@ import jakarta.persistence.Table;
 import lombok.*;
 import lombok.experimental.Accessors;
 import org.dti.se.finalproject1backend1.inners.models.Model;
-import org.hibernate.annotations.ColumnDefault;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
 
-@Data
-@EqualsAndHashCode(callSuper = true)
 @Builder
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
@@ -34,24 +33,25 @@ public class Account extends Model {
 
     private String phone;
 
-    @ColumnDefault("false")
-    private Boolean isVerified;
+    @Builder.Default
+    private Boolean isVerified = false;
 
     private byte[] image;
 
     @OneToMany(mappedBy = "account")
+    @Builder.Default
     private Set<AccountAddress> accountAddresses = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "account")
+    @Builder.Default
     private Set<AccountPermission> accountPermissions = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "account")
+    @Builder.Default
     private Set<CartItem> cartItems = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "account")
+    @Builder.Default
     private Set<Order> orders = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "account")
-    private Set<Session> sessions = new LinkedHashSet<>();
 
 }

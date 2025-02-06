@@ -16,9 +16,10 @@ public class MailgunGateway {
     @Autowired
     Environment environment;
 
+
     public void sendEmail(String to, String subject, String text) {
         RestTemplate restTemplate = new RestTemplate();
-        String url = "https://api.mailgun.net/v3/" + environment.getProperty("mailgun.domain") + "/messages";
+        String url = environment.getProperty("mailgun.url") + environment.getProperty("mailgun.domain") + "/messages";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);

@@ -1,14 +1,18 @@
 package org.dti.se.finalproject1backend1.inners.models.entities;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.Accessors;
+import org.locationtech.jts.geom.Point;
 
 import java.util.UUID;
 
+@Builder
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Accessors(chain = true)
 @Entity
 @Table(name = "account_address")
 public class AccountAddress {
@@ -23,12 +27,8 @@ public class AccountAddress {
 
     private String address;
 
+    @Builder.Default
     private Boolean isPrimary = false;
 
-/*
- TODO [Reverse Engineering] create field to map the 'location' column
- Available actions: Define target Java type | Uncomment as is | Remove column mapping
-    @Column(name = "location", columnDefinition = "geography")
-    private Object location;
-*/
+    private Point location;
 }

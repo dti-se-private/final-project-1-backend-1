@@ -1,14 +1,18 @@
 package org.dti.se.finalproject1backend1.inners.models.entities;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.Accessors;
 
 import java.util.UUID;
 
+
+@Builder
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Accessors(chain = true)
 @Entity
 @Table(name = "provider")
 public class Provider {

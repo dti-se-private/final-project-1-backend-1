@@ -1,16 +1,19 @@
 package org.dti.se.finalproject1backend1.inners.models.entities;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.Accessors;
 
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+
+@Builder
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Accessors(chain = true)
 @Entity
 @Table(name = "warehouse_ledger")
 public class WarehouseLedger {
@@ -29,9 +32,16 @@ public class WarehouseLedger {
     @JoinColumn(name = "destination_warehouse_id", nullable = false)
     private Warehouse destinationWarehouse;
 
-    private BigDecimal preQuantity;
+    @OneToOne(mappedBy = "warehouseLedger")
+    private OrderItem orderItem;
 
-    private BigDecimal postQuantity;
+    private Double originPreQuantity;
+
+    private Double originPostQuantity;
+
+    private Double destinationPreQuantity;
+
+    private Double destinationPostQuantity;
 
     private OffsetDateTime time;
 

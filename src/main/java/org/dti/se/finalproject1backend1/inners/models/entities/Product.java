@@ -1,16 +1,20 @@
 package org.dti.se.finalproject1backend1.inners.models.entities;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.Accessors;
 
-import java.math.BigDecimal;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
+
+@Builder
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Accessors(chain = true)
 @Entity
 @Table(name = "product")
 public class Product {
@@ -25,20 +29,24 @@ public class Product {
 
     private String description;
 
-    private BigDecimal price;
+    private Double price;
 
     private byte[] image;
 
     @OneToMany(mappedBy = "product")
+    @Builder.Default
     private Set<CartItem> cartItems = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "product")
+    @Builder.Default
     private Set<OrderItem> orderItems = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "product")
+    @Builder.Default
     private Set<WarehouseLedger> warehouseLedgers = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "product")
+    @Builder.Default
     private Set<WarehouseProduct> warehouseProducts = new LinkedHashSet<>();
 
 }

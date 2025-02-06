@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -41,15 +42,6 @@ public class SecurityConfiguration implements PasswordEncoder {
     @Autowired
     Environment environment;
 
-    public List<String> unAuthenticatedPaths = List.of(
-            "/otps/**",
-            "/authentications/**",
-            "/products/**",
-            "/webjars/**",
-            "/v3/api-docs/**",
-            "/swagger-ui/**"
-    );
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -63,7 +55,18 @@ public class SecurityConfiguration implements PasswordEncoder {
                 .addFilterBefore(transactionWebFilterImpl, DisableEncodeUrlFilter.class)
                 .addFilterAt(authenticationWebFilterImpl, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
-                        .requestMatchers(unAuthenticatedPaths.toArray(String[]::new)).permitAll()
+                        .requestMatchers(
+                                "/otps/**",
+                                "/authentications/**",
+                                "/webjars/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**"
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/products/**",
+                                "/product-categories/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .build();
