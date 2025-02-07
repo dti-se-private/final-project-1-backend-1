@@ -8,9 +8,10 @@ import org.dti.se.finalproject1backend1.inners.models.entities.*;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByInternalRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByExternalRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByInternalRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.verifications.VerificationRequest;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
@@ -330,7 +331,7 @@ public class TestConfiguration {
 
         Verification verification = getVerification(email, type);
 
-        RegisterByEmailAndPasswordRequest requestBody = RegisterByEmailAndPasswordRequest
+        RegisterByInternalRequest requestBody = RegisterByInternalRequest
                 .builder()
                 .name(String.format("name-%s", UUID.randomUUID()))
                 .email(email)
@@ -387,9 +388,9 @@ public class TestConfiguration {
 
         Mockito.when(googleIdTokenVerifier.verify(mockIdToken)).thenReturn(idToken);
 
-        RegisterAndLoginByExternalRequest requestBody = RegisterAndLoginByExternalRequest
+        RegisterByExternalRequest requestBody = RegisterByExternalRequest
                 .builder()
-                .idToken(mockIdToken)
+                .credential(mockIdToken)
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
@@ -417,7 +418,7 @@ public class TestConfiguration {
     }
 
     protected ResponseBody<Session> loginByInternal(Account account) throws Exception {
-        LoginByEmailAndPasswordRequest requestBody = LoginByEmailAndPasswordRequest
+        LoginByInternalRequest requestBody = LoginByInternalRequest
                 .builder()
                 .email(account.getEmail())
                 .password(rawPassword)
@@ -470,11 +471,16 @@ public class TestConfiguration {
     protected Verification getVerification(String email, String type) throws Exception {
         Mockito.doNothing().when(mailgunGatewayMock).sendEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 
+        VerificationRequest requestBody = VerificationRequest
+                .builder()
+                .email(email)
+                .type(type)
+                .build();
+
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post("/otps/send")
-                .param("email", email)
-                .param("type", type)
-                .contentType(MediaType.APPLICATION_JSON);
+                .post("/verifications/send")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
                 .perform(request)
@@ -486,7 +492,7 @@ public class TestConfiguration {
         });
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
         assert body != null;
-        assert body.getMessage().equals("OTP sent succeed.");
+        assert body.getMessage().equals("Verification send succeed.");
         assert body.getData() == null;
 
         return verificationRepository

@@ -9,10 +9,7 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Verification;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.ResetPasswordRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.*;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,7 +62,7 @@ public class AuthenticationRestTest extends TestConfiguration {
 
         Verification verification = getVerification(email, type);
 
-        RegisterByEmailAndPasswordRequest requestBody = RegisterByEmailAndPasswordRequest
+        RegisterByInternalRequest requestBody = RegisterByInternalRequest
                 .builder()
                 .name(String.format("name-%s", UUID.randomUUID()))
                 .email(email)
@@ -122,9 +119,9 @@ public class AuthenticationRestTest extends TestConfiguration {
 
         Mockito.when(authGoogleIdTokenVerifier.verify(mockIdToken)).thenReturn(idToken);
 
-        RegisterAndLoginByExternalRequest requestBody = RegisterAndLoginByExternalRequest
+        RegisterByExternalRequest requestBody = RegisterByExternalRequest
                 .builder()
-                .idToken(mockIdToken)
+                .credential(mockIdToken)
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
@@ -160,7 +157,7 @@ public class AuthenticationRestTest extends TestConfiguration {
         Account realAccount = accountRepository
                 .findById(registerResponse.getData().getId())
                 .orElseThrow(AccountNotFoundException::new);
-        LoginByEmailAndPasswordRequest requestBody = LoginByEmailAndPasswordRequest
+        LoginByInternalRequest requestBody = LoginByInternalRequest
                 .builder()
                 .email(realAccount.getEmail())
                 .password(rawPassword)
@@ -196,9 +193,9 @@ public class AuthenticationRestTest extends TestConfiguration {
         ResponseBody<Account> registerResponse = registerByExternal();
         Account realAccount = registerResponse.getData();
 
-        RegisterAndLoginByExternalRequest requestBody = RegisterAndLoginByExternalRequest
+        LoginByExternalRequest requestBody = LoginByExternalRequest
                 .builder()
-                .idToken("mock-id-token")
+                .credential("mock-id-token")
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders

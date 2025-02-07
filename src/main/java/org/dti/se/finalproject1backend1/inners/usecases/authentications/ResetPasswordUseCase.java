@@ -22,7 +22,7 @@ public class ResetPasswordUseCase {
     private ProviderRepository providerRepository;
 
     @Autowired
-    private OtpUseCase otpUseCase;
+    private VerificationUseCase verificationUseCase;
 
     @Autowired
     private SecurityConfiguration securityConfiguration;
@@ -38,7 +38,7 @@ public class ResetPasswordUseCase {
             throw new ProviderException("Reset password is only allowed for register by email and password");
         }
 
-        if (otpUseCase.verifyOtp(email, otp, "RESET_PASSWORD")) {
+        if (verificationUseCase.verifyOtp(email, otp, "RESET_PASSWORD")) {
             String encodedPassword = securityConfiguration.encode(newPassword);
             account.setPassword(encodedPassword);
             accountRepository.saveAndFlush(account);
