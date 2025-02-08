@@ -7,11 +7,13 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import org.dti.se.finalproject1backend1.inners.models.entities.*;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
+import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
 import org.locationtech.jts.geom.Coordinate;
@@ -45,6 +47,8 @@ public class TestConfiguration {
     @Autowired
     protected AccountRepository accountRepository;
     @Autowired
+    protected AccountAddressRepository accountAddressRepository;
+    @Autowired
     private AccountPermissionRepository accountPermissionRepository;
     @Autowired
     protected WarehouseRepository warehouseRepository;
@@ -76,6 +80,7 @@ public class TestConfiguration {
     protected SecurityConfiguration securityConfiguration;
 
     protected List<Account> fakeAccounts = new ArrayList<>();
+    protected List<AccountAddress> fakeAccountAddresses = new ArrayList<>();
     protected List<AccountPermission> fakePermissions = new ArrayList<>();
     protected List<Warehouse> fakeWarehouses = new ArrayList<>();
     protected List<Category> fakeCategories = new ArrayList<>();
@@ -95,6 +100,7 @@ public class TestConfiguration {
     protected ObjectMapper objectMapper;
 
     public void populate() {
+        GeometryFactory geometryFactory = new GeometryFactory();
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
         for (int i = 0; i < 5; i++) {
@@ -108,6 +114,15 @@ public class TestConfiguration {
                     .build();
             fakeAccounts.add(newAccount);
 
+            AccountAddress newAccountAddress = AccountAddress
+                    .builder()
+                    .id(UUID.randomUUID())
+                    .account(newAccount)
+                    .name(String.format("name-%s", UUID.randomUUID()))
+                    .location(geometryFactory.createPoint(new Coordinate(Math.random() * 10, Math.random() * 10)))
+                    .build();
+            fakeAccountAddresses.add(newAccountAddress);
+
             AccountPermission newPermission = AccountPermission
                     .builder()
                     .id(UUID.randomUUID())
@@ -117,6 +132,7 @@ public class TestConfiguration {
             fakePermissions.add(newPermission);
         }
         accountRepository.saveAll(fakeAccounts);
+        accountAddressRepository.saveAll(fakeAccountAddresses);
         accountPermissionRepository.saveAll(fakePermissions);
 
         for (int i = 0; i < 5; i++) {
@@ -125,6 +141,7 @@ public class TestConfiguration {
                     .id(UUID.randomUUID())
                     .name(String.format("name-%s", UUID.randomUUID()))
                     .description(String.format("description-%s", UUID.randomUUID()))
+                    .location(geometryFactory.createPoint(new Coordinate(Math.random() * 10, Math.random() * 10)))
                     .build();
             fakeWarehouses.add(newWarehouse);
         }
@@ -164,7 +181,7 @@ public class TestConfiguration {
                         .id(UUID.randomUUID())
                         .warehouse(warehouse)
                         .product(product)
-                        .quantity(200 + Math.ceil(Math.random() * 1000))
+                        .quantity(2000 + Math.ceil(Math.random() * 1000))
                         .build();
                 fakeWarehouseProducts.add(newWarehouseProduct);
             });
@@ -185,7 +202,6 @@ public class TestConfiguration {
         });
         cartItemRepository.saveAll(fakeCartItems);
 
-        GeometryFactory geometryFactory = new GeometryFactory();
         List<String> ledgerStatuses = List.of(
                 "WAITING_FOR_APPROVAL",
                 "APPROVED",
@@ -202,6 +218,7 @@ public class TestConfiguration {
 
         fakeAccounts.forEach(account -> {
             for (int i = 0; i < 5; i++) {
+                Warehouse orderOriginWarehouse = fakeWarehouses.get((int) Math.floor(Math.random() * fakeWarehouses.size()));
                 Order newOrder = Order
                         .builder()
                         .id(UUID.randomUUID())
@@ -211,10 +228,11 @@ public class TestConfiguration {
                         .shipmentDestination(geometryFactory.createPoint(new Coordinate(Math.random() * 10, Math.random() * 10)))
                         .shipmentPrice(Math.ceil(Math.random() * 1000000))
                         .itemPrice(Math.ceil(Math.random() * 1000000))
+                        .originWarehouse(orderOriginWarehouse)
                         .build();
                 fakeOrders.add(newOrder);
 
-                for (int j = 0; j < orderStatuses.size() - i; j++) {
+                for (int j = 0; j < orderStatuses.size() - (i + 1); j++) {
                     OrderStatus newOrderStatus = OrderStatus
                             .builder()
                             .id(UUID.randomUUID())
@@ -226,20 +244,14 @@ public class TestConfiguration {
                 }
 
                 fakeProducts.forEach(product -> {
-                    int originWarehouseIndex = (int) Math.floor(Math.random() * fakeWarehouses.size());
-                    Warehouse originWarehouse = fakeWarehouses.get(originWarehouseIndex);
-                    int destinationWarehouseIndex = (int) Math.floor(Math.random() * fakeWarehouses.size());
-                    Warehouse destinationWarehouse = fakeWarehouses.get(destinationWarehouseIndex);
-
-                    int ledgerStatusIndex = (int) Math.floor(Math.random() * ledgerStatuses.size());
-                    String ledgerStatus = ledgerStatuses.get(ledgerStatusIndex);
-
+                    Warehouse originWarehouse = fakeWarehouses.get((int) Math.floor(Math.random() * fakeWarehouses.size()));
+                    String ledgerStatus = ledgerStatuses.get((int) Math.floor(Math.random() * ledgerStatuses.size()));
                     WarehouseLedger newWarehouseLedger = WarehouseLedger
                             .builder()
                             .id(UUID.randomUUID())
                             .product(product)
                             .originWarehouse(originWarehouse)
-                            .destinationWarehouse(destinationWarehouse)
+                            .destinationWarehouse(orderOriginWarehouse)
                             .originPreQuantity(Math.ceil(Math.random() * 100))
                             .originPostQuantity(Math.ceil(Math.random() * 100))
                             .destinationPreQuantity(Math.ceil(Math.random() * 100))
@@ -286,12 +298,19 @@ public class TestConfiguration {
         fakeCategories.clear();
         warehouseRepository.deleteAll(fakeWarehouses);
         fakeWarehouses.clear();
+        accountPermissionRepository.deleteAll(fakePermissions);
+        fakePermissions.clear();
+        accountAddressRepository.deleteAll(fakeAccountAddresses);
+        fakeAccountAddresses.clear();
         accountRepository.deleteAll(fakeAccounts);
         fakeAccounts.clear();
     }
 
     public void auth() throws Exception {
-        authenticatedAccount = registerByInternal().getData();
+        ResponseBody<AccountResponse> accountResponse = registerByInternal();
+        authenticatedAccount = accountRepository
+                .findById(accountResponse.getData().getId())
+                .orElseThrow(AccountNotFoundException::new);
         fakeAccounts.add(authenticatedAccount);
         authenticatedSession = loginByInternal(authenticatedAccount).getData();
     }
@@ -305,7 +324,7 @@ public class TestConfiguration {
         logout(authenticatedSession);
     }
 
-    protected ResponseBody<Account> registerByInternal() throws Exception {
+    protected ResponseBody<AccountResponse> registerByInternal() throws Exception {
         String email = String.format("email-%s", UUID.randomUUID());
         String type = "REGISTER";
 
@@ -331,16 +350,24 @@ public class TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<Account> body = objectMapper.readValue(content, new TypeReference<>() {
+        ResponseBody<AccountResponse> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
-        assert body.getMessage().equals("Register succeed.");
+        assert body.getMessage().equals("Register by internal succeed.");
         assert body.getData() != null;
         assert body.getData().getId() != null;
         assert body.getData().getName().equals(requestBody.getName());
         assert body.getData().getEmail().equals(requestBody.getEmail());
         assert securityConfiguration.matches(requestBody.getPassword(), body.getData().getPassword());
         assert body.getData().getPhone().equals(requestBody.getPhone());
+        assert body.getData().getImage() == null;
+        assert body.getData().getIsVerified().equals(true);
+
+        Account registeredAccount = accountRepository
+                .findById(body.getData().getId())
+                .orElseThrow(AccountNotFoundException::new);
+        fakeAccounts.add(registeredAccount);
+
         return body;
     }
 
@@ -348,12 +375,12 @@ public class TestConfiguration {
         String mockIdToken = "mock-id-token";
         String email = String.format("email-%s", UUID.randomUUID());
         String name = String.format("name-%s", UUID.randomUUID());
-        String picture = "http://example.com/picture.jpg";
+        String picture = "https://placehold.co/400x400";
 
         GoogleIdToken.Payload payload = Mockito.mock(GoogleIdToken.Payload.class);
         Mockito.when(payload.getEmail()).thenReturn(email);
         Mockito.when(payload.get("name")).thenReturn(name);
-        Mockito.when(payload.get("picture")).thenReturn(picture.getBytes());
+        Mockito.when(payload.get("picture")).thenReturn(picture);
 
         GoogleIdToken idToken = Mockito.mock(GoogleIdToken.class);
         Mockito.when(idToken.getPayload()).thenReturn(payload);
@@ -379,7 +406,7 @@ public class TestConfiguration {
         ResponseBody<Account> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
-        assert body.getMessage().equals("Register succeed.");
+        assert body.getMessage().equals("Register by external succeed.");
         assert body.getData() != null;
         assert body.getData().getId() != null;
         assert body.getData().getName().equals(name);
@@ -465,6 +492,5 @@ public class TestConfiguration {
         return verificationRepository
                 .findByEmailAndType(email, type)
                 .orElseThrow(VerificationNotFoundException::new);
-
     }
 }

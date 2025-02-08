@@ -43,4 +43,7 @@ public class Warehouse {
     @Builder.Default
     private Set<WarehouseProduct> warehouseProducts = new LinkedHashSet<>();
 
+    @OneToMany(mappedBy = "originWarehouse")
+    @Builder.Default
+    private Set<Order> orders = new LinkedHashSet<>();
 }

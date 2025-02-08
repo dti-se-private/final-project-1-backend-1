@@ -8,5 +8,4 @@ import java.util.UUID;
 
 public interface OrderStatusRepository extends JpaRepository<OrderStatus, UUID> {
     List<OrderStatus> findAllByOrderIdOrderByTimeAsc(UUID id);
-
 }
