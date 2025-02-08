@@ -13,7 +13,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Repository
 public class OrderCustomRepository {
@@ -29,78 +28,71 @@ public class OrderCustomRepository {
             Account account,
             Integer page,
             Integer size,
-            List<String> filters,
             String search
     ) {
-        String order = filters
-                .stream()
-                .map(filter -> String.format("SIMILARITY(%s::text, '%s')", filter, search))
-                .collect(Collectors.joining("+"));
-
-        if (order.isEmpty()) {
-            order = "\"order\".id";
-        }
-
-        String sql = String.format("""
-                        SELECT json_build_object(
-                            'id', "order".id,
-                            'totalPrice', "order".total_price,
-                            'shipmentOrigin', "order".shipment_origin,
-                            'shipmentDestination', "order".shipment_destination,
-                            'shipmentPrice', "order".shipment_price,
-                            'itemPrice', "order".item_price,
-                            'statuses', (
-                                SELECT json_agg(json_build_object(
-                                    'id', order_status.id,
-                                    'status', order_status.status,
-                                    'time', order_status.time
-                                ))
-                                FROM (
-                                    SELECT *
-                                    FROM order_status
-                                    WHERE order_status.order_id = "order".id
-                                    ORDER BY order_status.time
-                                ) as order_status
-                            ),
-                            'items', (
-                                SELECT json_agg(json_build_object(
-                                    'id', order_item.id,
-                                    'quantity', order_item.quantity,
-                                    'product', json_build_object(
-                                        'id', product.id,
-                                        'name', product.name,
-                                        'description', product.description,
-                                        'price', product.price,
-                                        'image', product.image,
-                                        'category', json_build_object(
-                                            'id', category.id,
-                                            'name', category.name,
-                                            'description', category.description
-                                        )
+        String sql = """
+                SELECT *
+                FROM (
+                    SELECT json_build_object(
+                        'id', "order".id,
+                        'totalPrice', "order".total_price,
+                        'shipmentOrigin', "order".shipment_origin,
+                        'shipmentDestination', "order".shipment_destination,
+                        'shipmentPrice', "order".shipment_price,
+                        'itemPrice', "order".item_price,
+                        'statuses', (
+                            SELECT json_agg(json_build_object(
+                                'id', order_status.id,
+                                'status', order_status.status,
+                                'time', order_status.time
+                            ))
+                            FROM (
+                                SELECT *
+                                FROM order_status
+                                WHERE order_status.order_id = "order".id
+                                ORDER BY order_status.time
+                            ) as order_status
+                        ),
+                        'items', (
+                            SELECT json_agg(json_build_object(
+                                'id', order_item.id,
+                                'quantity', order_item.quantity,
+                                'product', json_build_object(
+                                    'id', product.id,
+                                    'name', product.name,
+                                    'description', product.description,
+                                    'price', product.price,
+                                    'image', product.image,
+                                    'category', json_build_object(
+                                        'id', category.id,
+                                        'name', category.name,
+                                        'description', category.description
                                     )
-                                ))
-                                FROM order_item
-                                JOIN product ON order_item.product_id = product.id
-                                JOIN category ON product.category_id = category.id
-                                WHERE order_item.order_id = "order".id
-                            ),
-                             'paymentProofs', (
-                                 SELECT json_agg(json_build_object(
-                                     'id', payment_proof.id,
-                                     'file', payment_proof.file,
-                                     'extension', payment_proof.extension,
-                                     'time', payment_proof.time
-                                 ))
-                                 FROM payment_proof
-                                 WHERE payment_proof.order_id = "order".id
-                             )
-                        ) as item
-                FROM "order"
-                WHERE "order".account_id = ?
-                ORDER BY %s
-                LIMIT ?
-                OFFSET ?
-                """, order);
+                                )
+                            ))
+                            FROM order_item
+                            JOIN product ON order_item.product_id = product.id
+                            JOIN category ON product.category_id = category.id
+                            WHERE order_item.order_id = "order".id
+                        ),
+                         'paymentProofs', (
+                             SELECT json_agg(json_build_object(
+                                 'id', payment_proof.id,
+                                 'file', payment_proof.file,
+                                 'extension', payment_proof.extension,
+                                 'time', payment_proof.time
+                             ))
+                             FROM payment_proof
+                             WHERE payment_proof.order_id = "order".id
+                         )
+                    ) as item
+                    FROM "order"
+                    WHERE "order".account_id = ?
+                    LIMIT ?
+                    OFFSET ?
+                ) as sq1
+                ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                """;
 
         return oneTemplate
                 .query(sql,
@@ -114,87 +106,82 @@ public class OrderCustomRepository {
                         },
                         account.getId(),
                         size,
-                        page * size
+                        page * size,
+                        search
                 );
     }
 
-    public List<OrderResponse> getOrders(Account account, Integer page, Integer size, List<String> filters, String search) {
-        String order = filters
-                .stream()
-                .map(filter -> String.format("SIMILARITY(%s::text, '%s')", filter, search))
-                .collect(Collectors.joining("+"));
-
-        if (order.isEmpty()) {
-            order = "\"order\".id";
-        }
-
-        String sql = String.format("""
-                SELECT json_build_object(
-                            'id', "order".id,
-                            'totalPrice', "order".total_price,
-                            'shipmentOrigin', "order".shipment_origin,
-                            'shipmentDestination', "order".shipment_destination,
-                            'shipmentPrice', "order".shipment_price,
-                            'itemPrice', "order".item_price,
-                            'statuses', (
-                                SELECT json_agg(json_build_object(
-                                    'id', order_status.id,
-                                    'status', order_status.status,
-                                    'time', order_status.time
-                                ))
-                                FROM (
-                                    SELECT *
-                                    FROM order_status
-                                    WHERE order_status.order_id = "order".id
-                                    ORDER BY order_status.time
-                                ) as order_status
-                            ),
-                            'items', (
-                                SELECT json_agg(json_build_object(
-                                    'id', order_item.id,
-                                    'quantity', order_item.quantity,
-                                    'product', json_build_object(
-                                        'id', product.id,
-                                        'name', product.name,
-                                        'description', product.description,
-                                        'price', product.price,
-                                        'image', product.image,
-                                        'category', json_build_object(
-                                            'id', category.id,
-                                            'name', category.name,
-                                            'description', category.description
-                                        )
+    public List<OrderResponse> getOrders(Account account, Integer page, Integer size, String search) {
+        String sql = """
+                SELECT *
+                FROM (
+                    SELECT json_build_object(
+                        'id', "order".id,
+                        'totalPrice', "order".total_price,
+                        'shipmentOrigin', "order".shipment_origin,
+                        'shipmentDestination', "order".shipment_destination,
+                        'shipmentPrice', "order".shipment_price,
+                        'itemPrice', "order".item_price,
+                        'statuses', (
+                            SELECT json_agg(json_build_object(
+                                'id', order_status.id,
+                                'status', order_status.status,
+                                'time', order_status.time
+                            ))
+                            FROM (
+                                SELECT *
+                                FROM order_status
+                                WHERE order_status.order_id = "order".id
+                                ORDER BY order_status.time
+                            ) as order_status
+                        ),
+                        'items', (
+                            SELECT json_agg(json_build_object(
+                                'id', order_item.id,
+                                'quantity', order_item.quantity,
+                                'product', json_build_object(
+                                    'id', product.id,
+                                    'name', product.name,
+                                    'description', product.description,
+                                    'price', product.price,
+                                    'image', product.image,
+                                    'category', json_build_object(
+                                        'id', category.id,
+                                        'name', category.name,
+                                        'description', category.description
                                     )
-                                ))
-                                FROM order_item
-                                JOIN product ON order_item.product_id = product.id
-                                JOIN category ON product.category_id = category.id
-                                WHERE order_item.order_id = "order".id
-                            ),
-                            'paymentProofs', (
-                                SELECT json_agg(json_build_object(
-                                    'id', payment_proof.id,
-                                    'file', payment_proof.file,
-                                    'extension', payment_proof.extension,
-                                    'time', payment_proof.time
-                                ))
-                                FROM payment_proof
-                                WHERE payment_proof.order_id = "order".id
-                            )
-                        ) as item
-                FROM "order"
-                WHERE "order".id in (
-                    SELECT DISTINCT order_item.order_id
-                    FROM order_item
-                    JOIN warehouse_product ON order_item.product_id = warehouse_product.product_id
-                    JOIN warehouse_admin ON warehouse_product.warehouse_id = warehouse_admin.warehouse_id
-                    WHERE order_item.order_id = "order".id
-                    AND warehouse_admin.account_id = ?
-                )
-                ORDER BY %s
-                LIMIT ?
-                OFFSET ?
-                """, order);
+                                )
+                            ))
+                            FROM order_item
+                            JOIN product ON order_item.product_id = product.id
+                            JOIN category ON product.category_id = category.id
+                            WHERE order_item.order_id = "order".id
+                        ),
+                        'paymentProofs', (
+                            SELECT json_agg(json_build_object(
+                                'id', payment_proof.id,
+                                'file', payment_proof.file,
+                                'extension', payment_proof.extension,
+                                'time', payment_proof.time
+                            ))
+                            FROM payment_proof
+                            WHERE payment_proof.order_id = "order".id
+                        )
+                    ) as item
+                    FROM "order"
+                    WHERE "order".id in (
+                        SELECT DISTINCT order_item.order_id
+                        FROM order_item
+                        JOIN warehouse_product ON order_item.product_id = warehouse_product.product_id
+                        JOIN warehouse_admin ON warehouse_product.warehouse_id = warehouse_admin.warehouse_id
+                        WHERE order_item.order_id = "order".id
+                        AND warehouse_admin.account_id = ?
+                    )
+                    LIMIT ?
+                    OFFSET ?
+                ) as sq1
+                ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                """;
 
         return oneTemplate
                 .query(sql,
@@ -208,79 +195,74 @@ public class OrderCustomRepository {
                         },
                         account.getId(),
                         size,
-                        page * size
+                        page * size,
+                        search
                 );
     }
 
-    public List<OrderResponse> getOrders(Integer page, Integer size, List<String> filters, String search) {
-        String order = filters
-                .stream()
-                .map(filter -> String.format("SIMILARITY(%s::text, '%s')", filter, search))
-                .collect(Collectors.joining("+"));
-
-        if (order.isEmpty()) {
-            order = "\"order\".id";
-        }
-
-        String sql = String.format("""
-                SELECT json_build_object(
-                            'id', "order".id,
-                            'totalPrice', "order".total_price,
-                            'shipmentOrigin', "order".shipment_origin,
-                            'shipmentDestination', "order".shipment_destination,
-                            'shipmentPrice', "order".shipment_price,
-                            'itemPrice', "order".item_price,
-                            'statuses', (
-                                SELECT json_agg(json_build_object(
-                                    'id', order_status.id,
-                                    'status', order_status.status,
-                                    'time', order_status.time
-                                ))
-                                FROM (
-                                    SELECT *
-                                    FROM order_status
-                                    WHERE order_status.order_id = "order".id
-                                    ORDER BY order_status.time
-                                ) as order_status
-                            ),
-                            'items', (
-                                SELECT json_agg(json_build_object(
-                                    'id', order_item.id,
-                                    'quantity', order_item.quantity,
-                                    'product', json_build_object(
-                                        'id', product.id,
-                                        'name', product.name,
-                                        'description', product.description,
-                                        'price', product.price,
-                                        'image', product.image,
-                                        'category', json_build_object(
-                                            'id', category.id,
-                                            'name', category.name,
-                                            'description', category.description
+    public List<OrderResponse> getOrders(Integer page, Integer size, String search) {
+        String sql = """
+                SELECT *
+                FROM (
+                    SELECT json_build_object(
+                                'id', "order".id,
+                                'totalPrice', "order".total_price,
+                                'shipmentOrigin', "order".shipment_origin,
+                                'shipmentDestination', "order".shipment_destination,
+                                'shipmentPrice', "order".shipment_price,
+                                'itemPrice', "order".item_price,
+                                'statuses', (
+                                    SELECT json_agg(json_build_object(
+                                        'id', order_status.id,
+                                        'status', order_status.status,
+                                        'time', order_status.time
+                                    ))
+                                    FROM (
+                                        SELECT *
+                                        FROM order_status
+                                        WHERE order_status.order_id = "order".id
+                                        ORDER BY order_status.time
+                                    ) as order_status
+                                ),
+                                'items', (
+                                    SELECT json_agg(json_build_object(
+                                        'id', order_item.id,
+                                        'quantity', order_item.quantity,
+                                        'product', json_build_object(
+                                            'id', product.id,
+                                            'name', product.name,
+                                            'description', product.description,
+                                            'price', product.price,
+                                            'image', product.image,
+                                            'category', json_build_object(
+                                                'id', category.id,
+                                                'name', category.name,
+                                                'description', category.description
+                                            )
                                         )
-                                    )
-                                ))
-                                FROM order_item
-                                JOIN product ON order_item.product_id = product.id
-                                JOIN category ON product.category_id = category.id
-                                WHERE order_item.order_id = "order".id
-                            ),
-                            'paymentProofs', (
-                                SELECT json_agg(json_build_object(
-                                    'id', payment_proof.id,
-                                    'file', payment_proof.file,
-                                    'extension', payment_proof.extension,
-                                    'time', payment_proof.time
-                                ))
-                                FROM payment_proof
-                                WHERE payment_proof.order_id = "order".id
-                            )
-                        ) as item
-                FROM "order"
-                ORDER BY %s
-                LIMIT ?
-                OFFSET ?
-                """, order);
+                                    ))
+                                    FROM order_item
+                                    JOIN product ON order_item.product_id = product.id
+                                    JOIN category ON product.category_id = category.id
+                                    WHERE order_item.order_id = "order".id
+                                ),
+                                'paymentProofs', (
+                                    SELECT json_agg(json_build_object(
+                                        'id', payment_proof.id,
+                                        'file', payment_proof.file,
+                                        'extension', payment_proof.extension,
+                                        'time', payment_proof.time
+                                    ))
+                                    FROM payment_proof
+                                    WHERE payment_proof.order_id = "order".id
+                                )
+                            ) as item
+                    FROM "order"
+                    LIMIT ?
+                    OFFSET ?
+                ) as sq1
+                ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                """;
 
         return oneTemplate
                 .query(sql,
@@ -293,7 +275,8 @@ public class OrderCustomRepository {
                             }
                         },
                         size,
-                        page * size
+                        page * size,
+                        search
                 );
     }
 
@@ -375,93 +358,87 @@ public class OrderCustomRepository {
         }
     }
 
-    public List<OrderResponse> getPaymentConfirmationOrders(Account account, Integer page, Integer size, List<String> filters, String search) {
-        String order = filters
-                .stream()
-                .map(filter -> String.format("SIMILARITY(%s::text, '%s')", filter, search))
-                .collect(Collectors.joining("+"));
-
-        if (order.isEmpty()) {
-            order = "\"order\".id";
-        }
-
-        String sql = String.format("""
-                SELECT json_build_object(
-                            'id', "order".id,
-                            'totalPrice', "order".total_price,
-                            'shipmentOrigin', "order".shipment_origin,
-                            'shipmentDestination', "order".shipment_destination,
-                            'shipmentPrice', "order".shipment_price,
-                            'itemPrice', "order".item_price,
-                            'statuses', (
-                                SELECT json_agg(json_build_object(
-                                    'id', order_status.id,
-                                    'status', order_status.status,
-                                    'time', order_status.time
-                                ))
-                                FROM (
-                                    SELECT *
-                                    FROM order_status
-                                    WHERE order_status.order_id = "order".id
-                                    ORDER BY order_status.time
-                                ) as order_status
-                            ),
-                            'items', (
-                                SELECT json_agg(json_build_object(
-                                    'id', order_item.id,
-                                    'quantity', order_item.quantity,
-                                    'product', json_build_object(
-                                        'id', product.id,
-                                        'name', product.name,
-                                        'description', product.description,
-                                        'price', product.price,
-                                        'image', product.image,
-                                        'category', json_build_object(
-                                            'id', category.id,
-                                            'name', category.name,
-                                            'description', category.description
+    public List<OrderResponse> getPaymentConfirmationOrders(Account account, Integer page, Integer size, String search) {
+        String sql = """
+                SELECT *
+                FROM (
+                    SELECT json_build_object(
+                                'id', "order".id,
+                                'totalPrice', "order".total_price,
+                                'shipmentOrigin', "order".shipment_origin,
+                                'shipmentDestination', "order".shipment_destination,
+                                'shipmentPrice', "order".shipment_price,
+                                'itemPrice', "order".item_price,
+                                'statuses', (
+                                    SELECT json_agg(json_build_object(
+                                        'id', order_status.id,
+                                        'status', order_status.status,
+                                        'time', order_status.time
+                                    ))
+                                    FROM (
+                                        SELECT *
+                                        FROM order_status
+                                        WHERE order_status.order_id = "order".id
+                                        ORDER BY order_status.time
+                                    ) as order_status
+                                ),
+                                'items', (
+                                    SELECT json_agg(json_build_object(
+                                        'id', order_item.id,
+                                        'quantity', order_item.quantity,
+                                        'product', json_build_object(
+                                            'id', product.id,
+                                            'name', product.name,
+                                            'description', product.description,
+                                            'price', product.price,
+                                            'image', product.image,
+                                            'category', json_build_object(
+                                                'id', category.id,
+                                                'name', category.name,
+                                                'description', category.description
+                                            )
                                         )
-                                    )
-                                ))
-                                FROM order_item
-                                JOIN product ON order_item.product_id = product.id
-                                JOIN category ON product.category_id = category.id
-                                WHERE order_item.order_id = "order".id
-                            ),
-                            'paymentProofs', (
-                                SELECT json_agg(json_build_object(
-                                    'id', payment_proof.id,
-                                    'file', payment_proof.file,
-                                    'extension', payment_proof.extension,
-                                    'time', payment_proof.time
-                                ))
-                                FROM payment_proof
-                                WHERE payment_proof.order_id = "order".id
-                            )
-                        ) as item
-                FROM "order"
-                WHERE "order".id in (
-                    SELECT order_status.order_id
-                    FROM order_status
-                    WHERE order_status.id in (
-                        SELECT DISTINCT ON (order_status.order_id) order_status.id
+                                    ))
+                                    FROM order_item
+                                    JOIN product ON order_item.product_id = product.id
+                                    JOIN category ON product.category_id = category.id
+                                    WHERE order_item.order_id = "order".id
+                                ),
+                                'paymentProofs', (
+                                    SELECT json_agg(json_build_object(
+                                        'id', payment_proof.id,
+                                        'file', payment_proof.file,
+                                        'extension', payment_proof.extension,
+                                        'time', payment_proof.time
+                                    ))
+                                    FROM payment_proof
+                                    WHERE payment_proof.order_id = "order".id
+                                )
+                            ) as item
+                    FROM "order"
+                    WHERE "order".id in (
+                        SELECT order_status.order_id
                         FROM order_status
-                        ORDER BY order_status.order_id, order_status.time DESC
+                        WHERE order_status.id in (
+                            SELECT DISTINCT ON (order_status.order_id) order_status.id
+                            FROM order_status
+                            ORDER BY order_status.order_id, order_status.time DESC
+                        )
+                        AND order_status.status = 'WAITING_FOR_PAYMENT_CONFIRMATION'
                     )
-                    AND order_status.status = 'WAITING_FOR_PAYMENT_CONFIRMATION'
-                )
-                AND "order".id in (
-                    SELECT DISTINCT order_item.order_id
-                    FROM order_item
-                    JOIN warehouse_product ON order_item.product_id = warehouse_product.product_id
-                    JOIN warehouse_admin ON warehouse_product.warehouse_id = warehouse_admin.warehouse_id
-                    WHERE order_item.order_id = "order".id
-                    AND warehouse_admin.account_id = ?
-                )
-                ORDER BY %s
-                LIMIT ?
-                OFFSET ?
-                """, order);
+                    AND "order".id in (
+                        SELECT DISTINCT order_item.order_id
+                        FROM order_item
+                        JOIN warehouse_product ON order_item.product_id = warehouse_product.product_id
+                        JOIN warehouse_admin ON warehouse_product.warehouse_id = warehouse_admin.warehouse_id
+                        WHERE order_item.order_id = "order".id
+                        AND warehouse_admin.account_id = ?
+                    )
+                    LIMIT ?
+                    OFFSET ?
+                ) as sq1
+                ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                """;
 
         return oneTemplate
                 .query(sql,
@@ -475,90 +452,85 @@ public class OrderCustomRepository {
                         },
                         account.getId(),
                         size,
-                        page * size
+                        page * size,
+                        search
                 );
     }
 
 
-    public List<OrderResponse> getPaymentConfirmationOrders(Integer page, Integer size, List<String> filters, String search) {
-        String order = filters
-                .stream()
-                .map(filter -> String.format("SIMILARITY(%s::text, '%s')", filter, search))
-                .collect(Collectors.joining("+"));
-
-        if (order.isEmpty()) {
-            order = "\"order\".id";
-        }
-
-        String sql = String.format("""
-                SELECT json_build_object(
-                            'id', "order".id,
-                            'totalPrice', "order".total_price,
-                            'shipmentOrigin', "order".shipment_origin,
-                            'shipmentDestination', "order".shipment_destination,
-                            'shipmentPrice', "order".shipment_price,
-                            'itemPrice', "order".item_price,
-                            'statuses', (
-                                SELECT json_agg(json_build_object(
-                                    'id', order_status.id,
-                                    'status', order_status.status,
-                                    'time', order_status.time
-                                ))
-                                FROM (
-                                    SELECT *
-                                    FROM order_status
-                                    WHERE order_status.order_id = "order".id
-                                    ORDER BY order_status.time
-                                ) as order_status
-                            ),
-                            'items', (
-                                SELECT json_agg(json_build_object(
-                                    'id', order_item.id,
-                                    'quantity', order_item.quantity,
-                                    'product', json_build_object(
-                                        'id', product.id,
-                                        'name', product.name,
-                                        'description', product.description,
-                                        'price', product.price,
-                                        'image', product.image,
-                                        'category', json_build_object(
-                                            'id', category.id,
-                                            'name', category.name,
-                                            'description', category.description
+    public List<OrderResponse> getPaymentConfirmationOrders(Integer page, Integer size, String search) {
+        String sql = """
+                SELECT *
+                FROM (
+                    SELECT json_build_object(
+                                'id', "order".id,
+                                'totalPrice', "order".total_price,
+                                'shipmentOrigin', "order".shipment_origin,
+                                'shipmentDestination', "order".shipment_destination,
+                                'shipmentPrice', "order".shipment_price,
+                                'itemPrice', "order".item_price,
+                                'statuses', (
+                                    SELECT json_agg(json_build_object(
+                                        'id', order_status.id,
+                                        'status', order_status.status,
+                                        'time', order_status.time
+                                    ))
+                                    FROM (
+                                        SELECT *
+                                        FROM order_status
+                                        WHERE order_status.order_id = "order".id
+                                        ORDER BY order_status.time
+                                    ) as order_status
+                                ),
+                                'items', (
+                                    SELECT json_agg(json_build_object(
+                                        'id', order_item.id,
+                                        'quantity', order_item.quantity,
+                                        'product', json_build_object(
+                                            'id', product.id,
+                                            'name', product.name,
+                                            'description', product.description,
+                                            'price', product.price,
+                                            'image', product.image,
+                                            'category', json_build_object(
+                                                'id', category.id,
+                                                'name', category.name,
+                                                'description', category.description
+                                            )
                                         )
-                                    )
-                                ))
-                                FROM order_item
-                                JOIN product ON order_item.product_id = product.id
-                                JOIN category ON product.category_id = category.id
-                                WHERE order_item.order_id = "order".id
-                            ),
-                            'paymentProofs', (
-                                SELECT json_agg(json_build_object(
-                                    'id', payment_proof.id,
-                                    'file', payment_proof.file,
-                                    'extension', payment_proof.extension,
-                                    'time', payment_proof.time
-                                ))
-                                FROM payment_proof
-                                WHERE payment_proof.order_id = "order".id
-                            )
-                        ) as item
-                FROM "order"
-                WHERE "order".id in (
-                    SELECT order_status.order_id
-                    FROM order_status
-                    WHERE order_status.id in (
-                        SELECT DISTINCT ON (order_status.order_id) order_status.id
+                                    ))
+                                    FROM order_item
+                                    JOIN product ON order_item.product_id = product.id
+                                    JOIN category ON product.category_id = category.id
+                                    WHERE order_item.order_id = "order".id
+                                ),
+                                'paymentProofs', (
+                                    SELECT json_agg(json_build_object(
+                                        'id', payment_proof.id,
+                                        'file', payment_proof.file,
+                                        'extension', payment_proof.extension,
+                                        'time', payment_proof.time
+                                    ))
+                                    FROM payment_proof
+                                    WHERE payment_proof.order_id = "order".id
+                                )
+                            ) as item
+                    FROM "order"
+                    WHERE "order".id in (
+                        SELECT order_status.order_id
                         FROM order_status
-                        ORDER BY order_status.order_id, order_status.time DESC
+                        WHERE order_status.id in (
+                            SELECT DISTINCT ON (order_status.order_id) order_status.id
+                            FROM order_status
+                            ORDER BY order_status.order_id, order_status.time DESC
+                        )
+                        AND order_status.status = 'WAITING_FOR_PAYMENT_CONFIRMATION'
                     )
-                    AND order_status.status = 'WAITING_FOR_PAYMENT_CONFIRMATION'
-                )
-                ORDER BY %s
-                LIMIT ?
-                OFFSET ?
-                """, order);
+                    LIMIT ?
+                    OFFSET ?
+                ) as sq1
+                ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                """;
 
         return oneTemplate
                 .query(sql,
@@ -571,7 +543,8 @@ public class OrderCustomRepository {
                             }
                         },
                         size,
-                        page * size
+                        page * size,
+                        search
                 );
     }
 }

@@ -95,7 +95,6 @@ public class PaymentUseCase {
             Account account,
             Integer page,
             Integer size,
-            List<String> filters,
             String search
     ) {
         List<String> accountPermissions = account
@@ -106,10 +105,10 @@ public class PaymentUseCase {
 
         if (accountPermissions.contains("SUPER_ADMIN")) {
             return orderCustomRepository
-                    .getPaymentConfirmationOrders(page, size, filters, search);
+                    .getPaymentConfirmationOrders(page, size, search);
         } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
             return orderCustomRepository
-                    .getPaymentConfirmationOrders(account, page, size, filters, search);
+                    .getPaymentConfirmationOrders(account, page, size, search);
         } else {
             throw new AccountPermissionInvalidException();
         }

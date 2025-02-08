@@ -33,14 +33,13 @@ public class CartUseCase {
             Account account,
             Integer page,
             Integer size,
-            List<String> filters,
             String search
     ) {
         Account foundAccount = accountRepository
                 .findById(account.getId())
                 .orElseThrow(AccountNotFoundException::new);
 
-        return cartCustomRepository.getCartItems(foundAccount, page, size, filters, search);
+        return cartCustomRepository.getCartItems(foundAccount, page, size, search);
     }
 
     public void addCartItem(Account account, AddCartItemRequest request) {
