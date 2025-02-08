@@ -55,10 +55,10 @@ public class LoginAuthenticationUseCase {
         return getSession(account);
     }
 
-    public Session loginByExternal(String googleCredential) {
+    public Session loginByExternal(String credential) {
         GoogleIdToken idToken;
         try {
-            idToken = googleIdTokenVerifier.verify(googleCredential);
+            idToken = googleIdTokenVerifier.verify(credential);
         } catch (GeneralSecurityException | IOException e) {
             throw new VerificationInvalidException();
         }

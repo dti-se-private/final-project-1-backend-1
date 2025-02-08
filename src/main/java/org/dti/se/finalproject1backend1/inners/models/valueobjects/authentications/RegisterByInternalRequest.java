@@ -11,7 +11,7 @@ import org.dti.se.finalproject1backend1.inners.models.Model;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class RegisterByEmailAndPasswordRequest extends Model {
+public class RegisterByInternalRequest extends Model {
     private String name;
     private String email;
     private String otp;

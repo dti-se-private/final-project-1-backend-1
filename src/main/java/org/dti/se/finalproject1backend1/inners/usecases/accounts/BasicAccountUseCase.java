@@ -3,7 +3,7 @@ package org.dti.se.finalproject1backend1.inners.usecases.accounts;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
-import org.dti.se.finalproject1backend1.inners.usecases.authentications.OtpUseCase;
+import org.dti.se.finalproject1backend1.inners.usecases.authentications.VerificationUseCase;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
@@ -22,7 +22,7 @@ public class BasicAccountUseCase {
     SecurityConfiguration securityConfiguration;
 
     @Autowired
-    OtpUseCase otpUseCase;
+    VerificationUseCase verificationUseCase;
 
     public AccountResponse saveOne(AccountRequest request) {
         String encodedPassword = securityConfiguration.encode(request.getPassword());
@@ -84,7 +84,7 @@ public class BasicAccountUseCase {
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);
 
-        Boolean verifyResult = otpUseCase.verifyOtp(request.getEmail(), request.getOtp(), "UPDATE_EMAIL");
+        Boolean verifyResult = verificationUseCase.verifyOtp(request.getEmail(), request.getOtp(), "UPDATE_ACCOUNT");
         if (!verifyResult) {
             throw new VerificationInvalidException();
         }

@@ -2,13 +2,12 @@ package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import org.apache.commons.codec.binary.Hex;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
 import org.dti.se.finalproject1backend1.inners.models.entities.Provider;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByExternalRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByInternalRequest;
 import org.dti.se.finalproject1backend1.outers.configurations.GoogleConfiguration;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
@@ -21,10 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,11 +42,11 @@ public class RegisterAuthenticationUseCase {
     GoogleIdTokenVerifier googleIdTokenVerifier;
 
     @Autowired
-    OtpUseCase otpUseCase;
+    VerificationUseCase verificationUseCase;
 
 
-    public AccountResponse registerByInternal(RegisterByEmailAndPasswordRequest request) {
-        boolean isOtpVerified = otpUseCase.verifyOtp(request.getEmail(), request.getOtp(), "REGISTER");
+    public AccountResponse registerByInternal(RegisterByInternalRequest request) {
+        boolean isOtpVerified = verificationUseCase.verifyOtp(request.getEmail(), request.getOtp(), "REGISTER");
 
         if (!isOtpVerified) {
             throw new VerificationNotFoundException();
@@ -101,16 +96,16 @@ public class RegisterAuthenticationUseCase {
     }
 
 
-    public AccountResponse registerByExternal(RegisterAndLoginByExternalRequest request) {
+    public AccountResponse registerByExternal(RegisterByExternalRequest request) {
         GoogleIdToken idToken;
 
-        String idTokenString = request.getIdToken();
+        String idTokenString = request.getCredential();
         if (idTokenString == null || idTokenString.isEmpty()) {
             throw new VerificationNotFoundException("ID token is null or empty");
         }
 
         try {
-            idToken = googleIdTokenVerifier.verify(request.getIdToken());
+            idToken = googleIdTokenVerifier.verify(request.getCredential());
         } catch (GeneralSecurityException | IOException e) {
             throw new VerificationInvalidException("Invalid Google ID token");
         }
