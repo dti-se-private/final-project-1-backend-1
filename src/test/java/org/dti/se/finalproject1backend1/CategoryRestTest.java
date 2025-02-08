@@ -2,6 +2,7 @@ package org.dti.se.finalproject1backend1;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.Category;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.categories.CategoryRequest;
@@ -36,6 +37,8 @@ public class CategoryRestTest extends TestConfiguration {
     @BeforeEach
     public void beforeEach() throws Exception {
         populate();
+        Account selectedAccount = fakeAccounts.getFirst();
+        auth(selectedAccount);
     }
 
     @AfterEach
@@ -45,10 +48,14 @@ public class CategoryRestTest extends TestConfiguration {
 
     @Test
     public void testGetAllCategories() throws Exception {
+        List<Category> realCategories = fakeCategories
+                .stream()
+                .toList();
+
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
                 .get("/product-categories")
                 .param("page", "0")
-                .param("size", "5");
+                .param("size", String.valueOf(realCategories.size()));
 
         MvcResult result = mockMvc
                 .perform(request)
@@ -86,23 +93,33 @@ public class CategoryRestTest extends TestConfiguration {
 
     @Test
     public void testAddCategory() throws Exception {
-        CategoryRequest requestBody = new CategoryRequest("New Category", "New Category Description");
+        Category fakeCategory = fakeCategories
+                .stream()
+                .findFirst()
+                .orElse(null);
+
+        assert fakeCategory != null;
+
+        CategoryRequest requestBody = new CategoryRequest(fakeCategory.getName(), fakeCategory.getDescription());
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
                 .post("/product-categories")
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken()) // Add this if authentication is required
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
                 .perform(request)
-                .andExpect(status().isOk())
+                .andExpect(status().isOk()) // Change to isCreated() if returning 201
                 .andReturn();
 
+        // Adjust response parsing based on what the controller returns
         Category responseBody = objectMapper.readValue(
                 result.getResponse().getContentAsString(),
                 Category.class
         );
 
+        assert responseBody != null;
         assert responseBody.getName().equals(requestBody.getName());
         assert responseBody.getDescription().equals(requestBody.getDescription());
     }

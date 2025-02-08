@@ -7,6 +7,7 @@ import org.dti.se.finalproject1backend1.inners.usecases.categories.CategoryMappe
 import org.dti.se.finalproject1backend1.inners.usecases.categories.CategoryUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -43,7 +44,7 @@ public class CategoryRest {
     }
 
     @PostMapping
-//    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
     public Category addCategory(@RequestBody CategoryRequest categoryRequest) {
         Category category = categoryMapper.toEntity(categoryRequest);
 

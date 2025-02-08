@@ -8,6 +8,11 @@ import org.dti.se.finalproject1backend1.inners.usecases.categories.CategoryUseCa
 import org.dti.se.finalproject1backend1.inners.usecases.products.ProductMapper;
 import org.dti.se.finalproject1backend1.inners.usecases.products.ProductUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,11 +33,15 @@ public class ProductRest {
     private ProductMapper productMapper;
 
     @GetMapping
-    public List<ProductResponse> getAllProducts() {
-        return productService.getAllProducts()
-                .stream()
-                .map(productMapper::toProductResponse)
-                .collect(Collectors.toList());
+    public ResponseEntity<Page<ProductResponse>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String search
+    ) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
+        Page<ProductResponse> response = productService.getFilteredProducts(pageable, category, search);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")

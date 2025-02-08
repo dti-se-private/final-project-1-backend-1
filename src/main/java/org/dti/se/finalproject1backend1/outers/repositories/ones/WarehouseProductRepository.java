@@ -5,7 +5,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,4 +23,11 @@ public interface WarehouseProductRepository extends JpaRepository<WarehouseProdu
     Page<WarehouseProduct> findWithFilters(String filters, Pageable pageable);
 
     Optional<WarehouseProduct> findByProductIdAndWarehouseId(UUID productId, UUID warehouseId);
+
+    // implement summation of quantity for product total quantity
+    @Query("SELECT wp.product.id, SUM(wp.quantity) " +
+            "FROM WarehouseProduct wp " +
+            "WHERE wp.product.id IN :productIds " +
+            "GROUP BY wp.product.id")
+    List<Object[]> findTotalQuantitiesByProductIds(@Param("productIds") List<UUID> productIds);
 }
