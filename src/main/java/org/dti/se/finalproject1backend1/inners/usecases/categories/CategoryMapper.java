@@ -31,5 +31,14 @@ public class CategoryMapper {
         categoryDTO.setDescription(category.getDescription());
         return categoryDTO;
     }
+
+    public CategoryResponse mapCategory(Category category) {
+        if (category == null) return null;
+
+        return new CategoryResponse()
+                .setId(category.getId())
+                .setName(category.getName())
+                .setDescription(category.getDescription());
+    }
 }
 
