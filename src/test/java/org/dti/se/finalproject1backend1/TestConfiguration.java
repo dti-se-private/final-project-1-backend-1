@@ -68,6 +68,8 @@ public class TestConfiguration {
     protected WarehouseLedgerRepository warehouseLedgerRepository;
     @Autowired
     protected VerificationRepository verificationRepository;
+    @Autowired
+    protected WarehouseAdminRepository warehouseAdminRepository;
 
     @MockitoBean
     protected MailgunGateway mailgunGatewayMock;
@@ -89,6 +91,7 @@ public class TestConfiguration {
     protected List<OrderItem> fakeOrderItems = new ArrayList<>();
     protected List<OrderStatus> fakeOrderStatuses = new ArrayList<>();
     protected List<WarehouseLedger> fakeWarehouseLedger = new ArrayList<>();
+    protected List<WarehouseAdmin> fakeWarehouseAdmins = new ArrayList<>();
 
     protected String rawPassword = String.format("password-%s", UUID.randomUUID());
     protected Account authenticatedAccount;
@@ -179,7 +182,7 @@ public class TestConfiguration {
                         .id(UUID.randomUUID())
                         .warehouse(warehouse)
                         .product(product)
-                        .quantity(200 + Math.ceil(Math.random() * 1000))
+                        .quantity(2000 + Math.ceil(Math.random() * 1000))
                         .build();
                 fakeWarehouseProducts.add(newWarehouseProduct);
             });
@@ -230,7 +233,7 @@ public class TestConfiguration {
                         .build();
                 fakeOrders.add(newOrder);
 
-                for (int j = 0; j < orderStatuses.size() - i; j++) {
+                for (int j = 0; j < orderStatuses.size() - (i + 1); j++) {
                     OrderStatus newOrderStatus = OrderStatus
                             .builder()
                             .id(UUID.randomUUID())
@@ -275,6 +278,16 @@ public class TestConfiguration {
         orderStatusRepository.saveAll(fakeOrderStatuses);
         warehouseLedgerRepository.saveAll(fakeWarehouseLedger);
         orderItemRepository.saveAll(fakeOrderItems);
+
+        Account adminAccountForWarehouseAdmin = fakeAccounts.get(1);
+        Warehouse warehouseForWarehouseAdmin = fakeWarehouses.get(1);
+        WarehouseAdmin warehouseAdmin = WarehouseAdmin.builder()
+                .id(UUID.randomUUID())
+                .account(adminAccountForWarehouseAdmin)
+                .warehouse(warehouseForWarehouseAdmin)
+                .build();
+        fakeWarehouseAdmins.add(warehouseAdmin);
+        warehouseAdminRepository.save(warehouseAdmin);
     }
 
     public void depopulate() {
@@ -302,6 +315,8 @@ public class TestConfiguration {
         fakeAccountAddresses.clear();
         accountRepository.deleteAll(fakeAccounts);
         fakeAccounts.clear();
+        warehouseAdminRepository.deleteAll(fakeWarehouseAdmins);
+        fakeWarehouseAdmins.clear();
     }
 
     public void auth() throws Exception {

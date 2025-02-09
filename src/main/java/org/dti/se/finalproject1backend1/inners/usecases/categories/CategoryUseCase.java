@@ -29,12 +29,12 @@ public class CategoryUseCase {
     }
 
     public Category addCategory(Category category) {
-        return categoryRepository.save(category);
+        return categoryRepository.saveAndFlush(category);
     }
 
     public Category updateCategory(UUID id, Category category) {
         category.setId(id);
-        return categoryRepository.save(category);
+        return categoryRepository.saveAndFlush(category);
     }
 
     public void deleteCategory(UUID id) {

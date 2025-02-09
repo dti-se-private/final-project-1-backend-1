@@ -13,7 +13,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class OrderRequest extends Model {
-    private UUID addressId;
-    private List<OrderItemRequest> items;
+public class PaymentProcessRequest extends Model {
+    private UUID orderId;
+    private String paymentMethod;
+    private List<PaymentProcessRequest> paymentProofs;
 }

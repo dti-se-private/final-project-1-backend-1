@@ -41,14 +41,14 @@ public class WarehouseProductUseCase {
     }
 
     public WarehouseProduct addWarehouseProduct(WarehouseProduct warehouseProduct) {
-        return warehouseProductRepository.save(warehouseProduct);
+        return warehouseProductRepository.saveAndFlush(warehouseProduct);
     }
 
     public WarehouseProductResponse updateWarehouseProduct(UUID id, WarehouseProductRequest request) {
         WarehouseProduct existing = warehouseProductRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Warehouse Product Not Found"));
         existing.setQuantity(request.getQuantity());
-        WarehouseProduct updated = warehouseProductRepository.save(existing);
+        WarehouseProduct updated = warehouseProductRepository.saveAndFlush(existing);
         return warehouseProductMapper.toResponse(updated);
     }
 
