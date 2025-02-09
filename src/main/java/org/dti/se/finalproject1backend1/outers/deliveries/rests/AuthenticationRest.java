@@ -224,12 +224,6 @@ public class AuthenticationRest {
                     .message("Account credentials invalid.")
                     .build()
                     .toEntity(HttpStatus.UNAUTHORIZED);
-        } catch (VerificationInvalidException e) {
-            return ResponseBody
-                    .<Session>builder()
-                    .message("Verification invalid.")
-                    .build()
-                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
                     .<Session>builder()

@@ -56,8 +56,8 @@ public class AccountAddressRestTest extends TestConfiguration {
         Point location = geometryFactory.createPoint(new Coordinate(1.0, 1.0));
         AccountAddressRequest request = AccountAddressRequest
                 .builder()
-                .name("Home")
-                .address("123 Main St")
+                .name(String.format("name-%s", UUID.randomUUID()))
+                .address(String.format("address-%s", UUID.randomUUID()))
                 .isPrimary(true)
                 .location(location)
                 .build();
@@ -74,18 +74,19 @@ public class AccountAddressRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<AccountAddressResponse> body = objectMapper.readValue(content, new TypeReference<>() {});
+        ResponseBody<AccountAddressResponse> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
         assert body != null;
-        assert body.getMessage().equals("Address added successfully.");
+        assert body.getMessage().equals("Address added.");
     }
 
     @Test
-    public void testUpdateAddress() throws Exception {
+    public void testPatchAddress() throws Exception {
         AccountAddress realAddress = fakeAccountAddresses.getFirst();
         Point location = geometryFactory.createPoint(new Coordinate(2.0, 2.0));
         AccountAddressRequest request = AccountAddressRequest.builder()
-                .name("Office")
-                .address("456 Office St")
+                .name(String.format("name-%s", UUID.randomUUID()))
+                .address(String.format("address-%s", UUID.randomUUID()))
                 .isPrimary(false)
                 .location(location)
                 .build();
@@ -102,9 +103,10 @@ public class AccountAddressRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<AccountAddressResponse> body = objectMapper.readValue(content, new TypeReference<>() {});
+        ResponseBody<AccountAddressResponse> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
         assert body != null;
-        assert body.getMessage().equals("Address updated successfully.");
+        assert body.getMessage().equals("Address patched.");
     }
 
     @Test
@@ -113,8 +115,7 @@ public class AccountAddressRestTest extends TestConfiguration {
 
         MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .delete("/account-addresses/" + realAddress.getId())
-                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
-                .contentType(MediaType.APPLICATION_JSON);
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
                 .perform(httpRequest)
@@ -122,9 +123,10 @@ public class AccountAddressRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {});
+        ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
         assert body != null;
-        assert body.getMessage().equals("Address deleted successfully.");
+        assert body.getMessage().equals("Address deleted.");
     }
 
     @Test
@@ -133,8 +135,7 @@ public class AccountAddressRestTest extends TestConfiguration {
 
         MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .get("/account-addresses/" + realAddress.getId())
-                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
-                .contentType(MediaType.APPLICATION_JSON);
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
                 .perform(httpRequest)
@@ -142,21 +143,20 @@ public class AccountAddressRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<AccountAddressResponse> body = objectMapper.readValue(content, new TypeReference<>() {});
+        ResponseBody<AccountAddressResponse> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
         assert body != null;
-        assert body.getMessage().equals("Address retrieved successfully.");
+        assert body.getMessage().equals("Address found.");
     }
 
     @Test
-    public void testGetAllAddresses() throws Exception {
+    public void testGetAddresses() throws Exception {
         MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .get("/account-addresses")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .param("page", "0")
                 .param("size", "10")
-                .param("filters", "")
-                .param("search", "")
-                .contentType(MediaType.APPLICATION_JSON);
+                .param("search", "");
 
         MvcResult result = mockMvc
                 .perform(httpRequest)
@@ -164,8 +164,9 @@ public class AccountAddressRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<List<AccountAddressResponse>> body = objectMapper.readValue(content, new TypeReference<>() {});
+        ResponseBody<List<AccountAddressResponse>> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
         assert body != null;
-        assert body.getMessage().equals("All addresses retrieved successfully.");
+        assert body.getMessage().equals("Addresses found.");
     }
 }

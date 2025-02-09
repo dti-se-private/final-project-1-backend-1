@@ -64,7 +64,8 @@ public class WarehouseAdminCustomRepository {
                 .query(sql,
                         (rs, rowNum) -> {
                             try {
-                                return objectMapper.readValue(rs.getString("warehouse_admin"), new TypeReference<>() {});
+                                return objectMapper.readValue(rs.getString("warehouse_admin"), new TypeReference<>() {
+                                });
                             } catch (JsonProcessingException e) {
                                 throw new RuntimeException(e);
                             }

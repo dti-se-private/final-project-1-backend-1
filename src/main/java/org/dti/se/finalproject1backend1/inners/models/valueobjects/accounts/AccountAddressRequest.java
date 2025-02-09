@@ -1,8 +1,10 @@
 package org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-
 import org.locationtech.jts.geom.Point;
 
 @Data

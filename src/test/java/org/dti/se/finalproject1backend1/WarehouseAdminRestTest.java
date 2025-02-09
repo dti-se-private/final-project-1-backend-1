@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountAddressResponse;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse.admin.WarehouseAdminRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse.admin.WarehouseAdminResponse;
 import org.junit.jupiter.api.AfterEach;
@@ -18,8 +17,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
-
-import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -65,7 +62,8 @@ public class WarehouseAdminRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<WarehouseAdminResponse> body = objectMapper.readValue(content, new TypeReference<>() {});
+        ResponseBody<WarehouseAdminResponse> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
         assert body != null;
         assert body.getMessage().equals("Warehouse admin assigned.");
     }
@@ -83,7 +81,8 @@ public class WarehouseAdminRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<WarehouseAdminResponse> body = objectMapper.readValue(content, new TypeReference<>() {});
+        ResponseBody<WarehouseAdminResponse> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
         assert body != null;
         assert body.getMessage().equals("Warehouse admin found.");
     }
@@ -108,7 +107,8 @@ public class WarehouseAdminRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<WarehouseAdminResponse> body = objectMapper.readValue(content, new TypeReference<>() {});
+        ResponseBody<WarehouseAdminResponse> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
         assert body != null;
         assert body.getMessage().equals("Warehouse admin updated.");
     }
@@ -126,7 +126,8 @@ public class WarehouseAdminRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {});
+        ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
         assert body != null;
         assert body.getMessage().equals("Warehouse admin deleted.");
     }

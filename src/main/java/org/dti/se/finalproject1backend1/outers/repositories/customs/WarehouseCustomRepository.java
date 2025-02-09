@@ -3,8 +3,6 @@ package org.dti.se.finalproject1backend1.outers.repositories.customs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.dti.se.finalproject1backend1.inners.models.entities.Account;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountAddressResponse;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse.WarehouseResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -12,7 +10,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Repository
 public class WarehouseCustomRepository {
@@ -24,45 +21,40 @@ public class WarehouseCustomRepository {
     @Autowired
     ObjectMapper objectMapper;
 
-    public List<WarehouseResponse> getAllWarehouses(
+    public List<WarehouseResponse> getWarehouses(
             Integer page,
             Integer size,
-            List<String> filters,
             String search
     ) {
-        String order = filters
-                .stream()
-                .map(filter -> String.format("SIMILARITY(%s::text, '%s')", filter, search))
-                .collect(Collectors.joining("+"));
-
-        if (order.isEmpty()) {
-            order = "warehouse.id";
-        }
-
-        String sql = String.format("""
-                SELECT json_build_object(
-                        'id', warehouse.id,
-                        'name', warehouse.name,
-                        'description', warehouse.description,
-                        'location', warehouse.location
-                    ) as warehouse
-                FROM warehouse
-                ORDER BY %s
-                LIMIT ?
-                OFFSET ?
-                """, order);
+        String sql = """
+                SELECT *
+                FROM (
+                    SELECT json_build_object(
+                            'id', warehouse.id,
+                            'name', warehouse.name,
+                            'description', warehouse.description,
+                            'location', warehouse.location
+                        ) as item
+                    FROM warehouse
+                    LIMIT ?
+                    OFFSET ?
+                ) as sq1
+                ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                """;
 
         return oneTemplate
                 .query(sql,
                         (rs, rowNum) -> {
                             try {
-                                return objectMapper.readValue(rs.getString("warehouse"), new TypeReference<>() {});
+                                return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
+                                });
                             } catch (JsonProcessingException e) {
                                 throw new RuntimeException(e);
                             }
                         },
                         size,
-                        page * size
+                        page * size,
+                        search
                 );
     }
 }

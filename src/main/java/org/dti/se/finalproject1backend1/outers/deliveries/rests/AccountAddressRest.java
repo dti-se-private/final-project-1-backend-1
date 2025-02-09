@@ -31,10 +31,10 @@ public class AccountAddressRest {
             @RequestBody AccountAddressRequest request
     ) {
         try {
-            AccountAddressResponse response = accountAddressUseCase.saveOne(account, request);
+            AccountAddressResponse response = accountAddressUseCase.addAddress(account, request);
             return ResponseBody
                     .<AccountAddressResponse>builder()
-                    .message("Address added successfully.")
+                    .message("Address added.")
                     .data(response)
                     .build()
                     .toEntity(HttpStatus.CREATED);
@@ -56,16 +56,16 @@ public class AccountAddressRest {
 
     @PatchMapping("/{addressId}")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
-    public ResponseEntity<ResponseBody<AccountAddressResponse>> updateAddress(
+    public ResponseEntity<ResponseBody<AccountAddressResponse>> patchAddress(
             @AuthenticationPrincipal Account account,
             @PathVariable UUID addressId,
             @RequestBody AccountAddressRequest request
     ) {
         try {
-            AccountAddressResponse response = accountAddressUseCase.patchOneById(account, addressId, request);
+            AccountAddressResponse response = accountAddressUseCase.patchAddress(account, addressId, request);
             return ResponseBody
                     .<AccountAddressResponse>builder()
-                    .message("Address updated successfully.")
+                    .message("Address patched.")
                     .data(response)
                     .build()
                     .toEntity(HttpStatus.OK);
@@ -98,10 +98,10 @@ public class AccountAddressRest {
             @PathVariable UUID addressId
     ) {
         try {
-            AccountAddressResponse response = accountAddressUseCase.findOneById(account, addressId);
+            AccountAddressResponse response = accountAddressUseCase.getAddress(account, addressId);
             return ResponseBody
                     .<AccountAddressResponse>builder()
-                    .message("Address retrieved successfully.")
+                    .message("Address found.")
                     .data(response)
                     .build()
                     .toEntity(HttpStatus.OK);
@@ -129,19 +129,18 @@ public class AccountAddressRest {
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
-    public ResponseEntity<ResponseBody<List<AccountAddressResponse>>> getAllAddresses(
+    public ResponseEntity<ResponseBody<List<AccountAddressResponse>>> getAddresses(
             @AuthenticationPrincipal Account account,
-            @RequestParam Integer page,
-            @RequestParam Integer size,
-            @RequestParam List<String> filters,
-            @RequestParam String search
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "") String search
     ) {
         try {
             List<AccountAddressResponse> foundAddresses = accountAddressUseCase
-                    .findAll(account, page, size, filters, search);
+                    .getAddresses(account, page, size, search);
             return ResponseBody
                     .<List<AccountAddressResponse>>builder()
-                    .message("All addresses retrieved successfully.")
+                    .message("Addresses found.")
                     .data(foundAddresses)
                     .build()
                     .toEntity(HttpStatus.OK);
@@ -168,10 +167,10 @@ public class AccountAddressRest {
             @PathVariable UUID addressId
     ) {
         try {
-            accountAddressUseCase.deleteOneById(account, addressId);
+            accountAddressUseCase.deleteAddress(account, addressId);
             return ResponseBody
                     .<Void>builder()
-                    .message("Address deleted successfully.")
+                    .message("Address deleted.")
                     .build()
                     .toEntity(HttpStatus.NO_CONTENT);
         } catch (AccountNotFoundException e) {
