@@ -36,10 +36,10 @@ public class WarehouseCustomRepository {
                             'location', warehouse.location
                         ) as item
                     FROM warehouse
-                    LIMIT ?
-                    OFFSET ?
                 ) as sq1
                 ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                LIMIT ?
+                OFFSET ?
                 """;
 
         return oneTemplate
@@ -52,9 +52,9 @@ public class WarehouseCustomRepository {
                                 throw new RuntimeException(e);
                             }
                         },
+                        search,
                         size,
-                        page * size,
-                        search
+                        page * size
                 );
     }
 }

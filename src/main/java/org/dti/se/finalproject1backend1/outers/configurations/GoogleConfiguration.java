@@ -29,7 +29,7 @@ public class GoogleConfiguration {
     public GoogleIdTokenVerifier verifier() throws GeneralSecurityException, IOException {
         NetHttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         JsonFactory jsonFactory = new GsonFactory();
-        String clientId = environment.getProperty("google.client_id");
+        String clientId = environment.getProperty("google.client.id");
         return new GoogleIdTokenVerifier
                 .Builder(httpTransport, jsonFactory)
                 .setAudience(Collections.singletonList(clientId))

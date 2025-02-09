@@ -36,15 +36,15 @@ public class AccountAddressCustomRepository {
                         'id', account_address.id,
                         'name', account_address.name,
                         'address', account_address.address,
-                        'isPrimary', account_address.is_primary,
+                        'is_primary', account_address.is_primary,
                         'location', account_address.location
                     ) as item
                     FROM account_address
                     WHERE account_id = ?
-                    LIMIT ?
-                    OFFSET ?
                 ) as sq1
                 ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                LIMIT ?
+                OFFSET ?
                 """;
 
         return oneTemplate
@@ -58,9 +58,9 @@ public class AccountAddressCustomRepository {
                             }
                         },
                         account.getId(),
+                        search,
                         size,
-                        page * size,
-                        search
+                        page * size
                 );
     }
 }

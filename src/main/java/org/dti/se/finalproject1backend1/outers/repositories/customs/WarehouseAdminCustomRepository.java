@@ -28,37 +28,31 @@ public class WarehouseAdminCustomRepository {
             List<String> filters,
             String search
     ) {
-        String order = filters
-                .stream()
-                .map(filter -> String.format("SIMILARITY(%s::text, '%s')", filter, search))
-                .collect(Collectors.joining("+"));
-
-        if (order.isEmpty()) {
-            order = "warehouse_admin.id";
-        }
-
-        String sql = String.format("""
-                SELECT json_build_object(
-                        'id', warehouse_admin.id,
-                        'account', json_build_object(
-                            'id', account.id,
-                            'username', account.username,
-                            'email', account.email
-                        ),
-                        'warehouse', json_build_object(
-                            'id', warehouse.id,
-                            'name', warehouse.name,
-                            'description', warehouse.description,
-                            'location', warehouse.location
-                        )
-                    ) as admin
-                FROM warehouse_admin
-                JOIN account ON warehouse_admin.account_id = account.id
-                JOIN warehouse ON warehouse_admin.warehouse_id = warehouse.id
-                ORDER BY %s
+        String sql = """
+                SELECT *
+                FROM (
+                    SELECT json_build_object(
+                            'id', warehouse_admin.id,
+                            'account', json_build_object(
+                                'id', account.id,
+                                'username', account.username,
+                                'email', account.email
+                            ),
+                            'warehouse', json_build_object(
+                                'id', warehouse.id,
+                                'name', warehouse.name,
+                                'description', warehouse.description,
+                                'location', warehouse.location
+                            )
+                        ) as item
+                    FROM warehouse_admin
+                    JOIN account ON warehouse_admin.account_id = account.id
+                    JOIN warehouse ON warehouse_admin.warehouse_id = warehouse.id
+                ) as sq1
+                ORDER BY SIMILARITY(sq1.item::text, ?) DESC
                 LIMIT ?
                 OFFSET ?
-                """, order);
+                """;
 
         return oneTemplate
                 .query(sql,
@@ -70,6 +64,7 @@ public class WarehouseAdminCustomRepository {
                                 throw new RuntimeException(e);
                             }
                         },
+                        search,
                         size,
                         page * size
                 );

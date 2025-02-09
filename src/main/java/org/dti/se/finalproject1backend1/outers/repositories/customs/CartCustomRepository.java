@@ -52,10 +52,10 @@ public class CartCustomRepository {
                     JOIN product ON cart_item.product_id =product.id
                     JOIN category ON product.category_id = category.id
                     WHERE account_id = ?
-                    LIMIT ?
-                    OFFSET ?
                 ) as sq1
                 ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                LIMIT ?
+                OFFSET ?
                 """;
 
         return oneTemplate
@@ -69,9 +69,9 @@ public class CartCustomRepository {
                             }
                         },
                         account.getId(),
+                        search,
                         size,
-                        page * size,
-                        search
+                        page * size
                 );
     }
 
