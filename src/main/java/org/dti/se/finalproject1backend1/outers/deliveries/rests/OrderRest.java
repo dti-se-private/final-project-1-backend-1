@@ -136,12 +136,11 @@ public class OrderRest {
             @AuthenticationPrincipal Account account,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(defaultValue = "") List<String> filters,
             @RequestParam(defaultValue = "") String search
     ) {
         try {
             List<OrderResponse> orders = orderUseCase
-                    .getOrders(account, page, size, filters, search);
+                    .getOrders(account, page, size, search);
             return ResponseBody
                     .<List<OrderResponse>>builder()
                     .message("Orders found.")
@@ -172,12 +171,11 @@ public class OrderRest {
             @AuthenticationPrincipal Account account,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(defaultValue = "") List<String> filters,
             @RequestParam(defaultValue = "") String search
     ) {
         try {
             List<OrderResponse> orders = paymentUseCase
-                    .getPaymentConfirmationOrders(account, page, size, filters, search);
+                    .getPaymentConfirmationOrders(account, page, size, search);
             return ResponseBody
                     .<List<OrderResponse>>builder()
                     .message("Payment confirmation orders found.")

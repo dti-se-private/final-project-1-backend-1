@@ -12,7 +12,6 @@ import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountCreden
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountUnAuthorizedException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
-import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountPermissionRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.twos.SessionRepository;
@@ -57,17 +56,12 @@ public class LoginAuthenticationUseCase {
         return getSession(account);
     }
 
-    public Session loginByExternal(String googleCredential) {
+    public Session loginByExternal(String credential) {
         GoogleIdToken idToken;
-
-        if (googleCredential == null || googleCredential.isEmpty()) {
-            throw new VerificationNotFoundException("ID token is null or empty");
-        }
-
         try {
-            idToken = googleIdTokenVerifier.verify(googleCredential);
+            idToken = googleIdTokenVerifier.verify(credential);
         } catch (GeneralSecurityException | IOException e) {
-            throw new VerificationInvalidException(e);
+            throw new VerificationInvalidException();
         }
 
         GoogleIdToken.Payload payload = idToken.getPayload();

@@ -56,7 +56,7 @@ public class SecurityConfiguration implements PasswordEncoder {
                 .addFilterAt(authenticationWebFilterImpl, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
                         .requestMatchers(
-                                "/otps/**",
+                                "/verifications/**",
                                 "/authentications/**",
                                 "/webjars/**",
                                 "/v3/api-docs/**",

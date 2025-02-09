@@ -33,12 +33,11 @@ public class CartRest {
             @AuthenticationPrincipal Account account,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size,
-            @RequestParam(defaultValue = "") List<String> filters,
             @RequestParam(defaultValue = "") String search
     ) {
         try {
             List<CartItemResponse> cartItems = cartUseCase
-                    .getCartItems(account, page, size, filters, search);
+                    .getCartItems(account, page, size, search);
             return ResponseBody
                     .<List<CartItemResponse>>builder()
                     .message("Cart items found.")

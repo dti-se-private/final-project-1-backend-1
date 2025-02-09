@@ -1,6 +1,7 @@
 package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.Verification;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.verifications.VerificationRequest;
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationExpiredException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
@@ -14,7 +15,7 @@ import java.util.Random;
 import java.util.UUID;
 
 @Service
-public class OtpUseCase {
+public class VerificationUseCase {
 
     @Autowired
     private VerificationRepository verificationRepository;
@@ -22,22 +23,25 @@ public class OtpUseCase {
     @Autowired
     private MailgunGateway mailgunGateway;
 
-    public void sendOtp(String email, String type) {
+    public void send(VerificationRequest request) {
         String otp = generateOtp();
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
         OffsetDateTime endTime = now.plusHours(1);
 
         Verification verification = new Verification();
         verification.setId(UUID.randomUUID());
-        verification.setEmail(email);
-        verification.setType(type);
+        verification.setEmail(request.getEmail());
+        verification.setType(request.getType());
         verification.setCode(otp);
         verification.setInitTime(now);
         verification.setEndTime(endTime);
 
         verificationRepository.saveAndFlush(verification);
 
-        mailgunGateway.sendEmail(email, "Your Commerce OTP Code", "Your " + type.toLowerCase().replace("_", " ") + " OTP code is: " + otp);
+        mailgunGateway.sendEmail(
+                verification.getEmail(),
+                "Your Commerce OTP Code", "Your " + verification.getType().toLowerCase().replace("_", " ") + " OTP code is: " + otp
+        );
     }
 
     public boolean verifyOtp(String email, String otp, String type) {

@@ -122,7 +122,7 @@ public class AccountRestTest extends TestConfiguration {
         String encodedPassword = securityConfiguration.encode(rawPassword);
 
         String newEmail = "new-email@example.com";
-        String otpType = "UPDATE_EMAIL";
+        String otpType = "UPDATE_ACCOUNT";
         Verification verification = getVerification(newEmail, otpType);
         String updateEmailOtp = verification.getCode();
 
