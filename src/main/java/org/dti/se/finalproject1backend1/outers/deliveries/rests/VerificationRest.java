@@ -1,29 +1,32 @@
 package org.dti.se.finalproject1backend1.outers.deliveries.rests;
 
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
-import org.dti.se.finalproject1backend1.inners.usecases.authentications.OtpUseCase;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.verifications.VerificationRequest;
+import org.dti.se.finalproject1backend1.inners.usecases.authentications.VerificationUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/otps")
-public class OtpRest {
+@RequestMapping("/verifications")
+public class VerificationRest {
 
     @Autowired
-    private OtpUseCase otpUseCase;
+    private VerificationUseCase verificationUseCase;
 
     @PostMapping("/send")
-    public ResponseEntity<ResponseBody<Void>> sendOtp(@RequestParam String email, @RequestParam String type) {
+    public ResponseEntity<ResponseBody<Void>> send(
+            @RequestBody VerificationRequest request
+    ) {
         try {
-            otpUseCase.sendOtp(email, type);
+            verificationUseCase.send(request);
             return ResponseBody
                     .<Void>builder()
-                    .message("OTP sent succeed.")
+                    .message("Verification send succeed.")
                     .data(null)
                     .build()
                     .toEntity(HttpStatus.OK);

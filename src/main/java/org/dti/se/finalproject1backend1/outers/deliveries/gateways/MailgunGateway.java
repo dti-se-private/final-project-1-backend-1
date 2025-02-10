@@ -16,13 +16,14 @@ public class MailgunGateway {
     @Autowired
     Environment environment;
 
+
     public void sendEmail(String to, String subject, String text) {
         RestTemplate restTemplate = new RestTemplate();
-        String url = "https://api.mailgun.net/v3/" + environment.getProperty("mailgun.domain") + "/messages";
+        String url = environment.getProperty("mailgun.api.url") + environment.getProperty("mailgun.domain") + "/messages";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-        headers.setBasicAuth("api", environment.getProperty("mailgun.api-key"));
+        headers.setBasicAuth("api", environment.getProperty("mailgun.api.key"));
 
         MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
         map.add("from", "Mailgun Sandbox <postmaster@" + environment.getProperty("mailgun.domain") + ">");

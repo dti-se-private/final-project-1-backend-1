@@ -181,12 +181,12 @@ public class ProductUseCase {
     }
 
     public Product addProduct(Product product) {
-        return productRepository.save(product);
+        return productRepository.saveAndFlush(product);
     }
 
     public Product updateProduct(UUID id, Product product) {
         product.setId(id);
-        return productRepository.save(product);
+        return productRepository.saveAndFlush(product);
     }
 
     public void deleteProduct(UUID id) {

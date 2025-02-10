@@ -2,7 +2,6 @@ package org.dti.se.finalproject1backend1.inners.usecases.orders;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.*;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
-import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductNotFoundException;
@@ -36,26 +35,11 @@ public class OrderUseCase {
     @Autowired
     private LocationCustomRepository locationCustomRepository;
 
-    public List<OrderResponse> getCustomerOrders(
-            Account account,
-            Integer page,
-            Integer size,
-            List<String> filters,
-            String search
-    ) {
-        Account foundAccount = accountRepository
-                .findById(account.getId())
-                .orElseThrow(AccountNotFoundException::new);
-
-        return orderCustomRepository
-                .getCustomerOrders(foundAccount, page, size, filters, search);
-    }
 
     public List<OrderResponse> getOrders(
             Account account,
             Integer page,
             Integer size,
-            List<String> filters,
             String search
     ) {
         List<String> accountPermissions = account
@@ -66,16 +50,19 @@ public class OrderUseCase {
 
         if (accountPermissions.contains("SUPER_ADMIN")) {
             return orderCustomRepository
-                    .getOrders(page, size, filters, search);
+                    .getOrders(page, size, search);
         } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
             return orderCustomRepository
-                    .getOrders(account, page, size, filters, search);
+                    .getOrders(account, page, size, search);
+        } else if (accountPermissions.contains("CUSTOMER")) {
+            return orderCustomRepository
+                    .getCustomerOrders(account, page, size, search);
         } else {
             throw new AccountPermissionInvalidException();
         }
     }
 
-    public void processOrder(UUID orderId, String ledgerStatus) {
+    public void processOrderProcessing(UUID orderId, String ledgerStatus) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
         Order foundOrder = orderRepository
@@ -121,12 +108,12 @@ public class OrderUseCase {
 
                 originWarehouseProduct.setQuantity(newWarehouseLedger.getOriginPostQuantity());
                 destinationWarehouseProduct.setQuantity(newWarehouseLedger.getDestinationPostQuantity());
-                warehouseProductRepository.save(originWarehouseProduct);
-                warehouseProductRepository.save(destinationWarehouseProduct);
-                warehouseLedgerRepository.save(newWarehouseLedger);
+                warehouseProductRepository.saveAndFlush(originWarehouseProduct);
+                warehouseProductRepository.saveAndFlush(destinationWarehouseProduct);
+                warehouseLedgerRepository.saveAndFlush(newWarehouseLedger);
             } else {
                 originWarehouseProduct.setQuantity(originWarehouseProduct.getQuantity() - foundOrderItem.getQuantity());
-                warehouseProductRepository.save(originWarehouseProduct);
+                warehouseProductRepository.saveAndFlush(originWarehouseProduct);
             }
         }
 
@@ -137,7 +124,7 @@ public class OrderUseCase {
                 .status("SHIPPING")
                 .time(now)
                 .build();
-        orderStatusRepository.save(newOrderStatus);
+        orderStatusRepository.saveAndFlush(newOrderStatus);
     }
 
 }

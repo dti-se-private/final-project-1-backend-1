@@ -8,9 +8,9 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.Verification;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.*;
+import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,7 +62,7 @@ public class AuthenticationRestTest extends TestConfiguration {
 
         Verification verification = getVerification(email, type);
 
-        RegisterByEmailAndPasswordRequest requestBody = RegisterByEmailAndPasswordRequest
+        RegisterByInternalRequest requestBody = RegisterByInternalRequest
                 .builder()
                 .name(String.format("name-%s", UUID.randomUUID()))
                 .email(email)
@@ -82,41 +82,46 @@ public class AuthenticationRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<Account> body = objectMapper.readValue(content, new TypeReference<>() {
+        ResponseBody<AccountResponse> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
-        assert body.getMessage().equals("Register succeed.");
+        assert body.getMessage().equals("Register by internal succeed.");
         assert body.getData() != null;
         assert body.getData().getId() != null;
         assert body.getData().getName().equals(requestBody.getName());
         assert body.getData().getEmail().equals(requestBody.getEmail());
         assert securityConfiguration.matches(requestBody.getPassword(), body.getData().getPassword());
         assert body.getData().getPhone().equals(requestBody.getPhone());
+        assert body.getData().getImage() == null;
+        assert body.getData().getIsVerified().equals(true);
 
-        fakeAccounts.add(body.getData());
+        Account registeredAccount = accountRepository
+                .findById(body.getData().getId())
+                .orElseThrow(AccountNotFoundException::new);
+        fakeAccounts.add(registeredAccount);
     }
 
     @Test
-    @ResourceLock(value = "mockToken")
+    @ResourceLock("idTokenMock")
     public void testRegisterByExternal() throws Exception {
         String mockIdToken = "mock-id-token";
         String email = String.format("email-%s", UUID.randomUUID());
         String name = String.format("name-%s", UUID.randomUUID());
-        String picture = "http://example.com/picture.jpg";
+        String picture = "https://placehold.co/400x400";
 
         GoogleIdToken.Payload payload = Mockito.mock(GoogleIdToken.Payload.class);
         Mockito.when(payload.getEmail()).thenReturn(email);
         Mockito.when(payload.get("name")).thenReturn(name);
-        Mockito.when(payload.get("picture")).thenReturn(picture.getBytes());
+        Mockito.when(payload.get("picture")).thenReturn(picture);
 
         GoogleIdToken idToken = Mockito.mock(GoogleIdToken.class);
         Mockito.when(idToken.getPayload()).thenReturn(payload);
 
         Mockito.when(authGoogleIdTokenVerifier.verify(mockIdToken)).thenReturn(idToken);
 
-        RegisterAndLoginByExternalRequest requestBody = RegisterAndLoginByExternalRequest
+        RegisterByExternalRequest requestBody = RegisterByExternalRequest
                 .builder()
-                .idToken(mockIdToken)
+                .credential(mockIdToken)
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
@@ -133,21 +138,26 @@ public class AuthenticationRestTest extends TestConfiguration {
         ResponseBody<Account> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
-        assert body.getMessage().equals("Register succeed.");
+        assert body.getMessage().equals("Register by external succeed.");
         assert body.getData() != null;
         assert body.getData().getId() != null;
         assert body.getData().getName().equals(name);
         assert body.getData().getEmail().equals(email);
+        assert body.getData().getPassword() == null;
+        assert body.getData().getPhone() == null;
         assert body.getData().getImage() != null;
+        assert body.getData().getIsVerified().equals(true);
 
         fakeAccounts.add(body.getData());
     }
 
     @Test
     public void testLoginByInternal() throws Exception {
-        ResponseBody<Account> registerResponse = registerByInternal();
-        Account realAccount = registerResponse.getData();
-        LoginByEmailAndPasswordRequest requestBody = LoginByEmailAndPasswordRequest
+        ResponseBody<AccountResponse> registerResponse = registerByInternal();
+        Account realAccount = accountRepository
+                .findById(registerResponse.getData().getId())
+                .orElseThrow(AccountNotFoundException::new);
+        LoginByInternalRequest requestBody = LoginByInternalRequest
                 .builder()
                 .email(realAccount.getEmail())
                 .password(rawPassword)
@@ -178,14 +188,14 @@ public class AuthenticationRestTest extends TestConfiguration {
     }
 
     @Test
-    @ResourceLock(value = "mockToken")
+    @ResourceLock("idTokenMock")
     public void testLoginByExternal() throws Exception {
         ResponseBody<Account> registerResponse = registerByExternal();
         Account realAccount = registerResponse.getData();
 
-        RegisterAndLoginByExternalRequest requestBody = RegisterAndLoginByExternalRequest
+        LoginByExternalRequest requestBody = LoginByExternalRequest
                 .builder()
-                .idToken("mock-id-token")
+                .credential("mock-id-token")
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
@@ -212,59 +222,109 @@ public class AuthenticationRestTest extends TestConfiguration {
         fakeAccounts.add(realAccount);
     }
 
-//    @Test
-//    public void testLogout() throws Exception {
-//        ResponseBody<Account> registerResponse = register();
-//        Account realAccount = registerResponse.getData();
-//        ResponseBody<Session> loginResponse = login(realAccount);
-//        Session requestBody = loginResponse.getData();
-//
-//        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-//                .post("/authentications/logouts/session")
-//                .contentType(MediaType.APPLICATION_JSON)
-//                .content(objectMapper.writeValueAsString(requestBody));
-//
-//        MvcResult result = mockMvc
-//                .perform(request)
-//                .andExpect(status().isOk())
-//                .andReturn();
-//
-//        String content = result.getResponse().getContentAsString();
-//        ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {
-//        });
-//        assert body != null;
-//        assert body.getMessage().equals("Logout succeed.");
-//
-//        fakeAccounts.add(realAccount);
-//    }
-//
-//    @Test
-//    public void testRefreshSession() throws Exception {
-//        ResponseBody<Account> registerResponse = register();
-//        Account realAccount = registerResponse.getData();
-//        ResponseBody<Session> loginResponse = login(realAccount);
-//        Session requestBody = loginResponse.getData();
-//
-//        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-//                .post("/authentications/refreshes/session")
-//                .contentType(MediaType.APPLICATION_JSON)
-//                .content(objectMapper.writeValueAsString(requestBody));
-//
-//        MvcResult result = mockMvc
-//                .perform(request)
-//                .andExpect(status().isOk())
-//                .andReturn();
-//
-//        String content = result.getResponse().getContentAsString();
-//        ResponseBody<Session> body = objectMapper.readValue(content, new TypeReference<>() {
-//        });
-//        assert body != null;
-//        assert body.getData() != null;
-//        assert body.getData().getAccessToken() != null;
-//        assert body.getData().getRefreshToken() != null;
-//        assert body.getData().getAccessTokenExpiredAt().isAfter(OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS));
-//        assert body.getData().getRefreshTokenExpiredAt().isAfter(OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS));
-//
-//        fakeAccounts.add(realAccount);
-//    }
+    @Test
+    public void testResetPassword() throws Exception {
+        ResponseBody<AccountResponse> registerResponse = registerByInternal();
+        Account realAccount = accountRepository
+                .findById(registerResponse.getData().getId())
+                .orElseThrow(AccountNotFoundException::new);
+        String newRawPassword = "new-password";
+
+        Verification verification = getVerification(realAccount.getEmail(), "RESET_PASSWORD");
+
+        ResetPasswordRequest resetPasswordRequest = ResetPasswordRequest
+                .builder()
+                .email(realAccount.getEmail())
+                .otp(verification.getCode())
+                .newPassword(newRawPassword)
+                .build();
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/authentications/reset-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(resetPasswordRequest));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
+        assert body != null;
+        assert body.getMessage().equals("Password reset successfully.");
+        assert body.getData() == null;
+
+        Account resetPasswordAccount = Account
+                .builder()
+                .id(realAccount.getId())
+                .name(realAccount.getName())
+                .email(realAccount.getEmail())
+                .password(realAccount.getPassword())
+                .phone(realAccount.getPhone())
+                .image(realAccount.getImage())
+                .build();
+        fakeAccounts.set(fakeAccounts.indexOf(realAccount), resetPasswordAccount);
+    }
+
+    @Test
+    public void testLogout() throws Exception {
+        ResponseBody<AccountResponse> registerResponse = registerByInternal();
+        Account realAccount = accountRepository
+                .findById(registerResponse.getData().getId())
+                .orElseThrow(AccountNotFoundException::new);
+        ResponseBody<Session> loginResponse = loginByInternal(realAccount);
+        Session requestBody = loginResponse.getData();
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/authentications/logouts/session")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
+        assert body != null;
+        assert body.getMessage().equals("Logout succeed.");
+
+        fakeAccounts.add(realAccount);
+    }
+
+    @Test
+    public void testRefreshSession() throws Exception {
+        ResponseBody<AccountResponse> registerResponse = registerByInternal();
+        Account realAccount = accountRepository
+                .findById(registerResponse.getData().getId())
+                .orElseThrow(AccountNotFoundException::new);
+        ResponseBody<Session> loginResponse = loginByInternal(realAccount);
+        Session requestBody = loginResponse.getData();
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .post("/authentications/refreshes/session")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        ResponseBody<Session> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
+        assert body != null;
+        assert body.getData() != null;
+        assert body.getData().getAccessToken() != null;
+        assert body.getData().getRefreshToken() != null;
+        assert body.getData().getAccessTokenExpiredAt().isAfter(OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS));
+        assert body.getData().getRefreshTokenExpiredAt().isAfter(OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS));
+
+        fakeAccounts.add(realAccount);
+    }
 }

@@ -3,10 +3,10 @@ package org.dti.se.finalproject1backend1.inners.usecases.accounts;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
-import org.dti.se.finalproject1backend1.inners.usecases.authentications.OtpUseCase;
+import org.dti.se.finalproject1backend1.inners.usecases.authentications.VerificationUseCase;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
-import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,7 @@ public class BasicAccountUseCase {
     SecurityConfiguration securityConfiguration;
 
     @Autowired
-    OtpUseCase otpUseCase;
+    VerificationUseCase verificationUseCase;
 
     public AccountResponse saveOne(AccountRequest request) {
         String encodedPassword = securityConfiguration.encode(request.getPassword());
@@ -36,7 +36,7 @@ public class BasicAccountUseCase {
                 .isVerified(false)
                 .image(request.getImage())
                 .build();
-        Account savedAccount = accountRepository.save(account);
+        Account savedAccount = accountRepository.saveAndFlush(account);
 
         return AccountResponse
                 .builder()
@@ -84,19 +84,19 @@ public class BasicAccountUseCase {
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);
 
-        if (request.getEmail() != null && !request.getEmail().equals(accountToPatch.getEmail())) {
-            if (!otpUseCase.verifyOtp(request.getEmail(), request.getOtp(), "UPDATE_EMAIL")) {
-                throw new VerificationNotFoundException("Invalid OTP for email update");
-            }
-            accountToPatch.setEmail(request.getEmail());
+        Boolean verifyResult = verificationUseCase.verifyOtp(request.getEmail(), request.getOtp(), "UPDATE_ACCOUNT");
+        if (!verifyResult) {
+            throw new VerificationInvalidException();
         }
 
-        String encodedPassword = securityConfiguration.encode(request.getPassword());
+        accountToPatch.setEmail(request.getEmail());
         accountToPatch.setName(request.getName());
         accountToPatch.setPhone(request.getPhone());
         accountToPatch.setImage(request.getImage());
+        String encodedPassword = securityConfiguration.encode(request.getPassword());
         accountToPatch.setPassword(encodedPassword);
-        Account patchedAccount = accountRepository.save(accountToPatch);
+
+        Account patchedAccount = accountRepository.saveAndFlush(accountToPatch);
 
         return AccountResponse
                 .builder()

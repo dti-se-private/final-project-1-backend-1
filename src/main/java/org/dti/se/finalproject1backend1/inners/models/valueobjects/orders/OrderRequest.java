@@ -15,7 +15,5 @@ import java.util.UUID;
 @Accessors(chain = true)
 public class OrderRequest extends Model {
     private UUID addressId;
-    private String paymentMethod;
     private List<OrderItemRequest> items;
-    private List<PaymentProofResponse> paymentProofs;
 }
