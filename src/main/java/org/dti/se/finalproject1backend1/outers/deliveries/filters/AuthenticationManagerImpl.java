@@ -24,13 +24,13 @@ import java.util.stream.Collectors;
 @Component
 public class AuthenticationManagerImpl implements AuthenticationManager { // Changed to AuthenticationManager
     @Autowired
-     JwtAuthenticationUseCase jwtAuthenticationUseCase;
+    JwtAuthenticationUseCase jwtAuthenticationUseCase;
 
     @Autowired
-     AccountRepository accountRepository;
+    AccountRepository accountRepository;
 
     @Autowired
-     SessionRepository sessionRepository;
+    SessionRepository sessionRepository;
 
 
     @Override

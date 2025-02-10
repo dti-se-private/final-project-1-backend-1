@@ -1,17 +1,8 @@
 package org.dti.se.finalproject1backend1.outers.deliveries.rests;
 
 import lombok.RequiredArgsConstructor;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.statistics.StatisticSeriesResponse;
-import org.dti.se.finalproject1backend1.inners.usecases.statistics.SalesStatisticsUseCase;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
-
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/statistics/product-sales")

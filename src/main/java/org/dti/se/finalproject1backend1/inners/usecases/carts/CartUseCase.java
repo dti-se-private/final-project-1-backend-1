@@ -46,12 +46,12 @@ public class CartUseCase {
         Account foundAccount = accountRepository
                 .findById(account.getId())
                 .orElseThrow(AccountNotFoundException::new);
-        Product product = productRepository
+        Product foundProduct = productRepository
                 .findById(request.getProductId())
                 .orElseThrow(ProductNotFoundException::new);
-        ProductResponse allWarehouseProduct = productCustomRepository.getAllWarehouseProduct(product.getId());
+        ProductResponse product = productCustomRepository.getProduct(foundProduct.getId());
 
-        if (allWarehouseProduct.getTotalQuantity() < request.getQuantity()) {
+        if (product.getQuantity() < request.getQuantity()) {
             throw new ProductInsufficientException();
         }
 

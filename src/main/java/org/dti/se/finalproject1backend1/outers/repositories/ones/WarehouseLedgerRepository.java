@@ -11,11 +11,14 @@ import java.util.UUID;
 
 public interface WarehouseLedgerRepository extends JpaRepository<WarehouseLedger, UUID> {
     List<WarehouseLedger> findByProductIdAndTimeBetween(UUID productId, OffsetDateTime startDate, OffsetDateTime endDate);
+
     @Query("SELECT wl FROM WarehouseLedger wl WHERE wl.product.category.id = :categoryId AND wl.time BETWEEN :startTime AND :endTime")
     List<WarehouseLedger> findByCategoryIdAndTimeBetween(@Param("categoryId") UUID categoryId,
                                                          @Param("startTime") OffsetDateTime startTime,
                                                          @Param("endTime") OffsetDateTime endTime);
+
     List<WarehouseLedger> findByTimeBetween(OffsetDateTime startDate, OffsetDateTime endDate);
+
     List<WarehouseLedger> findByProductIdInAndTimeBetween(List<UUID> productIds, OffsetDateTime startTime, OffsetDateTime endTime);
 
 
@@ -38,7 +41,6 @@ public interface WarehouseLedgerRepository extends JpaRepository<WarehouseLedger
 //            @Param("startTime") OffsetDateTime startTime,
 //            @Param("endTime") OffsetDateTime endTime
 //    );
-
 
 
     // for product statistics

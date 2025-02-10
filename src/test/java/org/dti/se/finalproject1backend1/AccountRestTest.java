@@ -45,7 +45,7 @@ public class AccountRestTest extends TestConfiguration {
     }
 
     @Test
-    public void testSaveOne() throws Exception {
+    public void testAddAccount() throws Exception {
         String encodedPassword = securityConfiguration.encode(rawPassword);
         AccountRequest accountCreator = AccountRequest
                 .builder()
@@ -91,11 +91,11 @@ public class AccountRestTest extends TestConfiguration {
     }
 
     @Test
-    public void testFindOneById() throws Exception {
+    public void testGetAccount() throws Exception {
         Account realAccount = fakeAccounts.getFirst();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/accounts/{id}", realAccount.getId())
+                .get("/accounts/{accountId}", realAccount.getId())
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
@@ -117,7 +117,7 @@ public class AccountRestTest extends TestConfiguration {
     }
 
     @Test
-    public void testPatchOneById() throws Exception {
+    public void testPatchAccount() throws Exception {
         Account realAccount = fakeAccounts.getFirst();
         String encodedPassword = securityConfiguration.encode(rawPassword);
 
@@ -136,7 +136,7 @@ public class AccountRestTest extends TestConfiguration {
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .patch("/accounts/{id}", realAccount.getId())
+                .patch("/accounts/{accountId}", realAccount.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(accountPatcher))
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
@@ -171,11 +171,11 @@ public class AccountRestTest extends TestConfiguration {
     }
 
     @Test
-    public void testDeleteOneById() throws Exception {
+    public void testDeleteAccount() throws Exception {
         Account realAccount = fakeAccounts.getFirst();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .delete("/accounts/{id}", realAccount.getId())
+                .delete("/accounts/{accountId}", realAccount.getId())
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc

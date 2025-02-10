@@ -39,7 +39,11 @@ public class BasicAuthenticationUseCase {
     AuthenticationManagerImpl authenticationManagerImpl; // Keep the autowired, assume it's adapted
 
     public void logout(Session session) {
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(null, session, null);
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                null,
+                session.getAccessToken(),
+                null
+        );
         authenticationManagerImpl.authenticate(authentication);
         sessionRepository.deleteByAccessToken(session.getAccessToken());
     }

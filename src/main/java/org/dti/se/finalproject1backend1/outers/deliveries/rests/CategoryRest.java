@@ -1,80 +1,153 @@
 package org.dti.se.finalproject1backend1.outers.deliveries.rests;
 
-import org.dti.se.finalproject1backend1.inners.models.entities.Category;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.categories.CategoryRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.categories.CategoryResponse;
-import org.dti.se.finalproject1backend1.inners.usecases.categories.CategoryMapper;
-import org.dti.se.finalproject1backend1.inners.usecases.categories.CategoryUseCase;
+import org.dti.se.finalproject1backend1.inners.usecases.products.CategoryUseCase;
+import org.dti.se.finalproject1backend1.outers.exceptions.products.CategoryNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/product-categories")
+@RequestMapping("/categories")
 public class CategoryRest {
 
     @Autowired
-    private CategoryUseCase categoryService;
-
-    @Autowired
-    private CategoryMapper categoryMapper;
+    private CategoryUseCase categoryUseCase;
 
     @GetMapping
-    public List<CategoryResponse> getAllCategories(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "5") int size,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String description
+    public ResponseEntity<ResponseBody<List<CategoryResponse>>> getCategories(
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "5") Integer size,
+            @RequestParam(defaultValue = "") String search
     ) {
-        return categoryService.getAllCategories(page, size, name, description)
-                .stream()
-                .map(this::convertToCategoryDTO)
-                .collect(Collectors.toList());
+        try {
+            List<CategoryResponse> categories = categoryUseCase.getCategories(page, size, search);
+            return ResponseBody
+                    .<List<CategoryResponse>>builder()
+                    .message("Categories found.")
+                    .data(categories)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<List<CategoryResponse>>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @GetMapping("/{id}")
-    public CategoryResponse getCategoryById(@PathVariable UUID id) {
-        Category category = categoryService.getCategoryById(id);
-        return convertToCategoryDTO(category);
+    @GetMapping("/{categoryId}")
+    public ResponseEntity<ResponseBody<CategoryResponse>> getCategory(@PathVariable UUID categoryId) {
+        try {
+            CategoryResponse category = categoryUseCase.getCategory(categoryId);
+            return ResponseBody
+                    .<CategoryResponse>builder()
+                    .message("Category found.")
+                    .data(category)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (CategoryNotFoundException e) {
+            return ResponseBody
+                    .<CategoryResponse>builder()
+                    .message("Category not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<CategoryResponse>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
-    public Category addCategory(@RequestBody CategoryRequest categoryRequest) {
-        Category category = categoryMapper.toEntity(categoryRequest);
-
-        Category savedCategory = categoryService.addCategory(category);
-        return savedCategory;
+    public ResponseEntity<ResponseBody<CategoryResponse>> addCategory(@RequestBody CategoryRequest request) {
+        try {
+            CategoryResponse category = categoryUseCase.addCategory(request);
+            return ResponseBody
+                    .<CategoryResponse>builder()
+                    .message("Category added.")
+                    .data(category)
+                    .build()
+                    .toEntity(HttpStatus.CREATED);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<CategoryResponse>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @PutMapping("/{id}")
-//    @PreAuthorize("hasAuthority('SUPER_ADMIN)")
-    public CategoryResponse updateCategory(@PathVariable UUID id, @RequestBody CategoryRequest categoryRequest) {
-        Category category = categoryMapper.toEntity(categoryRequest);
-        Category updatedCategory = categoryService.updateCategory(id, category);
-        return convertToCategoryDTO(updatedCategory);
+    @PatchMapping("/{categoryId}")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
+    public ResponseEntity<ResponseBody<CategoryResponse>> patchCategory(
+            @PathVariable UUID categoryId,
+            @RequestBody CategoryRequest request
+    ) {
+        try {
+            CategoryResponse category = categoryUseCase.patchCategory(categoryId, request);
+            return ResponseBody
+                    .<CategoryResponse>builder()
+                    .message("Category patched.")
+                    .data(category)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (CategoryNotFoundException e) {
+            return ResponseBody
+                    .<CategoryResponse>builder()
+                    .message("Category not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<CategoryResponse>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @DeleteMapping("/{id}")
-//    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
-    public ResponseEntity<String> deleteCategory(@PathVariable UUID id) {
-        categoryService.deleteCategory(id);
-        return ResponseEntity.ok("Category deleted Successfully.");
+    @DeleteMapping("/{categoryId}")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
+    public ResponseEntity<ResponseBody<Void>> deleteCategory(@PathVariable UUID categoryId) {
+        try {
+            categoryUseCase.deleteCategory(categoryId);
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Category deleted.")
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (CategoryNotFoundException e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Category not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
-
-
-    // Entities convert into DTO
-    private CategoryResponse convertToCategoryDTO(Category category) {
-        CategoryResponse dto = new CategoryResponse();
-        dto.setId(category.getId());
-        dto.setName(category.getName());
-        dto.setDescription(category.getDescription());
-        return dto;
-    }
-
 }

@@ -24,7 +24,7 @@ public class BasicAccountUseCase {
     @Autowired
     VerificationUseCase verificationUseCase;
 
-    public AccountResponse saveOne(AccountRequest request) {
+    public AccountResponse addAccount(AccountRequest request) {
         String encodedPassword = securityConfiguration.encode(request.getPassword());
         Account account = Account
                 .builder()
@@ -38,19 +38,10 @@ public class BasicAccountUseCase {
                 .build();
         Account savedAccount = accountRepository.saveAndFlush(account);
 
-        return AccountResponse
-                .builder()
-                .id(savedAccount.getId())
-                .email(savedAccount.getEmail())
-                .password(savedAccount.getPassword())
-                .name(savedAccount.getName())
-                .phone(savedAccount.getPhone())
-                .isVerified(savedAccount.getIsVerified())
-                .image(savedAccount.getImage())
-                .build();
+        return getAccount(savedAccount.getId());
     }
 
-    public AccountResponse findOneById(UUID id) {
+    public AccountResponse getAccount(UUID id) {
         Account foundAccount = accountRepository
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);
@@ -67,19 +58,7 @@ public class BasicAccountUseCase {
                 .build();
     }
 
-    public Account findOneByEmail(String email) {
-        return accountRepository
-                .findByEmail(email)
-                .orElseThrow(AccountNotFoundException::new);
-    }
-
-    public Account findOneByEmailAndPassword(String email, String password) {
-        return accountRepository
-                .findByEmailAndPassword(email, password)
-                .orElseThrow(AccountNotFoundException::new);
-    }
-
-    public AccountResponse patchOneById(UUID id, AccountRequest request) {
+    public AccountResponse patchAccount(UUID id, AccountRequest request) {
         Account accountToPatch = accountRepository
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);
@@ -98,19 +77,10 @@ public class BasicAccountUseCase {
 
         Account patchedAccount = accountRepository.saveAndFlush(accountToPatch);
 
-        return AccountResponse
-                .builder()
-                .id(patchedAccount.getId())
-                .email(patchedAccount.getEmail())
-                .password(patchedAccount.getPassword())
-                .name(patchedAccount.getName())
-                .phone(patchedAccount.getPhone())
-                .isVerified(patchedAccount.getIsVerified())
-                .image(patchedAccount.getImage())
-                .build();
+        return getAccount(patchedAccount.getId());
     }
 
-    public void deleteOneById(UUID id) {
+    public void deleteAccount(UUID id) {
         Account account = accountRepository
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);
