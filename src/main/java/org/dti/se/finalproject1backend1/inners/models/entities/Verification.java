@@ -1,43 +1,35 @@
 package org.dti.se.finalproject1backend1.inners.models.entities;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+import lombok.experimental.Accessors;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+
+@Builder
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Accessors(chain = true)
 @Entity
 @Table(name = "verification")
 public class Verification {
     @Id
-    @Column(name = "id", nullable = false)
     private UUID id;
 
-    @NotNull
-    @Column(name = "email", nullable = false, length = Integer.MAX_VALUE)
     private String email;
 
-    @NotNull
-    @Column(name = "type", nullable = false, length = Integer.MAX_VALUE)
     private String type;
 
-    @NotNull
-    @Column(name = "code", nullable = false, length = Integer.MAX_VALUE)
     private String code;
 
-    @NotNull
-    @Column(name = "init_time", nullable = false)
     private OffsetDateTime initTime;
 
-    @NotNull
-    @Column(name = "end_time", nullable = false)
     private OffsetDateTime endTime;
 
 }

@@ -1,9 +1,16 @@
 package org.dti.se.finalproject1backend1.inners.models.valueobjects.categories;
 
-import lombok.Data;
+import lombok.*;
+import lombok.experimental.Accessors;
+import org.dti.se.finalproject1backend1.inners.models.Model;
 
 @Data
-public class CategoryRequest {
+@EqualsAndHashCode(callSuper = true)
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+@Accessors(chain = true)
+public class CategoryRequest extends Model {
     private String name;
     private String description;
 }

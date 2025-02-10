@@ -42,17 +42,6 @@ public class SecurityConfiguration implements PasswordEncoder {
     @Autowired
     Environment environment;
 
-    public List<String> unAuthenticatedPaths = List.of(
-            "/otps/**",
-            "/authentications/**",
-            "/products/**",
-            "/webjars/**",
-            "/v3/api-docs/**",
-            "/swagger-ui/**",
-            "/product-categories/**",
-            "/warehouse-products/**"
-    );
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
@@ -66,7 +55,18 @@ public class SecurityConfiguration implements PasswordEncoder {
                 .addFilterBefore(transactionWebFilterImpl, DisableEncodeUrlFilter.class)
                 .addFilterAt(authenticationWebFilterImpl, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorizeHttpRequests -> authorizeHttpRequests
-                        .requestMatchers(unAuthenticatedPaths.toArray(String[]::new)).permitAll()
+                        .requestMatchers(
+                                "/verifications/**",
+                                "/authentications/**",
+                                "/webjars/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**"
+                        ).permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/products/**",
+                                "/categories/**"
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .build();

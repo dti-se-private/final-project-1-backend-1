@@ -14,9 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/warehouse-products")
@@ -36,7 +34,7 @@ public class WarehouseProductRest {
             @RequestParam(required = false) String search
     ) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").ascending());
-        Page<WarehouseProductResponse> response = warehouseProductService.getAllWarehouseProducts(pageable,filters, search);
+        Page<WarehouseProductResponse> response = warehouseProductService.getAllWarehouseProducts(pageable, filters, search);
         return ResponseEntity.ok(response);
     }
 
@@ -54,7 +52,7 @@ public class WarehouseProductRest {
     }
 
     @PutMapping("/{id}")
-    public WarehouseProductResponse updateWarehouseProduct(@PathVariable UUID id,@RequestBody WarehouseProductRequest request) {
+    public WarehouseProductResponse updateWarehouseProduct(@PathVariable UUID id, @RequestBody WarehouseProductRequest request) {
         return warehouseProductService.updateWarehouseProduct(id, request);
     }
 
