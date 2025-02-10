@@ -172,7 +172,7 @@ public class AccountAddressRest {
                     .<Void>builder()
                     .message("Address deleted.")
                     .build()
-                    .toEntity(HttpStatus.NO_CONTENT);
+                    .toEntity(HttpStatus.OK);
         } catch (AccountNotFoundException e) {
             return ResponseBody
                     .<Void>builder()

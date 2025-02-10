@@ -122,7 +122,7 @@ public class WarehouseAdminRestTest extends TestConfiguration {
 
         MvcResult result = mockMvc
                 .perform(httpRequest)
-                .andExpect(status().isNoContent())
+                .andExpect(status().isOk())
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
