@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.transaction.TransactionStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,6 +40,54 @@ public class OrderRest {
     CancellationUseCase cancellationUseCase;
     @Autowired
     private ShipmentUseCase shipmentUseCase;
+
+
+    @PostMapping("/try-checkout")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
+    public ResponseEntity<ResponseBody<OrderResponse>> tryCheckout(
+            @RequestAttribute("transactionStatus") TransactionStatus transactionStatus,
+            @AuthenticationPrincipal Account account,
+            @RequestBody OrderRequest request
+    ) {
+        try {
+            OrderResponse order = checkoutUseCase.tryCheckout(account, request);
+            transactionStatus.setRollbackOnly();
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Order check out tried.")
+                    .data(order)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (AccountNotFoundException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Account not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (CartItemInvalidException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Cart item invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (AccountAddressNotFoundException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Account address not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
 
     @PostMapping("/checkout")

@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -61,6 +62,11 @@ public class CheckoutUseCase {
 
     @Autowired
     BiteshipGateway biteshipGateway;
+
+
+    public OrderResponse tryCheckout(Account account, OrderRequest request) {
+        return checkout(account, request);
+    }
 
     public OrderResponse checkout(Account account, OrderRequest request) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
