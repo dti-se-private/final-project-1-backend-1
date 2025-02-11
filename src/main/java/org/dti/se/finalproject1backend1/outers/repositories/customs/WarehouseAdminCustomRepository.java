@@ -40,21 +40,10 @@ public class WarehouseAdminCustomRepository {
         String sql = String.format("""
                 SELECT json_build_object(
                         'id', warehouse_admin.id,
-                        'account', json_build_object(
-                            'id', account.id,
-                            'username', account.username,
-                            'email', account.email
-                        ),
-                        'warehouse', json_build_object(
-                            'id', warehouse.id,
-                            'name', warehouse.name,
-                            'description', warehouse.description,
-                            'location', warehouse.location
-                        )
-                    ) as admin
+                        'warehouseId', warehouse_admin.warehouse_id,
+                        'accountId', warehouse_admin.account_id
+                    ) as warehouse_admin
                 FROM warehouse_admin
-                JOIN account ON warehouse_admin.account_id = account.id
-                JOIN warehouse ON warehouse_admin.warehouse_id = warehouse.id
                 ORDER BY %s
                 LIMIT ?
                 OFFSET ?
