@@ -28,53 +28,33 @@ public class CategoryRest {
     public List<CategoryResponse> getAllCategories(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String description
+            @RequestParam(required = false) List<String> filters,
+            @RequestParam(required = false) String search
     ) {
-        return categoryService.getAllCategories(page, size, name, description)
-                .stream()
-                .map(this::convertToCategoryDTO)
-                .collect(Collectors.toList());
+        return categoryService.getAllCategories(page, size, filters, search);
     }
 
     @GetMapping("/{id}")
     public CategoryResponse getCategoryById(@PathVariable UUID id) {
-        Category category = categoryService.getCategoryById(id);
-        return convertToCategoryDTO(category);
+        return categoryService.getCategoryById(id);
     }
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
-    public Category addCategory(@RequestBody CategoryRequest categoryRequest) {
-        Category category = categoryMapper.toEntity(categoryRequest);
-
-        Category savedCategory = categoryService.addCategory(category);
-        return savedCategory;
+    public CategoryResponse addCategory(@RequestBody CategoryRequest categoryRequest) {
+        return categoryService.addCategory(categoryRequest);
     }
 
     @PutMapping("/{id}")
 //    @PreAuthorize("hasAuthority('SUPER_ADMIN)")
     public CategoryResponse updateCategory(@PathVariable UUID id, @RequestBody CategoryRequest categoryRequest) {
-        Category category = categoryMapper.toEntity(categoryRequest);
-        Category updatedCategory = categoryService.updateCategory(id, category);
-        return convertToCategoryDTO(updatedCategory);
+        return categoryService.updateCategory(id, categoryRequest);
     }
 
     @DeleteMapping("/{id}")
 //    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
     public ResponseEntity<String> deleteCategory(@PathVariable UUID id) {
         categoryService.deleteCategory(id);
-        return ResponseEntity.ok("Category deleted Successfully.");
+        return ResponseEntity.ok("Category deleted successfully.");
     }
-
-
-    // Entities convert into DTO
-    private CategoryResponse convertToCategoryDTO(Category category) {
-        CategoryResponse dto = new CategoryResponse();
-        dto.setId(category.getId());
-        dto.setName(category.getName());
-        dto.setDescription(category.getDescription());
-        return dto;
-    }
-
 }

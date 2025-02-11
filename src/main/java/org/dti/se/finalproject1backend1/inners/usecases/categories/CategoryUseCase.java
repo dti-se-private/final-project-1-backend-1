@@ -2,8 +2,13 @@ package org.dti.se.finalproject1backend1.inners.usecases.categories;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.dti.se.finalproject1backend1.inners.models.entities.Category;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.categories.CategoryRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.categories.CategoryResponse;
+import org.dti.se.finalproject1backend1.outers.exceptions.products.CategoryNotFoundException;
+import org.dti.se.finalproject1backend1.outers.repositories.customs.CategoryCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.CategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -15,29 +20,44 @@ import java.util.UUID;
 public class CategoryUseCase {
 
     @Autowired
-    private CategoryRepository categoryRepository;
+    private CategoryCustomRepository categoryRepository;
 
-    public List<Category> getAllCategories(int page, int size, String name, String description) {
-        Pageable pageable = PageRequest.of(page, size);
-
-        return categoryRepository.findCategories(pageable, name, description);
+    public List<CategoryResponse> getAllCategories(int page, int size, List<String> filters, String search) {
+        return categoryRepository.getAllCategories(page, size, filters, search);
     }
 
-    public Category getCategoryById(UUID id) {
-        return categoryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Category not Found for ID: " + id));
+    public CategoryResponse getCategoryById(UUID id) {
+        try {
+            return categoryRepository.getById(id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new CategoryNotFoundException();
+        }
     }
 
-    public Category addCategory(Category category) {
-        return categoryRepository.save(category);
+    public CategoryResponse addCategory(CategoryRequest request) {
+        Category category = new Category()
+                .setName(request.getName())
+                .setDescription(request.getDescription());
+
+        categoryRepository.create(category);
+        return getCategoryById(category.getId());
     }
 
-    public Category updateCategory(UUID id, Category category) {
-        category.setId(id);
-        return categoryRepository.save(category);
+    public CategoryResponse updateCategory(UUID id, CategoryRequest request) {
+        getCategoryById(id);
+
+        Category category = new Category()
+                .setId(id)
+                .setName(request.getName())
+                .setDescription(request.getDescription());
+
+        categoryRepository.update(category);
+        return getCategoryById(id);
+
     }
 
     public void deleteCategory(UUID id) {
-        categoryRepository.deleteById(id);
+        getCategoryById(id);
+        categoryRepository.delete(id);
     }
 }
