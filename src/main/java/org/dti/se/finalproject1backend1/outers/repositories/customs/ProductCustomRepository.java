@@ -1,12 +1,17 @@
 package org.dti.se.finalproject1backend1.outers.repositories.customs;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.categories.CategoryResponse;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -16,52 +21,166 @@ public class ProductCustomRepository {
     @Qualifier("oneTemplate")
     private JdbcTemplate oneTemplate;
 
-    public ProductResponse getAllWarehouseProduct(UUID productId) {
-        CategoryResponse category = oneTemplate
-                .queryForObject("""
-                                SELECT
-                                c.id as category_id,
-                                c.name as category_name,
-                                c.description as category_description
-                                FROM product p
-                                JOIN category c ON p.category_id = c.id
-                                WHERE p.id = ?
-                                LIMIT 1
-                                """,
-                        (rs, rowNum) -> CategoryResponse
-                                .builder()
-                                .id(UUID.fromString(rs.getString("category_id")))
-                                .name(rs.getString("category_name"))
-                                .description(rs.getString("category_description"))
-                                .build(),
-                        productId
-                );
+    @Autowired
+    ObjectMapper objectMapper;
+
+    public List<CategoryResponse> getCategories(
+            Integer page,
+            Integer size,
+            String search
+    ) {
+        String sql = """
+                SELECT *
+                FROM (
+                    SELECT json_build_object(
+                        'id', category.id,
+                        'name', category.name,
+                        'description', category.description
+                    ) as item
+                    FROM category
+                ) as sq1
+                ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                LIMIT ?
+                OFFSET ?
+                """;
 
         return oneTemplate
-                .queryForObject("""
-                                SELECT
-                                p.id as product_id,
-                                p.name as product_name,
-                                p.description as product_description,
-                                p.price as product_price,
-                                p.image as product_image,
-                                sum(wp.quantity) as product_total_quantity
-                                FROM warehouse_product wp
-                                JOIN product p ON wp.product_id = p.id
-                                WHERE wp.product_id = ?
-                                GROUP BY p.id
-                                """,
-                        (rs, rowNum) -> ProductResponse
-                                .builder()
-                                .id(UUID.fromString(rs.getString("product_id")))
-                                .category(category)
-                                .name(rs.getString("product_name"))
-                                .description(rs.getString("product_description"))
-                                .price(rs.getDouble("product_price"))
-                                .image(rs.getBytes("product_image"))
-                                .totalQuantity(rs.getDouble("product_total_quantity"))
-                                .build(),
-                        productId
+                .query(sql,
+                        (rs, rowNum) -> {
+                            try {
+                                return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
+                                });
+                            } catch (JsonProcessingException e) {
+                                throw new RuntimeException(e);
+                            }
+                        },
+                        search,
+                        size,
+                        page * size
                 );
+    }
+
+    public CategoryResponse getCategory(UUID categoryId) {
+        String sql = """
+                SELECT *
+                FROM (
+                    SELECT json_build_object(
+                        'id', category.id,
+                        'name', category.name,
+                        'description', category.description
+                    ) as item
+                    FROM category
+                    WHERE category.id = ?
+                ) as sq1
+                LIMIT 1
+                """;
+
+        try {
+            return oneTemplate
+                    .queryForObject(sql,
+                            (rs, rowNum) -> {
+                                try {
+                                    return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
+                                    });
+                                } catch (JsonProcessingException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            },
+                            categoryId
+                    );
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    public List<ProductResponse> getProducts(
+            Integer page,
+            Integer size,
+            String search
+    ) {
+        String sql = """
+                SELECT *
+                FROM (
+                    SELECT json_build_object(
+                        'id', product.id,
+                        'name', product.name,
+                        'description', product.description,
+                        'price', product.price,
+                        'image', product.image,
+                           'category', json_build_object(
+                               'id', category.id,
+                               'name', category.name,
+                               'description', category.description
+                           ),
+                            'quantity', (
+                                SELECT sum(warehouse_product.quantity)
+                                FROM warehouse_product
+                                WHERE warehouse_product.product_id = product.id
+                            )
+                    ) as item
+                    FROM category
+                    INNER JOIN product ON category.id = product.category_id
+                ) as sq1
+                ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                LIMIT ?
+                OFFSET ?
+                """;
+
+        return oneTemplate
+                .query(sql,
+                        (rs, rowNum) -> {
+                            try {
+                                return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
+                                });
+                            } catch (JsonProcessingException e) {
+                                throw new RuntimeException(e);
+                            }
+                        },
+                        search,
+                        size,
+                        page * size
+                );
+    }
+
+    public ProductResponse getProduct(UUID productId) {
+        String sql = """
+                SELECT json_build_object(
+                    'id', product.id,
+                    'name', product.name,
+                    'description', product.description,
+                    'price', product.price,
+                    'image', product.image,
+                    'category', json_build_object(
+                        'id', category.id,
+                        'name', category.name,
+                        'description', category.description
+                    ),
+                    'quantity', (
+                        SELECT sum(warehouse_product.quantity)
+                        FROM warehouse_product
+                        WHERE warehouse_product.product_id = product.id
+                    )
+                ) as item
+                FROM product
+                INNER JOIN category ON product.category_id = category.id
+                WHERE product.id = ?
+                """;
+
+        try {
+            return oneTemplate
+                    .queryForObject(sql,
+                            (rs, rowNum) -> {
+                                try {
+                                    return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
+                                    });
+                                } catch (JsonProcessingException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            },
+                            productId
+                    );
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 }

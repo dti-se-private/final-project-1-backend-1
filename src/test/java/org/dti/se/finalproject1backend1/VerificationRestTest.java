@@ -3,7 +3,7 @@ package org.dti.se.finalproject1backend1;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.VerificationRepository;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.verifications.VerificationRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,16 +23,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class OtpRestTest extends TestConfiguration {
+public class VerificationRestTest extends TestConfiguration {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @Autowired
-    private VerificationRepository verificationRepository;
 
     private String testEmail;
     private String testType;
@@ -49,14 +46,19 @@ public class OtpRestTest extends TestConfiguration {
     }
 
     @Test
-    public void sendOtp() throws Exception {
+    public void send() throws Exception {
         Mockito.doNothing().when(mailgunGatewayMock).sendEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 
+        VerificationRequest requestBody = VerificationRequest
+                .builder()
+                .email(testEmail)
+                .type(testType)
+                .build();
+
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post("/otps/send")
-                .param("email", testEmail)
-                .param("type", testType)
-                .contentType(MediaType.APPLICATION_JSON);
+                .post("/verifications/send")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
                 .perform(request)
@@ -67,6 +69,6 @@ public class OtpRestTest extends TestConfiguration {
         ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
-        assert body.getMessage().equals("OTP sent succeed.");
+        assert body.getMessage().equals("Verification send succeed.");
     }
 }

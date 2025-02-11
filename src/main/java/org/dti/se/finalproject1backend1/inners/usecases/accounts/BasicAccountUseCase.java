@@ -3,10 +3,10 @@ package org.dti.se.finalproject1backend1.inners.usecases.accounts;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
-import org.dti.se.finalproject1backend1.inners.usecases.authentications.OtpUseCase;
+import org.dti.se.finalproject1backend1.inners.usecases.authentications.VerificationUseCase;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
-import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,9 +22,9 @@ public class BasicAccountUseCase {
     SecurityConfiguration securityConfiguration;
 
     @Autowired
-    OtpUseCase otpUseCase;
+    VerificationUseCase verificationUseCase;
 
-    public AccountResponse saveOne(AccountRequest request) {
+    public AccountResponse addAccount(AccountRequest request) {
         String encodedPassword = securityConfiguration.encode(request.getPassword());
         Account account = Account
                 .builder()
@@ -36,21 +36,12 @@ public class BasicAccountUseCase {
                 .isVerified(false)
                 .image(request.getImage())
                 .build();
-        Account savedAccount = accountRepository.save(account);
+        Account savedAccount = accountRepository.saveAndFlush(account);
 
-        return AccountResponse
-                .builder()
-                .id(savedAccount.getId())
-                .email(savedAccount.getEmail())
-                .password(savedAccount.getPassword())
-                .name(savedAccount.getName())
-                .phone(savedAccount.getPhone())
-                .isVerified(savedAccount.getIsVerified())
-                .image(savedAccount.getImage())
-                .build();
+        return getAccount(savedAccount.getId());
     }
 
-    public AccountResponse findOneById(UUID id) {
+    public AccountResponse getAccount(UUID id) {
         Account foundAccount = accountRepository
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);
@@ -67,50 +58,29 @@ public class BasicAccountUseCase {
                 .build();
     }
 
-    public Account findOneByEmail(String email) {
-        return accountRepository
-                .findByEmail(email)
-                .orElseThrow(AccountNotFoundException::new);
-    }
-
-    public Account findOneByEmailAndPassword(String email, String password) {
-        return accountRepository
-                .findByEmailAndPassword(email, password)
-                .orElseThrow(AccountNotFoundException::new);
-    }
-
-    public AccountResponse patchOneById(UUID id, AccountRequest request) {
+    public AccountResponse patchAccount(UUID id, AccountRequest request) {
         Account accountToPatch = accountRepository
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);
 
-        if (request.getEmail() != null && !request.getEmail().equals(accountToPatch.getEmail())) {
-            if (!otpUseCase.verifyOtp(request.getEmail(), request.getOtp(), "UPDATE_EMAIL")) {
-                throw new VerificationNotFoundException("Invalid OTP for email update");
-            }
-            accountToPatch.setEmail(request.getEmail());
+        Boolean verifyResult = verificationUseCase.verifyOtp(request.getEmail(), request.getOtp(), "UPDATE_ACCOUNT");
+        if (!verifyResult) {
+            throw new VerificationInvalidException();
         }
 
-        String encodedPassword = securityConfiguration.encode(request.getPassword());
+        accountToPatch.setEmail(request.getEmail());
         accountToPatch.setName(request.getName());
         accountToPatch.setPhone(request.getPhone());
         accountToPatch.setImage(request.getImage());
+        String encodedPassword = securityConfiguration.encode(request.getPassword());
         accountToPatch.setPassword(encodedPassword);
-        Account patchedAccount = accountRepository.save(accountToPatch);
 
-        return AccountResponse
-                .builder()
-                .id(patchedAccount.getId())
-                .email(patchedAccount.getEmail())
-                .password(patchedAccount.getPassword())
-                .name(patchedAccount.getName())
-                .phone(patchedAccount.getPhone())
-                .isVerified(patchedAccount.getIsVerified())
-                .image(patchedAccount.getImage())
-                .build();
+        Account patchedAccount = accountRepository.saveAndFlush(accountToPatch);
+
+        return getAccount(patchedAccount.getId());
     }
 
-    public void deleteOneById(UUID id) {
+    public void deleteAccount(UUID id) {
         Account account = accountRepository
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);

@@ -12,7 +12,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Repository
 public class CartCustomRepository {
@@ -28,46 +27,39 @@ public class CartCustomRepository {
             Account account,
             Integer page,
             Integer size,
-            List<String> filters,
             String search
     ) {
-        String order = filters
-                .stream()
-                .map(filter -> String.format("SIMILARITY(%s::text, '%s')", filter, search))
-                .collect(Collectors.joining("+"));
-
-        if (order.isEmpty()) {
-            order = "cart_item.id";
-        }
-
-        String query = String.format("""
-                SELECT json_build_object(
-                        'id', cart_item.id,
-                        'quantity', cart_item.quantity,
-                        'product', json_build_object(
-                            'id', product.id,
-                            'name', product.name,
-                            'description', product.description,
-                            'price', product.price,
-                            'image', product.image,
-                            'category', json_build_object(
-                                'id', category.id,
-                                'name', category.name,
-                                'description', category.description
+        String sql = """
+                SELECT *
+                FROM (
+                    SELECT json_build_object(
+                            'id', cart_item.id,
+                            'quantity', cart_item.quantity,
+                            'product', json_build_object(
+                                'id', product.id,
+                                'name', product.name,
+                                'description', product.description,
+                                'price', product.price,
+                                'image', product.image,
+                                'category', json_build_object(
+                                    'id', category.id,
+                                    'name', category.name,
+                                    'description', category.description
+                                )
                             )
-                        )
-                    ) as item
-                FROM cart_item
-                JOIN product ON cart_item.product_id =product.id
-                JOIN category ON product.category_id = category.id
-                WHERE account_id = ?
-                ORDER BY %s
+                        ) as item
+                    FROM cart_item
+                    JOIN product ON cart_item.product_id =product.id
+                    JOIN category ON product.category_id = category.id
+                    WHERE account_id = ?
+                ) as sq1
+                ORDER BY SIMILARITY(sq1.item::text, ?) DESC
                 LIMIT ?
                 OFFSET ?
-                """, order);
+                """;
 
         return oneTemplate
-                .query(query,
+                .query(sql,
                         (rs, rowNum) -> {
                             try {
                                 return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
@@ -77,8 +69,22 @@ public class CartCustomRepository {
                             }
                         },
                         account.getId(),
+                        search,
                         size,
                         page * size
+                );
+    }
+
+    public Double getTotalPrice(UUID accountId) {
+        return oneTemplate
+                .queryForObject("""
+                                SELECT SUM(product.price * cart_item.quantity)
+                                FROM cart_item
+                                JOIN product ON cart_item.product_id = product.id
+                                WHERE account_id = ?
+                                """,
+                        Double.class,
+                        accountId
                 );
     }
 

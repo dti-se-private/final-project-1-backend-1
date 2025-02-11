@@ -1,16 +1,16 @@
 package org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.Accessors;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class RegisterAndLoginByExternalRequest {
-    private String idToken;
+public class ResetPasswordRequest {
+    private String email;
+    private String otp;
+    private String newPassword;
 }
