@@ -169,6 +169,6 @@ public class WarehouseRestTest extends TestConfiguration {
         String content = result.getResponse().getContentAsString();
         ResponseBody<List<WarehouseResponse>> body = objectMapper.readValue(content, new TypeReference<>() {});
         assert body != null;
-        assert body.getMessage().equals("Orders found.");
+        assert body.getMessage().equals("Warehouse fetched.");
     }
 }

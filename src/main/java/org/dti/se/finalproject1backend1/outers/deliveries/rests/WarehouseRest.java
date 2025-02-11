@@ -39,7 +39,7 @@ public class WarehouseRest {
                     .getAllWarehouses(account, page, size, filters, search);
             return ResponseBody
                     .<List<WarehouseResponse>>builder()
-                    .message("Orders found.")
+                    .message("Warehouse fetched.")
                     .data(warehouses)
                     .build()
                     .toEntity(HttpStatus.OK);
