@@ -26,13 +26,13 @@ public class WarehouseRest {
     private WarehouseUseCase warehouseService;
 
     @GetMapping
-    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
     public ResponseEntity<ResponseBody<List<WarehouseResponse>>> getAllWarehouses(
             @AuthenticationPrincipal Account account,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) List<String> filters,
-            @RequestParam(required = false) String search
+            @RequestParam(defaultValue = "") List<String> filters,
+            @RequestParam(defaultValue = "") String search
     ) {
         try {
             List<WarehouseResponse> warehouses = warehouseService
@@ -59,7 +59,7 @@ public class WarehouseRest {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
     public ResponseEntity<ResponseBody<WarehouseResponse>> getWarehouse(
             @AuthenticationPrincipal Account account,
             @PathVariable UUID id
@@ -94,7 +94,7 @@ public class WarehouseRest {
     }
 
     @PostMapping
-    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
     public ResponseEntity<ResponseBody<WarehouseResponse>> addWarehouse(
             @AuthenticationPrincipal Account account,
             @RequestBody WarehouseRequest request
@@ -123,7 +123,7 @@ public class WarehouseRest {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
     public ResponseEntity<ResponseBody<WarehouseResponse>> patchWarehouse(
             @AuthenticationPrincipal Account account,
             @PathVariable UUID id,
@@ -159,7 +159,7 @@ public class WarehouseRest {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
     public ResponseEntity<ResponseBody<WarehouseResponse>> deleteWarehouse(
             @AuthenticationPrincipal Account account,
             @PathVariable UUID id
