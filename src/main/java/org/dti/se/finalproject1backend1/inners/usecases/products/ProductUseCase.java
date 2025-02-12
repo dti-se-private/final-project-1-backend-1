@@ -8,9 +8,13 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Product;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.categories.CategoryResponse;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
 import org.dti.se.finalproject1backend1.inners.usecases.categories.CategoryMapper;
+import org.dti.se.finalproject1backend1.inners.usecases.categories.CategoryUseCase;
+import org.dti.se.finalproject1backend1.outers.exceptions.products.ProductNotFoundException;
+import org.dti.se.finalproject1backend1.outers.repositories.customs.ProductCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.ProductRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -27,170 +31,55 @@ import java.util.stream.Collectors;
 @Service
 public class ProductUseCase {
     @Autowired
-    private ProductRepository productRepository;
+    private ProductCustomRepository productRepository;
 
     @Autowired
     private WarehouseProductRepository warehouseProductRepository;
 
     @Autowired
-    private CategoryMapper categoryMapper;
+    private CategoryUseCase categoryService;
 
-//    public List<Product> getAllProducts() {
-//        return productRepository.findAll();
-//    }
-//    public Page<ProductResponse> getAllProducts(Pageable pageable, String category, String search) {
-//        Specification<Product> spec = Specification.where(null);
-//
-//        // add category filter
-//        if (StringUtils.hasText(category)) {
-//            spec = spec.and((root, query, cb) -> {
-//                        Join<Product, Category> categoryJoin = root.join("category");
-//                        return cb.equal(cb.lower(categoryJoin.get("name")), category.toLowerCase());
-//                    });
-//        }
-//
-//        // add search filter (name or description)
-//        if (StringUtils.hasText(search)) {
-//            String searchPattern = "%" + search.toLowerCase() + "%";
-//            spec = spec.and((root, query, cb) ->
-//                    cb.or(
-//                            cb.like(cb.lower(root.get("name")),  searchPattern),
-//                            cb.like(cb.lower(root.get("description")), searchPattern)
-//                    )
-//            );
-//        }
-//
-//        //execute query with pagination
-//        Page<Product> products = productRepository.findAll(spec, pageable);
-//
-//
-//        // Map to DTO
-//        return products.map(product ->
-//                new ProductResponse(
-//                        product.getId(),
-//
-//                )
-//        );
-//    }
 
-    public Page<ProductResponse> getFilteredProducts(Pageable pageable, String category, String search) {
-        Page<Product> products;
+    public List<ProductResponse> getFilteredProducts(
+            int page,
+            int size,
+            List<String> filters,
+            String search
+    ) {
+        return productRepository.getProducts(page, size, filters, search);
+    }
 
-        // 1. Apply filters/search
-        if (search != null && !search.isEmpty()) {
-            products = productRepository.searchProducts(search, pageable);
-        } else if (category != null && !category.isEmpty()) {
-            products = productRepository.findByCategoryName(category, pageable);
-        } else {
-            products = productRepository.findAll(pageable);
+    public ProductResponse getProductById(UUID id) {
+        try {
+            return productRepository.getById(id);
+        } catch (EmptyResultDataAccessException e) {
+            throw new ProductNotFoundException();
         }
-
-        // 2. Calculate quantities
-        Map<UUID, Double> quantities = products.getContent().stream()
-                .collect(Collectors.toMap(
-                        Product::getId,
-                        p -> warehouseProductRepository.sumQuantityByProductId(p.getId())
-                ));
-
-        // 3. Map to response
-        return products.map(p -> new ProductResponse()
-                .setId(p.getId())
-                .setName(p.getName())
-                .setDescription(p.getDescription())
-                .setPrice(p.getPrice())
-                .setTotalQuantity(quantities.getOrDefault(p.getId(), 0.0))
-                .setImage(p.getImage())
-                .setCategory(categoryMapper.mapCategory(p.getCategory()))
-        );
     }
 
-//    // how to get Product total quantity for filtered product
-//    public Page<ProductResponse> getFilteredProducts(Pageable pageable, String categoryName, String searchTerm) {
-//        // 1. First get filtered products using existing specifications
-//        Specification<Product> spec = buildSpecifications(categoryName, searchTerm);
-//        Page<Product> productPage = productRepository.findAll(spec, pageable);
-//
-//        // 2. Get quantities in bulk for all products in this page
-//        List<UUID> productIds = productPage.getContent()
-//                .stream()
-//                .map(Product::getId)
-//                .collect(Collectors.toList());
-//
-//        Map<UUID, Double> quantityMap = warehouseProductRepository
-//                .findTotalQuantitiesByProductIds(productIds)
-//                .stream()
-//                .collect(Collectors.toMap(
-//                        arr -> (UUID) arr[0],
-//                        arr -> (Double) arr[1]
-//                ));
-//
-//        // 3. Map to ProductResponse with quantities
-//        List<ProductResponse> responses = productPage.getContent()
-//                .stream()
-//                .map(product -> mapToResponse(product, quantityMap))
-//                .collect(Collectors.toList());
-//
-//        // 4. Return paginated result
-//        return new PageImpl<>(responses, pageable, productPage.getTotalElements());
-//    }
-//
-//    private ProductResponse mapToResponse(Product product, Map<UUID, Double> quantityMap) {
-//        return new ProductResponse()
-//                .setId(product.getId())
-//                .setName(product.getName())
-//                .setDescription(product.getDescription())
-//                .setPrice(product.getPrice())
-//                .setImage(product.getImage())
-//                .setTotalQuantity(quantityMap.getOrDefault(product.getId(), 0.0))
-//                .setCategory(mapCategory(product.getCategory()));
-//    }
-//
-//    private CategoryResponse mapCategory(Category category) {
-//        return new CategoryResponse()
-//                .setId(category.getId())
-//                .setName(category.getName())
-//                .setDescription(category.getDescription());
-//    }
-//
-//    private Specification<Product> buildSpecifications(String categoryName, String searchTerm) {
-//        return (root, query, cb) -> {
-//            List<Predicate> predicates = new ArrayList<>();
-//
-//            // Category filter
-//            if (StringUtils.hasText(categoryName)) {
-//                Join<Product, Category> categoryJoin = root.join("category");
-//                predicates.add(cb.equal(cb.lower(categoryJoin.get("name")), categoryName.toLowerCase()));
-//            }
-//
-//            // Search filter
-//            if (StringUtils.hasText(searchTerm)) {
-//                String pattern = "%" + searchTerm.toLowerCase() + "%";
-//                predicates.add(cb.or(
-//                        cb.like(cb.lower(root.get("name")), pattern),
-//                        cb.like(cb.lower(root.get("description")), pattern)
-//                ));
-//            }
-//
-//            return cb.and(predicates.toArray(new Predicate[0]));
-//        };
-//    }
+    public ProductResponse addProduct(ProductResponse product) {
+        // Verify category exists
+        categoryService.getCategoryById(product.getCategory().getId());
 
-    public Product getProductById(UUID id) {
-        return productRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Product not Found for ID: " + id));
+        productRepository.create(product);
+        return getProductById(product.getId());
     }
 
-    public Product addProduct(Product product) {
-        return productRepository.save(product);
-    }
+    public ProductResponse updateProduct(UUID id, ProductResponse product) {
+        // Verify existence
+        getProductById(id);
+        // Verify category exists
+        categoryService.getCategoryById(product.getCategory().getId());
 
-    public Product updateProduct(UUID id, Product product) {
         product.setId(id);
-        return productRepository.save(product);
+        productRepository.update(product);
+        return getProductById(id);
     }
 
     public void deleteProduct(UUID id) {
-        productRepository.deleteById(id);
+        // Verify existence
+        getProductById(id);
+        productRepository.delete(id);
     }
 
 }
