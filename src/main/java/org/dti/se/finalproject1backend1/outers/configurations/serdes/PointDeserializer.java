@@ -13,7 +13,7 @@ public class PointDeserializer extends JsonDeserializer<Point> {
     @Override
     public Point deserialize(JsonParser parser, DeserializationContext context) throws IOException {
         String text = parser.getText();
-        if (text == null) {
+        if (text == null || text.isEmpty()) {
             return null;
         }
 

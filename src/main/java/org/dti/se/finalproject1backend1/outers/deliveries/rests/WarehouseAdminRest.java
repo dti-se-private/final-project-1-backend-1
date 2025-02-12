@@ -213,7 +213,7 @@ public class WarehouseAdminRest {
                     .<Void>builder()
                     .message("Warehouse admin deleted.")
                     .build()
-                    .toEntity(HttpStatus.NO_CONTENT);
+                    .toEntity(HttpStatus.OK);
         } catch (AccountPermissionInvalidException e) {
             return ResponseBody
                     .<Void>builder()

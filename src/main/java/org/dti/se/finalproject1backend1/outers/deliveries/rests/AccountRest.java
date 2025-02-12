@@ -24,11 +24,11 @@ public class AccountRest {
     private BasicAccountUseCase basicAccountUseCase;
 
     @PostMapping
-    public ResponseEntity<ResponseBody<AccountResponse>> saveOne(
+    public ResponseEntity<ResponseBody<AccountResponse>> addAccount(
             @RequestBody AccountRequest request
     ) {
         try {
-            AccountResponse savedAccount = basicAccountUseCase.saveOne(request);
+            AccountResponse savedAccount = basicAccountUseCase.addAccount(request);
             return ResponseBody
                     .<AccountResponse>builder()
                     .message("Account saved.")
@@ -52,12 +52,12 @@ public class AccountRest {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping(value = "/{id}")
-    public ResponseEntity<ResponseBody<AccountResponse>> findOneById(
-            @PathVariable("id") UUID id
+    @GetMapping(value = "/{accountId}")
+    public ResponseEntity<ResponseBody<AccountResponse>> getAccount(
+            @PathVariable UUID accountId
     ) {
         try {
-            AccountResponse foundAccount = basicAccountUseCase.findOneById(id);
+            AccountResponse foundAccount = basicAccountUseCase.getAccount(accountId);
             return ResponseBody
                     .<AccountResponse>builder()
                     .message("Account found.")
@@ -82,13 +82,13 @@ public class AccountRest {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PatchMapping(value = "/{id}")
-    public ResponseEntity<ResponseBody<AccountResponse>> patchOneById(
-            @PathVariable("id") UUID id,
+    @PatchMapping(value = "/{accountId}")
+    public ResponseEntity<ResponseBody<AccountResponse>> patchAccount(
+            @PathVariable UUID accountId,
             @RequestBody AccountRequest request
     ) {
         try {
-            AccountResponse patchedAccount = basicAccountUseCase.patchOneById(id, request);
+            AccountResponse patchedAccount = basicAccountUseCase.patchAccount(accountId, request);
             return ResponseBody
                     .<AccountResponse>builder()
                     .message("Account patched.")
@@ -126,12 +126,12 @@ public class AccountRest {
         }
     }
 
-    @DeleteMapping(value = "/{id}")
-    public ResponseEntity<ResponseBody<Void>> deleteOneById(
-            @PathVariable("id") UUID id
+    @DeleteMapping(value = "/{accountId}")
+    public ResponseEntity<ResponseBody<Void>> deleteAccount(
+            @PathVariable UUID accountId
     ) {
         try {
-            basicAccountUseCase.deleteOneById(id);
+            basicAccountUseCase.deleteAccount(accountId);
             return ResponseBody
                     .<Void>builder()
                     .message("Account deleted.")

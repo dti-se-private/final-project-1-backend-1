@@ -40,7 +40,6 @@ public class OrderUseCase {
             Account account,
             Integer page,
             Integer size,
-            List<String> filters,
             String search
     ) {
         List<String> accountPermissions = account
@@ -51,14 +50,13 @@ public class OrderUseCase {
 
         if (accountPermissions.contains("SUPER_ADMIN")) {
             return orderCustomRepository
-                    .getOrders(page, size, filters, search);
+                    .getOrders(page, size, search);
         } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
             return orderCustomRepository
-                    .getOrders(account, page, size, filters, search);
-
+                    .getOrders(account, page, size, search);
         } else if (accountPermissions.contains("CUSTOMER")) {
             return orderCustomRepository
-                    .getOrders(account, page, size, filters, search);
+                    .getCustomerOrders(account, page, size, search);
         } else {
             throw new AccountPermissionInvalidException();
         }

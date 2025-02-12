@@ -2,13 +2,10 @@ package org.dti.se.finalproject1backend1.outers.deliveries.rests;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.exceptions.TokenExpiredException;
-import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.ResetPasswordRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.*;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.BasicAuthenticationUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.LoginAuthenticationUseCase;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.RegisterAuthenticationUseCase;
@@ -44,67 +41,39 @@ public class AuthenticationRest {
     @Autowired
     private ResetPasswordUseCase resetPasswordUseCase;
 
-    @PostMapping(value = "/registers/email-password")
-    public ResponseEntity<ResponseBody<Account>> registerByEmailAndPassword(
-            @RequestBody RegisterByEmailAndPasswordRequest request
-    ) {
-        try {
-            Account account = registerAuthenticationUseCase.registerByEmailAndPassword(request);
-            return ResponseBody
-                    .<Account>builder()
-                    .message("Register succeed.")
-                    .data(account)
-                    .build()
-                    .toEntity(HttpStatus.CREATED);
-        } catch (AccountExistsException e) {
-            return ResponseBody
-                    .<Account>builder()
-                    .message("Account exists.")
-                    .build()
-                    .toEntity(HttpStatus.CONFLICT);
-        } catch (Exception e) {
-            return ResponseBody
-                    .<Account>builder()
-                    .message("Internal server error.")
-                    .exception(e)
-                    .build()
-                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
     @PostMapping(value = "/registers/internal")
-    public ResponseEntity<ResponseBody<Account>> registerByInternal(
-            @RequestBody RegisterByEmailAndPasswordRequest request
+    public ResponseEntity<ResponseBody<AccountResponse>> registerByInternal(
+            @RequestBody RegisterByInternalRequest request
     ) {
         try {
-            Account account = registerAuthenticationUseCase.registerByInternal(request);
+            AccountResponse account = registerAuthenticationUseCase.registerByInternal(request);
             return ResponseBody
-                    .<Account>builder()
-                    .message("Register succeed.")
+                    .<AccountResponse>builder()
+                    .message("Register by internal succeed.")
                     .data(account)
                     .build()
                     .toEntity(HttpStatus.CREATED);
         } catch (AccountExistsException e) {
             return ResponseBody
-                    .<Account>builder()
+                    .<AccountResponse>builder()
                     .message("Account exists.")
                     .build()
                     .toEntity(HttpStatus.CONFLICT);
         } catch (VerificationNotFoundException e) {
             return ResponseBody
-                    .<Account>builder()
-                    .message("OTP not found.")
+                    .<AccountResponse>builder()
+                    .message("Verification not found.")
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
         } catch (VerificationExpiredException e) {
             return ResponseBody
-                    .<Account>builder()
-                    .message("OTP is invalid or expired.")
+                    .<AccountResponse>builder()
+                    .message("Verification expired.")
                     .build()
                     .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
-                    .<Account>builder()
+                    .<AccountResponse>builder()
                     .message("Internal server error.")
                     .exception(e)
                     .build()
@@ -113,44 +82,44 @@ public class AuthenticationRest {
     }
 
     @PostMapping(value = "/registers/external")
-    public ResponseEntity<ResponseBody<Account>> registerByExternal(
-            @RequestBody RegisterAndLoginByExternalRequest request
+    public ResponseEntity<ResponseBody<AccountResponse>> registerByExternal(
+            @RequestBody RegisterByExternalRequest request
     ) {
         try {
-            Account account = registerAuthenticationUseCase.registerByExternal(request);
+            AccountResponse account = registerAuthenticationUseCase.registerByExternal(request);
             return ResponseBody
-                    .<Account>builder()
-                    .message("Register succeed.")
+                    .<AccountResponse>builder()
+                    .message("Register by external succeed.")
                     .data(account)
                     .build()
                     .toEntity(HttpStatus.CREATED);
         } catch (AccountExistsException e) {
             return ResponseBody
-                    .<Account>builder()
+                    .<AccountResponse>builder()
                     .message("Account exists.")
                     .build()
                     .toEntity(HttpStatus.CONFLICT);
         } catch (VerificationNotFoundException e) {
             return ResponseBody
-                    .<Account>builder()
-                    .message("OTP not found.")
+                    .<AccountResponse>builder()
+                    .message("Verification not found.")
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
         } catch (VerificationExpiredException e) {
             return ResponseBody
-                    .<Account>builder()
-                    .message("OTP expired.")
+                    .<AccountResponse>builder()
+                    .message("Verification expired.")
                     .build()
                     .toEntity(HttpStatus.BAD_REQUEST);
         } catch (VerificationInvalidException e) {
             return ResponseBody
-                    .<Account>builder()
-                    .message("Invalid Google ID token")
+                    .<AccountResponse>builder()
+                    .message("Verification invalid.")
                     .build()
                     .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
-                    .<Account>builder()
+                    .<AccountResponse>builder()
                     .message("Internal server error.")
                     .exception(e)
                     .build()
@@ -184,15 +153,9 @@ public class AuthenticationRest {
         } catch (VerificationNotFoundException e) {
             return ResponseBody
                     .<Void>builder()
-                    .message("OTP not found.")
+                    .message("Verification not found.")
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
-        } catch (IllegalArgumentException e) {
-            return ResponseBody
-                    .<Void>builder()
-                    .message(e.getMessage())
-                    .build()
-                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
                     .<Void>builder()
@@ -205,7 +168,7 @@ public class AuthenticationRest {
 
     @PostMapping(value = "/logins/internal")
     public ResponseEntity<ResponseBody<Session>> loginByInternal(
-            @RequestBody LoginByEmailAndPasswordRequest request
+            @RequestBody LoginByInternalRequest request
     ) {
         try {
             Session session = loginAuthenticationUseCase.loginByInternal(request.getEmail(), request.getPassword());
@@ -233,10 +196,10 @@ public class AuthenticationRest {
 
     @PostMapping(value = "/logins/external")
     public ResponseEntity<ResponseBody<Session>> loginByExternal(
-            @RequestBody RegisterAndLoginByExternalRequest request
+            @RequestBody LoginByExternalRequest request
     ) {
         try {
-            Session session = loginAuthenticationUseCase.loginByExternal(request.getIdToken());
+            Session session = loginAuthenticationUseCase.loginByExternal(request.getCredential());
             return ResponseBody
                     .<Session>builder()
                     .message("Login succeed.")

@@ -33,26 +33,25 @@ public class CartUseCase {
             Account account,
             Integer page,
             Integer size,
-            List<String> filters,
             String search
     ) {
         Account foundAccount = accountRepository
                 .findById(account.getId())
                 .orElseThrow(AccountNotFoundException::new);
 
-        return cartCustomRepository.getCartItems(foundAccount, page, size, filters, search);
+        return cartCustomRepository.getCartItems(foundAccount, page, size, search);
     }
 
     public void addCartItem(Account account, AddCartItemRequest request) {
         Account foundAccount = accountRepository
                 .findById(account.getId())
                 .orElseThrow(AccountNotFoundException::new);
-        Product product = productRepository
+        Product foundProduct = productRepository
                 .findById(request.getProductId())
                 .orElseThrow(ProductNotFoundException::new);
-        ProductResponse allWarehouseProduct = productCustomRepository.getAllWarehouseProduct(product.getId());
+        ProductResponse product = productCustomRepository.getProduct(foundProduct.getId());
 
-        if (allWarehouseProduct.getTotalQuantity() < request.getQuantity()) {
+        if (product.getQuantity() < request.getQuantity()) {
             throw new ProductInsufficientException();
         }
 

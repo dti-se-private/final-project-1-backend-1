@@ -28,6 +28,7 @@ public class WarehouseLedgerRest {
     }
 
     @PostMapping("/mutations/add")
+//    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")
     public ResponseEntity<WarehouseLedger> addMutation(@RequestBody AddMutationRequest request) {
         WarehouseLedger ledger = warehouseLedgerService.addLedgerMutation(
                 request.getProductId(),
@@ -39,11 +40,13 @@ public class WarehouseLedgerRest {
     }
 
     @PostMapping("/mutations/approve")
+//    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     public ResponseEntity<WarehouseLedger> approveMutation(@RequestParam UUID id) {
         return ResponseEntity.ok(warehouseLedgerService.approveLedgerMutation(id));
     }
 
     @PostMapping("/mutations/reject")
+//    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")
     public ResponseEntity<WarehouseLedger> rejectMutation(@RequestParam UUID id) {
         return ResponseEntity.ok(warehouseLedgerService.rejectLedgerMutation(id));
     }

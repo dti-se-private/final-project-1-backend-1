@@ -58,6 +58,7 @@ public class WarehouseAdminCustomRepository {
                                 throw new RuntimeException(e);
                             }
                         },
+                        search,
                         size,
                         page * size
                 );

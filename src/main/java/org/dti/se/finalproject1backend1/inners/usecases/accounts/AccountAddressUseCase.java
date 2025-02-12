@@ -26,16 +26,16 @@ public class AccountAddressUseCase {
     @Autowired
     private AccountRepository accountRepository;
 
-    public AccountAddressResponse saveOne(Account account, AccountAddressRequest request) {
-        Account findAccount = accountRepository
+    public AccountAddressResponse addAddress(Account account, AccountAddressRequest request) {
+        Account foundAccount = accountRepository
                 .findById(account.getId())
                 .orElseThrow(AccountNotFoundException::new);
 
-        if (request.getIsPrimary()) {
-            setAllAddressesToNonPrimary(findAccount);
+        if (request.getIsPrimary().equals(true)) {
+            setAllAddressesToNonPrimary(foundAccount);
         }
 
-        AccountAddress accountAddress = AccountAddress
+        AccountAddress foundAccountAddress = AccountAddress
                 .builder()
                 .id(UUID.randomUUID())
                 .account(account)
@@ -45,37 +45,37 @@ public class AccountAddressUseCase {
                 .location(request.getLocation())
                 .build();
 
-        accountAddressRepository.saveAndFlush(accountAddress);
+        accountAddressRepository.saveAndFlush(foundAccountAddress);
 
         return AccountAddressResponse
                 .builder()
-                .id(accountAddress.getId())
-                .name(accountAddress.getName())
-                .address(accountAddress.getAddress())
-                .isPrimary(accountAddress.getIsPrimary())
-                .location(accountAddress.getLocation())
+                .id(foundAccountAddress.getId())
+                .name(foundAccountAddress.getName())
+                .address(foundAccountAddress.getAddress())
+                .isPrimary(foundAccountAddress.getIsPrimary())
+                .location(foundAccountAddress.getLocation())
                 .build();
     }
 
-    public AccountAddressResponse patchOneById(Account account, UUID addressId, AccountAddressRequest request) {
-        Account findAccount = accountRepository
+    public AccountAddressResponse patchAddress(Account account, UUID addressId, AccountAddressRequest request) {
+        Account foundAccount = accountRepository
                 .findById(account.getId())
                 .orElseThrow(AccountNotFoundException::new);
 
-        AccountAddress patchedAccountAddress = accountAddressRepository
+        AccountAddress foundAccountAddress = accountAddressRepository
                 .findById(addressId)
                 .orElseThrow(AccountAddressNotFoundException::new);
 
         if (request.getIsPrimary()) {
-            setAllAddressesToNonPrimary(findAccount);
+            setAllAddressesToNonPrimary(foundAccount);
         }
 
-        patchedAccountAddress.setName(request.getName());
-        patchedAccountAddress.setAddress(request.getAddress());
-        patchedAccountAddress.setIsPrimary(request.getIsPrimary());
-        patchedAccountAddress.setLocation(request.getLocation());
+        foundAccountAddress.setName(request.getName());
+        foundAccountAddress.setAddress(request.getAddress());
+        foundAccountAddress.setIsPrimary(request.getIsPrimary());
+        foundAccountAddress.setLocation(request.getLocation());
 
-        accountAddressRepository.saveAndFlush(patchedAccountAddress);
+        AccountAddress patchedAccountAddress = accountAddressRepository.saveAndFlush(foundAccountAddress);
 
         return AccountAddressResponse
                 .builder()
@@ -87,56 +87,56 @@ public class AccountAddressUseCase {
                 .build();
     }
 
-    public AccountAddressResponse findOneById(Account account, UUID addressId) {
-        Account findAccount = accountRepository
+    public AccountAddressResponse getAddress(Account account, UUID addressId) {
+        Account foundAccount = accountRepository
                 .findById(account.getId())
                 .orElseThrow(AccountNotFoundException::new);
 
-        AccountAddress accountAddress = accountAddressRepository
-                .findByIdAndAccountId(addressId, findAccount.getId())
+        AccountAddress foundAccountAddress = accountAddressRepository
+                .findByIdAndAccountId(addressId, foundAccount.getId())
                 .orElseThrow(AccountAddressNotFoundException::new);
 
         return AccountAddressResponse
                 .builder()
-                .id(accountAddress.getId())
-                .name(accountAddress.getName())
-                .address(accountAddress.getAddress())
-                .isPrimary(accountAddress.getIsPrimary())
-                .location(accountAddress.getLocation())
+                .id(foundAccountAddress.getId())
+                .name(foundAccountAddress.getName())
+                .address(foundAccountAddress.getAddress())
+                .isPrimary(foundAccountAddress.getIsPrimary())
+                .location(foundAccountAddress.getLocation())
                 .build();
     }
 
-    public List<AccountAddressResponse> findAll(Account account, Integer page, Integer size, List<String> filters, String search) {
-        Account findAccount = accountRepository
+    public List<AccountAddressResponse> getAddresses(Account account, Integer page, Integer size, String search) {
+        Account foundAccount = accountRepository
                 .findById(account.getId())
                 .orElseThrow(AccountNotFoundException::new);
 
-        return accountAddressCustomRepository.getAllAccountAddresses(findAccount, page, size, filters, search);
+        return accountAddressCustomRepository.getAccountAddresses(foundAccount, page, size, search);
     }
 
-    public void deleteOneById(Account account, UUID addressId) {
-        Account findAccount = accountRepository
+    public void deleteAddress(Account account, UUID addressId) {
+        Account foundAccount = accountRepository
                 .findById(account.getId())
                 .orElseThrow(AccountNotFoundException::new);
 
-        AccountAddress accountAddress = accountAddressRepository
-                .findByIdAndAccountId(addressId, findAccount.getId())
+        AccountAddress foundAccountAddress = accountAddressRepository
+                .findByIdAndAccountId(addressId, foundAccount.getId())
                 .orElseThrow(AccountAddressNotFoundException::new);
 
-        accountAddressRepository.delete(accountAddress);
+        accountAddressRepository.delete(foundAccountAddress);
     }
 
     private void setAllAddressesToNonPrimary(Account account) {
-        Account findAccount = accountRepository
+        Account foundAccount = accountRepository
                 .findById(account.getId())
                 .orElseThrow(AccountNotFoundException::new);
 
-        List<AccountAddress> accountAddresses = accountAddressRepository
-                .findAllByAccountId(findAccount.getId())
+        List<AccountAddress> foundAccountAddresses = accountAddressRepository
+                .findAllByAccountId(foundAccount.getId())
                 .orElseThrow(AccountAddressNotFoundException::new);
 
-        accountAddresses.forEach(accountAddress -> accountAddress.setIsPrimary(false));
+        foundAccountAddresses.forEach(accountAddress -> accountAddress.setIsPrimary(false));
 
-        accountAddressRepository.saveAllAndFlush(accountAddresses);
+        accountAddressRepository.saveAllAndFlush(foundAccountAddresses);
     }
 }
