@@ -169,6 +169,13 @@ public class OrderRest {
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
+        } catch (WarehouseProductInsufficientException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Warehouse product insufficient.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
                     .<OrderResponse>builder()
@@ -289,6 +296,13 @@ public class OrderRest {
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
+        } catch (WarehouseProductInsufficientException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Warehouse product insufficient.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
                     .<OrderResponse>builder()
