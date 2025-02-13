@@ -5,8 +5,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
-import org.dti.se.finalproject1backend1.outers.repositories.twos.SessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,9 +21,6 @@ import java.io.IOException;
 public class AuthenticationWebFilterImpl extends OncePerRequestFilter {
 
     @Autowired
-    private SessionRepository sessionRepository;
-
-    @Autowired
     private AuthenticationManager authenticationManager;
 
     @Override
@@ -33,10 +28,9 @@ public class AuthenticationWebFilterImpl extends OncePerRequestFilter {
         try {
             String accessToken = getAccessToken(request);
             if (accessToken != null) {
-                Session session = sessionRepository.getByAccessToken(accessToken);
                 UsernamePasswordAuthenticationToken authenticationRequest = new UsernamePasswordAuthenticationToken(
                         null,
-                        session,
+                        accessToken,
                         null
                 );
                 Authentication authenticationResponse = authenticationManager.authenticate(authenticationRequest);

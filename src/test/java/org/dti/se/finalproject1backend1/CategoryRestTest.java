@@ -7,6 +7,7 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Category;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.categories.CategoryRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.categories.CategoryResponse;
+import org.dti.se.finalproject1backend1.outers.exceptions.products.CategoryNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,120 +48,165 @@ public class CategoryRestTest extends TestConfiguration {
     }
 
     @Test
-    public void testGetAllCategories() throws Exception {
-        List<Category> realCategories = fakeCategories
-                .stream()
-                .toList();
+    public void testGetCategories() throws Exception {
+        List<Category> realCategories = fakeCategories;
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/product-categories")
+                .get("/categories")
                 .param("page", "0")
-                .param("size", String.valueOf(realCategories.size()));
+                .param("size", String.valueOf(realCategories.size()))
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
                 .perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
 
-        List<CategoryResponse> responseBody = objectMapper.readValue(
+        ResponseBody<List<CategoryResponse>> responseBody = objectMapper.readValue(
                 result.getResponse().getContentAsString(),
-                new TypeReference<>() {}
+                new TypeReference<>() {
+                }
         );
 
         assert responseBody != null;
-        assert !responseBody.isEmpty();
+        assert responseBody.getMessage().equals("Categories found.");
+        assert responseBody.getData().size() == realCategories.size();
     }
 
     @Test
-    public void testGetCategoryById() throws Exception {
-        UUID categoryId = fakeCategories.getFirst().getId();
+    public void testGetCategory() throws Exception {
+        Category realCategory = fakeCategories
+                .stream()
+                .findFirst()
+                .orElseThrow(CategoryNotFoundException::new);
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/product-categories/" + categoryId);
+                .get("/categories/{categoryId}", realCategory.getId())
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
                 .perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
 
-        CategoryResponse responseBody = objectMapper.readValue(
+        ResponseBody<CategoryResponse> responseBody = objectMapper.readValue(
                 result.getResponse().getContentAsString(),
-                CategoryResponse.class
+                new TypeReference<>() {
+                }
         );
 
-        assert responseBody.getId().equals(categoryId);
+        assert responseBody != null;
+        assert responseBody.getMessage().equals("Category found.");
+        assert responseBody.getData().getId().equals(realCategory.getId());
+        assert responseBody.getData().getName().equals(realCategory.getName());
+        assert responseBody.getData().getDescription().equals(realCategory.getDescription());
     }
 
     @Test
     public void testAddCategory() throws Exception {
-        Category fakeCategory = fakeCategories
-                .stream()
-                .findFirst()
-                .orElse(null);
-
-        assert fakeCategory != null;
-
-        CategoryRequest requestBody = new CategoryRequest(fakeCategory.getName(), fakeCategory.getDescription());
+        CategoryRequest requestBody = CategoryRequest
+                .builder()
+                .name(String.format("name-%s", UUID.randomUUID()))
+                .description(String.format("description-%s", UUID.randomUUID()))
+                .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post("/product-categories")
-                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken()) // Add this if authentication is required
+                .post("/categories")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody));
+                .content(objectMapper.writeValueAsString(requestBody))
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
                 .perform(request)
-                .andExpect(status().isOk()) // Change to isCreated() if returning 201
+                .andExpect(status().isCreated())
                 .andReturn();
 
-        // Adjust response parsing based on what the controller returns
-        Category responseBody = objectMapper.readValue(
+        ResponseBody<CategoryResponse> responseBody = objectMapper.readValue(
                 result.getResponse().getContentAsString(),
-                Category.class
+                new TypeReference<>() {
+                }
         );
 
         assert responseBody != null;
-        assert responseBody.getName().equals(requestBody.getName());
-        assert responseBody.getDescription().equals(requestBody.getDescription());
+        assert responseBody.getMessage().equals("Category added.");
+        assert responseBody.getData().getId() != null;
+        assert responseBody.getData().getName().equals(requestBody.getName());
+        assert responseBody.getData().getDescription().equals(requestBody.getDescription());
+
+        Category savedCategory = categoryRepository
+                .findById(responseBody.getData().getId())
+                .orElseThrow(CategoryNotFoundException::new);
+        fakeCategories.add(savedCategory);
     }
 
     @Test
-    public void testUpdateCategory() throws Exception {
-        UUID categoryId = fakeCategories.getFirst().getId();
-        CategoryRequest requestBody = new CategoryRequest("Updated Name", "Updated Description");
+    public void testPatchCategory() throws Exception {
+        Category realCategory = fakeCategories
+                .stream()
+                .findFirst()
+                .orElseThrow(CategoryNotFoundException::new);
+
+        CategoryRequest requestBody = CategoryRequest
+                .builder()
+                .name(String.format("name-%s", UUID.randomUUID()))
+                .description(String.format("description-%s", UUID.randomUUID()))
+                .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .put("/product-categories/" + categoryId)
+                .patch("/categories/{categoryId}", realCategory.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody));
+                .content(objectMapper.writeValueAsString(requestBody))
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
                 .perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
 
-        CategoryResponse responseBody = objectMapper.readValue(
+        ResponseBody<CategoryResponse> responseBody = objectMapper.readValue(
                 result.getResponse().getContentAsString(),
-                CategoryResponse.class
+                new TypeReference<>() {
+                }
         );
 
-        assert responseBody.getName().equals(requestBody.getName());
-        assert responseBody.getDescription().equals(requestBody.getDescription());
+        assert responseBody != null;
+        assert responseBody.getMessage().equals("Category patched.");
+        assert responseBody.getData().getId().equals(realCategory.getId());
+        assert responseBody.getData().getName().equals(requestBody.getName());
+        assert responseBody.getData().getDescription().equals(requestBody.getDescription());
+
+        Category patchedCategory = categoryRepository
+                .findById(responseBody.getData().getId())
+                .orElseThrow(CategoryNotFoundException::new);
+
+        fakeCategories.set(fakeCategories.indexOf(realCategory), patchedCategory);
     }
 
     @Test
     public void testDeleteCategory() throws Exception {
-        UUID categoryId = fakeCategories.getFirst().getId();
+        Category realCategory = fakeCategories
+                .stream()
+                .findFirst()
+                .orElseThrow(CategoryNotFoundException::new);
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .delete("/product-categories/" + categoryId);
+                .delete("/categories/{categoryId}", realCategory.getId())
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
                 .perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
 
-        String responseBody = result.getResponse().getContentAsString();
-        assert responseBody.equals("Category deleted Successfully.");
+        ResponseBody<CategoryResponse> responseBody = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                }
+        );
+
+        assert responseBody != null;
+        assert responseBody.getMessage().equals("Category deleted.");
+        assert categoryRepository.findById(realCategory.getId()).isEmpty();
+        fakeCategories.remove(realCategory);
     }
 }

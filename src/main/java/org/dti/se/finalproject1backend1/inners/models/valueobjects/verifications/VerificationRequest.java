@@ -1,9 +1,8 @@
-package org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications;
+package org.dti.se.finalproject1backend1.inners.models.valueobjects.verifications;
 
 import lombok.*;
 import lombok.experimental.Accessors;
 import org.dti.se.finalproject1backend1.inners.models.Model;
-
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -11,7 +10,7 @@ import org.dti.se.finalproject1backend1.inners.models.Model;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class LoginByEmailAndPasswordRequest extends Model {
+public class VerificationRequest extends Model {
     private String email;
-    private String password;
+    private String type;
 }

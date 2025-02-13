@@ -19,6 +19,6 @@ public class ProductResponse extends Model {
     private String name;
     private String description;
     private Double price;
-    private Double totalQuantity;
+    private Double quantity;
     private byte[] image;
 }

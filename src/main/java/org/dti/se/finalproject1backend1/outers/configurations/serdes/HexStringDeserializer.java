@@ -12,7 +12,7 @@ public class HexStringDeserializer extends JsonDeserializer<byte[]> {
     @Override
     public byte[] deserialize(JsonParser parser, DeserializationContext context) throws IOException {
         String hexString = parser.getText();
-        if (hexString == null) {
+        if (hexString == null || hexString.isEmpty()) {
             return null;
         }
 

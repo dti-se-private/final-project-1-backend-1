@@ -2,9 +2,14 @@ package org.dti.se.finalproject1backend1;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.dti.se.finalproject1backend1.inners.models.entities.Account;
+import org.dti.se.finalproject1backend1.inners.models.entities.Category;
 import org.dti.se.finalproject1backend1.inners.models.entities.Product;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
+import org.dti.se.finalproject1backend1.outers.exceptions.products.CategoryNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.products.ProductNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +22,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -35,6 +41,8 @@ public class ProductRestTest extends TestConfiguration {
     @BeforeEach
     public void beforeEach() throws Exception {
         populate();
+        Account selectedAccount = fakeAccounts.getFirst();
+        auth(selectedAccount);
     }
 
     @AfterEach
@@ -43,97 +51,196 @@ public class ProductRestTest extends TestConfiguration {
     }
 
     @Test
-    public void testListAllProducts() throws Exception {
+    public void testGetProducts() throws Exception {
+        List<Product> realProducts = fakeProducts;
+
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/products") // fakeproducts
+                .get("/products")
                 .param("page", "0")
-                .param("size", "5"); // fake.size
+                .param("size", String.valueOf(realProducts.size()))
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
                 .perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
 
-        List<ProductResponse> responseBody = objectMapper
-                .readValue(result.getResponse().getContentAsString(), new TypeReference<>() {});
+        ResponseBody<List<ProductResponse>> responseBody = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                }
+        );
 
         assert responseBody != null;
+        assert responseBody.getMessage().equals("Products found.");
+        assert responseBody.getData().size() == realProducts.size();
     }
 
     @Test
-    public void testGetProductById() throws Exception {
-        Product realProduct = fakeProducts.getFirst();
+    public void testGetProduct() throws Exception {
+        Product realProduct = fakeProducts
+                .stream()
+                .findFirst()
+                .orElseThrow(ProductNotFoundException::new);
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/products/" + realProduct.getId());
+                .get("/products/{productId}", realProduct.getId())
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
                 .perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
 
-        ProductResponse responseBody = objectMapper
-                .readValue(result.getResponse().getContentAsString(), ProductResponse.class);
+        ResponseBody<ProductResponse> responseBody = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                }
+        );
 
-        assert responseBody.getId().equals(realProduct.getId());
+        assert responseBody != null;
+        assert responseBody.getMessage().equals("Product found.");
+        assert responseBody.getData().getId().equals(realProduct.getId());
+        assert responseBody.getData().getName().equals(realProduct.getName());
+        assert responseBody.getData().getDescription().equals(realProduct.getDescription());
+        assert Math.ceil(responseBody.getData().getPrice()) == Math.ceil(realProduct.getPrice());
+        assert Arrays.equals(responseBody.getData().getImage(), realProduct.getImage());
+        assert responseBody.getData().getCategory().getId().equals(realProduct.getCategory().getId());
+        assert responseBody.getData().getCategory().getName().equals(realProduct.getCategory().getName());
+        assert responseBody.getData().getCategory().getDescription().equals(realProduct.getCategory().getDescription());
     }
 
     @Test
     public void testAddProduct() throws Exception {
-        ProductRequest requestBody = new ProductRequest(UUID.randomUUID(), "New Product", "Description", 99.99, new byte[]{1, 2, 3});
+        Category realCategory = fakeCategories
+                .stream()
+                .findFirst()
+                .orElseThrow(CategoryNotFoundException::new);
+
+        ProductRequest requestBody = ProductRequest
+                .builder()
+                .categoryId(realCategory.getId())
+                .name(String.format("name-%s", UUID.randomUUID()))
+                .description(String.format("description-%s", UUID.randomUUID()))
+                .price(1000.0)
+                .image(null)
+                .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
                 .post("/products")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody));
+                .content(objectMapper.writeValueAsString(requestBody))
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
                 .perform(request)
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andReturn();
 
-        ProductResponse responseBody = objectMapper
-                .readValue(result.getResponse().getContentAsString(), ProductResponse.class);
+        ResponseBody<ProductResponse> responseBody = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                }
+        );
 
-        assert responseBody.getCategory().getId().equals(requestBody.getCategoryId());
-        assert responseBody.getName().equals(requestBody.getName());
-        assert responseBody.getDescription().equals(requestBody.getDescription());
-        assert responseBody.getPrice().equals(requestBody.getPrice());
-        assert responseBody.getImage().equals(requestBody.getImage());
+        assert responseBody != null;
+        assert responseBody.getMessage().equals("Product added.");
+        assert responseBody.getData().getId() != null;
+        assert responseBody.getData().getName().equals(requestBody.getName());
+        assert responseBody.getData().getDescription().equals(requestBody.getDescription());
+        assert responseBody.getData().getPrice().equals(requestBody.getPrice());
+        assert Arrays.equals(responseBody.getData().getImage(), requestBody.getImage());
+        assert responseBody.getData().getCategory().getId().equals(realCategory.getId());
+        assert responseBody.getData().getCategory().getName().equals(realCategory.getName());
+        assert responseBody.getData().getCategory().getDescription().equals(realCategory.getDescription());
+
+        Product savedProduct = productRepository
+                .findById(responseBody.getData().getId())
+                .orElseThrow(ProductNotFoundException::new);
+        fakeProducts.add(savedProduct);
     }
 
     @Test
-    public void testUpdateProduct() throws Exception {
-        Product realProduct = fakeProducts.getFirst();
-        ProductRequest requestBody = new ProductRequest(UUID.randomUUID(), "Updated Name", "Updated Description", 150.0, new byte[]{4, 5, 6});
+    public void testPatchProduct() throws Exception {
+        Category realCategory = fakeCategories
+                .stream()
+                .findFirst()
+                .orElseThrow(CategoryNotFoundException::new);
+
+        Product realProduct = fakeProducts
+                .stream()
+                .findFirst()
+                .orElseThrow(ProductNotFoundException::new);
+
+        ProductRequest requestBody = ProductRequest
+                .builder()
+                .name(String.format("name-%s", UUID.randomUUID()))
+                .description(String.format("description-%s", UUID.randomUUID()))
+                .price(1000.0)
+                .image(null)
+                .categoryId(realCategory.getId())
+                .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .put("/products/" + realProduct.getId())
+                .patch("/products/{productId}", realProduct.getId())
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(requestBody));
+                .content(objectMapper.writeValueAsString(requestBody))
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
                 .perform(request)
                 .andExpect(status().isOk())
                 .andReturn();
 
-        ProductResponse responseBody = objectMapper
-                .readValue(result.getResponse().getContentAsString(), ProductResponse.class);
+        ResponseBody<ProductResponse> responseBody = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                }
+        );
 
-        assert responseBody.getCategory().getId().equals(requestBody.getCategoryId());
-        assert responseBody.getName().equals(requestBody.getName());
-        assert responseBody.getDescription().equals(requestBody.getDescription());
-        assert responseBody.getPrice().equals(requestBody.getPrice());
-        assert responseBody.getImage().equals(requestBody.getImage());
+        assert responseBody != null;
+        assert responseBody.getMessage().equals("Product patched.");
+        assert responseBody.getData().getId().equals(realProduct.getId());
+        assert responseBody.getData().getName().equals(requestBody.getName());
+        assert responseBody.getData().getDescription().equals(requestBody.getDescription());
+        assert responseBody.getData().getPrice().equals(requestBody.getPrice());
+        assert Arrays.equals(responseBody.getData().getImage(), requestBody.getImage());
+        assert responseBody.getData().getCategory().getId().equals(realCategory.getId());
+        assert responseBody.getData().getCategory().getName().equals(realCategory.getName());
+        assert responseBody.getData().getCategory().getDescription().equals(realCategory.getDescription());
+
+        Product patchedProduct = productRepository
+                .findById(responseBody.getData().getId())
+                .orElseThrow(ProductNotFoundException::new);
+
+        fakeProducts.set(fakeProducts.indexOf(realProduct), patchedProduct);
     }
 
     @Test
     public void testDeleteProduct() throws Exception {
-        Product realProduct = fakeProducts.getFirst();
+        Product realProduct = fakeProducts
+                .stream()
+                .findFirst()
+                .orElseThrow(ProductNotFoundException::new);
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .delete("/products/" + realProduct.getId());
+                .delete("/products/{productId}", realProduct.getId())
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
-        mockMvc.perform(request).andExpect(status().isOk());
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        ResponseBody<ProductResponse> responseBody = objectMapper.readValue(
+                result.getResponse().getContentAsString(),
+                new TypeReference<>() {
+                }
+        );
+
+        assert responseBody != null;
+        assert responseBody.getMessage().equals("Product deleted.");
+        assert productRepository.findById(realProduct.getId()).isEmpty();
+        fakeProducts.remove(realProduct);
     }
 }

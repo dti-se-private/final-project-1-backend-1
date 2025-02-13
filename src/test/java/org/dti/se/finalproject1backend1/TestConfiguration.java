@@ -7,11 +7,14 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import org.dti.se.finalproject1backend1.inners.models.entities.*;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByEmailAndPasswordRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterAndLoginByExternalRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByEmailAndPasswordRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByInternalRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByExternalRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.RegisterByInternalRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.verifications.VerificationRequest;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
+import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
 import org.locationtech.jts.geom.Coordinate;
@@ -68,6 +71,8 @@ public class TestConfiguration {
     protected WarehouseLedgerRepository warehouseLedgerRepository;
     @Autowired
     protected VerificationRepository verificationRepository;
+    @Autowired
+    protected WarehouseAdminRepository warehouseAdminRepository;
 
     @MockitoBean
     protected MailgunGateway mailgunGatewayMock;
@@ -89,6 +94,7 @@ public class TestConfiguration {
     protected List<OrderItem> fakeOrderItems = new ArrayList<>();
     protected List<OrderStatus> fakeOrderStatuses = new ArrayList<>();
     protected List<WarehouseLedger> fakeWarehouseLedger = new ArrayList<>();
+    protected List<WarehouseAdmin> fakeWarehouseAdmins = new ArrayList<>();
 
     protected String rawPassword = String.format("password-%s", UUID.randomUUID());
     protected Account authenticatedAccount;
@@ -179,7 +185,7 @@ public class TestConfiguration {
                         .id(UUID.randomUUID())
                         .warehouse(warehouse)
                         .product(product)
-                        .quantity(200 + Math.ceil(Math.random() * 1000))
+                        .quantity(2000 + Math.ceil(Math.random() * 1000))
                         .build();
                 fakeWarehouseProducts.add(newWarehouseProduct);
             });
@@ -230,7 +236,7 @@ public class TestConfiguration {
                         .build();
                 fakeOrders.add(newOrder);
 
-                for (int j = 0; j < orderStatuses.size() - i; j++) {
+                for (int j = 0; j < orderStatuses.size() - (i + 1); j++) {
                     OrderStatus newOrderStatus = OrderStatus
                             .builder()
                             .id(UUID.randomUUID())
@@ -275,6 +281,16 @@ public class TestConfiguration {
         orderStatusRepository.saveAll(fakeOrderStatuses);
         warehouseLedgerRepository.saveAll(fakeWarehouseLedger);
         orderItemRepository.saveAll(fakeOrderItems);
+
+        Account adminAccountForWarehouseAdmin = fakeAccounts.get(1);
+        Warehouse warehouseForWarehouseAdmin = fakeWarehouses.get(1);
+        WarehouseAdmin warehouseAdmin = WarehouseAdmin.builder()
+                .id(UUID.randomUUID())
+                .account(adminAccountForWarehouseAdmin)
+                .warehouse(warehouseForWarehouseAdmin)
+                .build();
+        fakeWarehouseAdmins.add(warehouseAdmin);
+        warehouseAdminRepository.save(warehouseAdmin);
     }
 
     public void depopulate() {
@@ -302,10 +318,15 @@ public class TestConfiguration {
         fakeAccountAddresses.clear();
         accountRepository.deleteAll(fakeAccounts);
         fakeAccounts.clear();
+        warehouseAdminRepository.deleteAll(fakeWarehouseAdmins);
+        fakeWarehouseAdmins.clear();
     }
 
     public void auth() throws Exception {
-        authenticatedAccount = registerByInternal().getData();
+        ResponseBody<AccountResponse> accountResponse = registerByInternal();
+        authenticatedAccount = accountRepository
+                .findById(accountResponse.getData().getId())
+                .orElseThrow(AccountNotFoundException::new);
         fakeAccounts.add(authenticatedAccount);
         authenticatedSession = loginByInternal(authenticatedAccount).getData();
     }
@@ -319,13 +340,13 @@ public class TestConfiguration {
         logout(authenticatedSession);
     }
 
-    protected ResponseBody<Account> registerByInternal() throws Exception {
+    protected ResponseBody<AccountResponse> registerByInternal() throws Exception {
         String email = String.format("email-%s", UUID.randomUUID());
         String type = "REGISTER";
 
         Verification verification = getVerification(email, type);
 
-        RegisterByEmailAndPasswordRequest requestBody = RegisterByEmailAndPasswordRequest
+        RegisterByInternalRequest requestBody = RegisterByInternalRequest
                 .builder()
                 .name(String.format("name-%s", UUID.randomUUID()))
                 .email(email)
@@ -345,38 +366,46 @@ public class TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<Account> body = objectMapper.readValue(content, new TypeReference<>() {
+        ResponseBody<AccountResponse> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
-        assert body.getMessage().equals("Register succeed.");
+        assert body.getMessage().equals("Register by internal succeed.");
         assert body.getData() != null;
         assert body.getData().getId() != null;
         assert body.getData().getName().equals(requestBody.getName());
         assert body.getData().getEmail().equals(requestBody.getEmail());
         assert securityConfiguration.matches(requestBody.getPassword(), body.getData().getPassword());
         assert body.getData().getPhone().equals(requestBody.getPhone());
+        assert body.getData().getImage() == null;
+        assert body.getData().getIsVerified().equals(true);
+
+        Account registeredAccount = accountRepository
+                .findById(body.getData().getId())
+                .orElseThrow(AccountNotFoundException::new);
+        fakeAccounts.add(registeredAccount);
+
         return body;
     }
 
     protected ResponseBody<Account> registerByExternal() throws Exception {
-        String mockIdToken = "mock-id-token";
+        String idTokenMock = "mock-id-token";
         String email = String.format("email-%s", UUID.randomUUID());
         String name = String.format("name-%s", UUID.randomUUID());
-        String picture = "http://example.com/picture.jpg";
+        String picture = "https://placehold.co/400x400";
 
         GoogleIdToken.Payload payload = Mockito.mock(GoogleIdToken.Payload.class);
         Mockito.when(payload.getEmail()).thenReturn(email);
         Mockito.when(payload.get("name")).thenReturn(name);
-        Mockito.when(payload.get("picture")).thenReturn(picture.getBytes());
+        Mockito.when(payload.get("picture")).thenReturn(picture);
 
         GoogleIdToken idToken = Mockito.mock(GoogleIdToken.class);
         Mockito.when(idToken.getPayload()).thenReturn(payload);
 
-        Mockito.when(googleIdTokenVerifier.verify(mockIdToken)).thenReturn(idToken);
+        Mockito.when(googleIdTokenVerifier.verify(idTokenMock)).thenReturn(idToken);
 
-        RegisterAndLoginByExternalRequest requestBody = RegisterAndLoginByExternalRequest
+        RegisterByExternalRequest requestBody = RegisterByExternalRequest
                 .builder()
-                .idToken(mockIdToken)
+                .credential(idTokenMock)
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
@@ -393,7 +422,7 @@ public class TestConfiguration {
         ResponseBody<Account> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
-        assert body.getMessage().equals("Register succeed.");
+        assert body.getMessage().equals("Register by external succeed.");
         assert body.getData() != null;
         assert body.getData().getId() != null;
         assert body.getData().getName().equals(name);
@@ -404,7 +433,7 @@ public class TestConfiguration {
     }
 
     protected ResponseBody<Session> loginByInternal(Account account) throws Exception {
-        LoginByEmailAndPasswordRequest requestBody = LoginByEmailAndPasswordRequest
+        LoginByInternalRequest requestBody = LoginByInternalRequest
                 .builder()
                 .email(account.getEmail())
                 .password(rawPassword)
@@ -457,11 +486,16 @@ public class TestConfiguration {
     protected Verification getVerification(String email, String type) throws Exception {
         Mockito.doNothing().when(mailgunGatewayMock).sendEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 
+        VerificationRequest requestBody = VerificationRequest
+                .builder()
+                .email(email)
+                .type(type)
+                .build();
+
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post("/otps/send")
-                .param("email", email)
-                .param("type", type)
-                .contentType(MediaType.APPLICATION_JSON);
+                .post("/verifications/send")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
                 .perform(request)
@@ -473,12 +507,11 @@ public class TestConfiguration {
         });
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
         assert body != null;
-        assert body.getMessage().equals("OTP sent succeed.");
+        assert body.getMessage().equals("Verification send succeed.");
         assert body.getData() == null;
 
         return verificationRepository
                 .findByEmailAndType(email, type)
                 .orElseThrow(VerificationNotFoundException::new);
-
     }
 }

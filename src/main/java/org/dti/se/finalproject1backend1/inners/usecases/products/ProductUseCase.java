@@ -1,85 +1,97 @@
 package org.dti.se.finalproject1backend1.inners.usecases.products;
 
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.persistence.criteria.Join;
-import jakarta.persistence.criteria.Predicate;
 import org.dti.se.finalproject1backend1.inners.models.entities.Category;
 import org.dti.se.finalproject1backend1.inners.models.entities.Product;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.categories.CategoryResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
-import org.dti.se.finalproject1backend1.inners.usecases.categories.CategoryMapper;
-import org.dti.se.finalproject1backend1.inners.usecases.categories.CategoryUseCase;
+import org.dti.se.finalproject1backend1.outers.exceptions.products.CategoryNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.products.ProductNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.ProductCustomRepository;
+import org.dti.se.finalproject1backend1.outers.repositories.ones.CategoryRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.ProductRepository;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseProductRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class ProductUseCase {
-    @Autowired
-    private ProductCustomRepository productRepository;
 
     @Autowired
-    private WarehouseProductRepository warehouseProductRepository;
-
+    ProductRepository productRepository;
     @Autowired
-    private CategoryUseCase categoryService;
+    CategoryRepository categoryRepository;
+    @Autowired
+    ProductCustomRepository productCustomRepository;
 
 
-    public List<ProductResponse> getFilteredProducts(
-            int page,
-            int size,
-            List<String> filters,
+    public List<ProductResponse> getProducts(
+            Integer page,
+            Integer size,
             String search
     ) {
-        return productRepository.getProducts(page, size, filters, search);
+        return productCustomRepository.getProducts(page, size, search);
     }
 
-    public ProductResponse getProductById(UUID id) {
-        try {
-            return productRepository.getById(id);
-        } catch (EmptyResultDataAccessException e) {
-            throw new ProductNotFoundException();
-        }
+    public ProductResponse getProduct(@PathVariable UUID productId) {
+        Product foundProduct = productRepository
+                .findById(productId)
+                .orElseThrow(ProductNotFoundException::new);
+
+        return productCustomRepository.getProduct(foundProduct.getId());
     }
 
-    public ProductResponse addProduct(ProductResponse product) {
-        // Verify category exists
-        categoryService.getCategoryById(product.getCategory().getId());
+    public ProductResponse addProduct(@RequestBody ProductRequest request) {
+        Category foundCategory = categoryRepository
+                .findById(request.getCategoryId())
+                .orElseThrow(CategoryNotFoundException::new);
 
-        productRepository.create(product);
-        return getProductById(product.getId());
+        Product newProduct = Product
+                .builder()
+                .id(UUID.randomUUID())
+                .category(foundCategory)
+                .name(request.getName())
+                .description(request.getDescription())
+                .price(request.getPrice())
+                .image(request.getImage())
+                .build();
+
+        productRepository.saveAndFlush(newProduct);
+
+        return getProduct(newProduct.getId());
     }
 
-    public ProductResponse updateProduct(UUID id, ProductResponse product) {
-        // Verify existence
-        getProductById(id);
-        // Verify category exists
-        categoryService.getCategoryById(product.getCategory().getId());
+    public ProductResponse patchProduct(
+            @PathVariable UUID id,
+            @RequestBody ProductRequest request
+    ) {
+        Product foundProduct = productRepository
+                .findById(id)
+                .orElseThrow(ProductNotFoundException::new);
 
-        product.setId(id);
-        productRepository.update(product);
-        return getProductById(id);
+        Category foundCategory = categoryRepository
+                .findById(request.getCategoryId())
+                .orElseThrow(CategoryNotFoundException::new);
+
+        foundProduct.setCategory(foundCategory);
+        foundProduct.setName(request.getName());
+        foundProduct.setDescription(request.getDescription());
+        foundProduct.setPrice(request.getPrice());
+        foundProduct.setImage(request.getImage());
+
+        productRepository.saveAndFlush(foundProduct);
+
+        return getProduct(foundProduct.getId());
     }
 
-    public void deleteProduct(UUID id) {
-        // Verify existence
-        getProductById(id);
-        productRepository.delete(id);
-    }
+    public void deleteProduct(@PathVariable UUID productId) {
+        Product foundProduct = productRepository
+                .findById(productId)
+                .orElseThrow(ProductNotFoundException::new);
 
+        productRepository.delete(foundProduct);
+    }
 }

@@ -6,6 +6,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.Acco
 import org.dti.se.finalproject1backend1.inners.usecases.accounts.BasicAccountUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,11 +24,11 @@ public class AccountRest {
     private BasicAccountUseCase basicAccountUseCase;
 
     @PostMapping
-    public ResponseEntity<ResponseBody<AccountResponse>> saveOne(
+    public ResponseEntity<ResponseBody<AccountResponse>> addAccount(
             @RequestBody AccountRequest request
     ) {
         try {
-            AccountResponse savedAccount = basicAccountUseCase.saveOne(request);
+            AccountResponse savedAccount = basicAccountUseCase.addAccount(request);
             return ResponseBody
                     .<AccountResponse>builder()
                     .message("Account saved.")
@@ -51,12 +52,12 @@ public class AccountRest {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping(value = "/{id}")
-    public ResponseEntity<ResponseBody<AccountResponse>> findOneById(
-            @PathVariable("id") UUID id
+    @GetMapping(value = "/{accountId}")
+    public ResponseEntity<ResponseBody<AccountResponse>> getAccount(
+            @PathVariable UUID accountId
     ) {
         try {
-            AccountResponse foundAccount = basicAccountUseCase.findOneById(id);
+            AccountResponse foundAccount = basicAccountUseCase.getAccount(accountId);
             return ResponseBody
                     .<AccountResponse>builder()
                     .message("Account found.")
@@ -81,13 +82,13 @@ public class AccountRest {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PatchMapping(value = "/{id}")
-    public ResponseEntity<ResponseBody<AccountResponse>> patchOneById(
-            @PathVariable("id") UUID id,
+    @PatchMapping(value = "/{accountId}")
+    public ResponseEntity<ResponseBody<AccountResponse>> patchAccount(
+            @PathVariable UUID accountId,
             @RequestBody AccountRequest request
     ) {
         try {
-            AccountResponse patchedAccount = basicAccountUseCase.patchOneById(id, request);
+            AccountResponse patchedAccount = basicAccountUseCase.patchAccount(accountId, request);
             return ResponseBody
                     .<AccountResponse>builder()
                     .message("Account patched.")
@@ -104,10 +105,17 @@ public class AccountRest {
         } catch (VerificationNotFoundException e) {
             return ResponseBody
                     .<AccountResponse>builder()
-                    .message("Invalid OTP for email update.")
+                    .message("Verification not found.")
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
+        } catch (VerificationInvalidException e) {
+            return ResponseBody
+                    .<AccountResponse>builder()
+                    .message("Verification invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
                     .<AccountResponse>builder()
@@ -118,12 +126,12 @@ public class AccountRest {
         }
     }
 
-    @DeleteMapping(value = "/{id}")
-    public ResponseEntity<ResponseBody<Void>> deleteOneById(
-            @PathVariable("id") UUID id
+    @DeleteMapping(value = "/{accountId}")
+    public ResponseEntity<ResponseBody<Void>> deleteAccount(
+            @PathVariable UUID accountId
     ) {
         try {
-            basicAccountUseCase.deleteOneById(id);
+            basicAccountUseCase.deleteAccount(accountId);
             return ResponseBody
                     .<Void>builder()
                     .message("Account deleted.")

@@ -2,12 +2,14 @@ package org.dti.se.finalproject1backend1.inners.usecases.orders;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.*;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderProcessRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderActionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderStatusInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductInsufficientException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductNotFoundException;
+import org.dti.se.finalproject1backend1.outers.repositories.customs.OrderCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.OrderRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.OrderStatusRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseLedgerRepository;
@@ -32,8 +34,10 @@ public class CancellationUseCase {
     WarehouseLedgerRepository warehouseLedgerRepository;
     @Autowired
     WarehouseProductRepository warehouseProductRepository;
+    @Autowired
+    OrderCustomRepository orderCustomRepository;
 
-    public void processCancellation(
+    public OrderResponse processCancellation(
             Account account,
             OrderProcessRequest request
     ) {
@@ -130,9 +134,9 @@ public class CancellationUseCase {
             foundDestinationWarehouseProduct.get().setQuantity(newWarehouseLedger.getOriginPostQuantity());
             foundOriginWarehouseProduct.get().setQuantity(newWarehouseLedger.getDestinationPostQuantity());
 
-            warehouseLedgerRepository.save(newWarehouseLedger);
-            warehouseProductRepository.save(foundDestinationWarehouseProduct.get());
-            warehouseProductRepository.save(foundOriginWarehouseProduct.get());
+            warehouseLedgerRepository.saveAndFlush(newWarehouseLedger);
+            warehouseProductRepository.saveAndFlush(foundDestinationWarehouseProduct.get());
+            warehouseProductRepository.saveAndFlush(foundOriginWarehouseProduct.get());
         }
 
         OrderStatus newOrderStatus = OrderStatus
@@ -142,6 +146,8 @@ public class CancellationUseCase {
                 .status("CANCELED")
                 .time(now)
                 .build();
-        orderStatusRepository.save(newOrderStatus);
+        orderStatusRepository.saveAndFlush(newOrderStatus);
+
+        return orderCustomRepository.getOrder(foundOrder.getId());
     }
 }

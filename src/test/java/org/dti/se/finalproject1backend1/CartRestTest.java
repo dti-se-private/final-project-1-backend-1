@@ -94,9 +94,8 @@ public class CartRestTest extends TestConfiguration {
                 .stream()
                 .filter(cartItem -> cartItem.getAccount().getId().equals(authenticatedAccount.getId()))
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(CartItemNotFoundException::new);
 
-        assert realCartItem != null;
         AddCartItemRequest requestBody = AddCartItemRequest
                 .builder()
                 .productId(realCartItem.getProduct().getId())
@@ -140,9 +139,8 @@ public class CartRestTest extends TestConfiguration {
                 .stream()
                 .filter(cartItem -> cartItem.getAccount().getId().equals(authenticatedAccount.getId()))
                 .findFirst()
-                .orElse(null);
+                .orElseThrow(CartItemNotFoundException::new);
 
-        assert realCartItem != null;
         RemoveCartItemRequest requestBody = RemoveCartItemRequest
                 .builder()
                 .productId(realCartItem.getProduct().getId())
