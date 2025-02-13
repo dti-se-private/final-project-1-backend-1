@@ -35,11 +35,11 @@ public class OrderCustomRepository {
                 FROM (
                     SELECT json_build_object(
                         'id', "order".id,
-                        'totalPrice', "order".total_price,
-                        'shipmentOrigin', "order".shipment_origin,
-                        'shipmentDestination', "order".shipment_destination,
-                        'shipmentPrice', "order".shipment_price,
-                        'itemPrice', "order".item_price,
+                        'total_price', "order".total_price,
+                        'shipment_origin', "order".shipment_origin,
+                        'shipment_destination', "order".shipment_destination,
+                        'shipment_price', "order".shipment_price,
+                        'item_price', "order".item_price,
                         'statuses', (
                             SELECT json_agg(json_build_object(
                                 'id', order_status.id,
@@ -75,7 +75,7 @@ public class OrderCustomRepository {
                             JOIN category ON product.category_id = category.id
                             WHERE order_item.order_id = "order".id
                         ),
-                         'paymentProofs', (
+                         'payment_proofs', (
                              SELECT json_agg(json_build_object(
                                  'id', payment_proof.id,
                                  'file', payment_proof.file,
@@ -88,10 +88,10 @@ public class OrderCustomRepository {
                     ) as item
                     FROM "order"
                     WHERE "order".account_id = ?
-                    LIMIT ?
-                    OFFSET ?
                 ) as sq1
                 ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                LIMIT ?
+                OFFSET ?
                 """;
 
         return oneTemplate
@@ -105,9 +105,9 @@ public class OrderCustomRepository {
                             }
                         },
                         account.getId(),
+                        search,
                         size,
-                        page * size,
-                        search
+                        page * size
                 );
     }
 
@@ -117,11 +117,11 @@ public class OrderCustomRepository {
                 FROM (
                     SELECT json_build_object(
                         'id', "order".id,
-                        'totalPrice', "order".total_price,
-                        'shipmentOrigin', "order".shipment_origin,
-                        'shipmentDestination', "order".shipment_destination,
-                        'shipmentPrice', "order".shipment_price,
-                        'itemPrice', "order".item_price,
+                        'total_price', "order".total_price,
+                        'shipment_origin', "order".shipment_origin,
+                        'shipment_destination', "order".shipment_destination,
+                        'shipment_price', "order".shipment_price,
+                        'item_price', "order".item_price,
                         'statuses', (
                             SELECT json_agg(json_build_object(
                                 'id', order_status.id,
@@ -157,7 +157,7 @@ public class OrderCustomRepository {
                             JOIN category ON product.category_id = category.id
                             WHERE order_item.order_id = "order".id
                         ),
-                        'paymentProofs', (
+                        'payment_proofs', (
                             SELECT json_agg(json_build_object(
                                 'id', payment_proof.id,
                                 'file', payment_proof.file,
@@ -177,10 +177,10 @@ public class OrderCustomRepository {
                         WHERE order_item.order_id = "order".id
                         AND warehouse_admin.account_id = ?
                     )
-                    LIMIT ?
-                    OFFSET ?
                 ) as sq1
                 ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                LIMIT ?
+                OFFSET ?
                 """;
 
         return oneTemplate
@@ -194,9 +194,9 @@ public class OrderCustomRepository {
                             }
                         },
                         account.getId(),
+                        search,
                         size,
-                        page * size,
-                        search
+                        page * size
                 );
     }
 
@@ -206,11 +206,11 @@ public class OrderCustomRepository {
                 FROM (
                     SELECT json_build_object(
                                 'id', "order".id,
-                                'totalPrice', "order".total_price,
-                                'shipmentOrigin', "order".shipment_origin,
-                                'shipmentDestination', "order".shipment_destination,
-                                'shipmentPrice', "order".shipment_price,
-                                'itemPrice', "order".item_price,
+                                'total_price', "order".total_price,
+                                'shipment_origin', "order".shipment_origin,
+                                'shipment_destination', "order".shipment_destination,
+                                'shipment_price', "order".shipment_price,
+                                'item_price', "order".item_price,
                                 'statuses', (
                                     SELECT json_agg(json_build_object(
                                         'id', order_status.id,
@@ -246,7 +246,7 @@ public class OrderCustomRepository {
                                     JOIN category ON product.category_id = category.id
                                     WHERE order_item.order_id = "order".id
                                 ),
-                                'paymentProofs', (
+                                'payment_proofs', (
                                     SELECT json_agg(json_build_object(
                                         'id', payment_proof.id,
                                         'file', payment_proof.file,
@@ -258,10 +258,10 @@ public class OrderCustomRepository {
                                 )
                             ) as item
                     FROM "order"
-                    LIMIT ?
-                    OFFSET ?
                 ) as sq1
                 ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                LIMIT ?
+                OFFSET ?
                 """;
 
         return oneTemplate
@@ -274,9 +274,9 @@ public class OrderCustomRepository {
                                 throw new RuntimeException(e);
                             }
                         },
+                        search,
                         size,
-                        page * size,
-                        search
+                        page * size
                 );
     }
 
@@ -284,11 +284,11 @@ public class OrderCustomRepository {
         String sql = """
                 SELECT json_build_object(
                     'id', "order".id,
-                    'totalPrice', "order".total_price,
-                    'shipmentOrigin', "order".shipment_origin,
-                    'shipmentDestination', "order".shipment_destination,
-                    'shipmentPrice', "order".shipment_price,
-                    'itemPrice', "order".item_price,
+                    'total_price', "order".total_price,
+                    'shipment_origin', "order".shipment_origin,
+                    'shipment_destination', "order".shipment_destination,
+                    'shipment_price', "order".shipment_price,
+                    'item_price', "order".item_price,
                     'statuses', (
                         SELECT json_agg(json_build_object(
                             'id', order_status.id,
@@ -324,7 +324,7 @@ public class OrderCustomRepository {
                         JOIN category ON product.category_id = category.id
                         WHERE order_item.order_id = "order".id
                     ),
-                    'paymentProofs', (
+                    'payment_proofs', (
                         SELECT json_agg(json_build_object(
                             'id', payment_proof.id,
                             'file', payment_proof.file,
@@ -364,11 +364,11 @@ public class OrderCustomRepository {
                 FROM (
                     SELECT json_build_object(
                                 'id', "order".id,
-                                'totalPrice', "order".total_price,
-                                'shipmentOrigin', "order".shipment_origin,
-                                'shipmentDestination', "order".shipment_destination,
-                                'shipmentPrice', "order".shipment_price,
-                                'itemPrice', "order".item_price,
+                                'total_price', "order".total_price,
+                                'shipment_origin', "order".shipment_origin,
+                                'shipment_destination', "order".shipment_destination,
+                                'shipment_price', "order".shipment_price,
+                                'item_price', "order".item_price,
                                 'statuses', (
                                     SELECT json_agg(json_build_object(
                                         'id', order_status.id,
@@ -404,7 +404,7 @@ public class OrderCustomRepository {
                                     JOIN category ON product.category_id = category.id
                                     WHERE order_item.order_id = "order".id
                                 ),
-                                'paymentProofs', (
+                                'payment_proofs', (
                                     SELECT json_agg(json_build_object(
                                         'id', payment_proof.id,
                                         'file', payment_proof.file,
@@ -434,10 +434,10 @@ public class OrderCustomRepository {
                         WHERE order_item.order_id = "order".id
                         AND warehouse_admin.account_id = ?
                     )
-                    LIMIT ?
-                    OFFSET ?
                 ) as sq1
                 ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                LIMIT ?
+                OFFSET ?
                 """;
 
         return oneTemplate
@@ -451,9 +451,9 @@ public class OrderCustomRepository {
                             }
                         },
                         account.getId(),
+                        search,
                         size,
-                        page * size,
-                        search
+                        page * size
                 );
     }
 
@@ -464,11 +464,11 @@ public class OrderCustomRepository {
                 FROM (
                     SELECT json_build_object(
                                 'id', "order".id,
-                                'totalPrice', "order".total_price,
-                                'shipmentOrigin', "order".shipment_origin,
-                                'shipmentDestination', "order".shipment_destination,
-                                'shipmentPrice', "order".shipment_price,
-                                'itemPrice', "order".item_price,
+                                'total_price', "order".total_price,
+                                'shipment_origin', "order".shipment_origin,
+                                'shipment_destination', "order".shipment_destination,
+                                'shipment_price', "order".shipment_price,
+                                'item_price', "order".item_price,
                                 'statuses', (
                                     SELECT json_agg(json_build_object(
                                         'id', order_status.id,
@@ -504,7 +504,7 @@ public class OrderCustomRepository {
                                     JOIN category ON product.category_id = category.id
                                     WHERE order_item.order_id = "order".id
                                 ),
-                                'paymentProofs', (
+                                'payment_proofs', (
                                     SELECT json_agg(json_build_object(
                                         'id', payment_proof.id,
                                         'file', payment_proof.file,
@@ -526,10 +526,10 @@ public class OrderCustomRepository {
                         )
                         AND order_status.status = 'WAITING_FOR_PAYMENT_CONFIRMATION'
                     )
-                    LIMIT ?
-                    OFFSET ?
                 ) as sq1
                 ORDER BY SIMILARITY(sq1.item::text, ?) DESC
+                LIMIT ?
+                OFFSET ?
                 """;
 
         return oneTemplate
@@ -542,9 +542,9 @@ public class OrderCustomRepository {
                                 throw new RuntimeException(e);
                             }
                         },
+                        search,
                         size,
-                        page * size,
-                        search
+                        page * size
                 );
     }
 }

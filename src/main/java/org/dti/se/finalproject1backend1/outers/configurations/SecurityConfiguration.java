@@ -65,7 +65,7 @@ public class SecurityConfiguration implements PasswordEncoder {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/products/**",
-                                "/product-categories/**"
+                                "/categories/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

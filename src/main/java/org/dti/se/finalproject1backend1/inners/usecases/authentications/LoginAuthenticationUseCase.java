@@ -9,7 +9,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.Acco
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.deliveries.filters.AuthenticationManagerImpl;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountCredentialsInvalidException;
-import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountUnAuthorizedException;
+import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountPermissionRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
@@ -86,7 +86,7 @@ public class LoginAuthenticationUseCase {
 
         List<AccountPermission> permissionsList = accountPermissionRepository
                 .findByAccountId(account.getId())
-                .orElseThrow(AccountUnAuthorizedException::new); // ganti ke permission not found exception
+                .orElseThrow(AccountPermissionNotFoundException::new); // ganti ke permission not found exception
 
         List<String> permissions = permissionsList
                 .stream()

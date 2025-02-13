@@ -104,7 +104,7 @@ public class AuthenticationRestTest extends TestConfiguration {
     @Test
     @ResourceLock("idTokenMock")
     public void testRegisterByExternal() throws Exception {
-        String mockIdToken = "mock-id-token";
+        String idTokenMock = "mock-id-token";
         String email = String.format("email-%s", UUID.randomUUID());
         String name = String.format("name-%s", UUID.randomUUID());
         String picture = "https://placehold.co/400x400";
@@ -117,11 +117,11 @@ public class AuthenticationRestTest extends TestConfiguration {
         GoogleIdToken idToken = Mockito.mock(GoogleIdToken.class);
         Mockito.when(idToken.getPayload()).thenReturn(payload);
 
-        Mockito.when(authGoogleIdTokenVerifier.verify(mockIdToken)).thenReturn(idToken);
+        Mockito.when(authGoogleIdTokenVerifier.verify(idTokenMock)).thenReturn(idToken);
 
         RegisterByExternalRequest requestBody = RegisterByExternalRequest
                 .builder()
-                .credential(mockIdToken)
+                .credential(idTokenMock)
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders

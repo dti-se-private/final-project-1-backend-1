@@ -44,6 +44,7 @@ public class TransactionWebFilterImpl extends GenericFilterBean {
         Long retryCount = 0L;
         while (retryCount <= MAX_RETRIES) {
             TransactionStatus status = transactionManager.getTransaction(definition);
+            httpRequest.setAttribute("transactionStatus", status);
             try {
                 chain.doFilter(request, response);
                 transactionManager.commit(status);

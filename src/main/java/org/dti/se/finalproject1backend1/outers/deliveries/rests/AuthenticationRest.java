@@ -206,18 +206,24 @@ public class AuthenticationRest {
                     .data(session)
                     .build()
                     .toEntity(HttpStatus.OK);
+        } catch (VerificationNotFoundException e) {
+            return ResponseBody
+                    .<Session>builder()
+                    .message("ID token is null or empty.")
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (VerificationInvalidException e) {
+            return ResponseBody
+                    .<Session>builder()
+                    .message("Invalid Google ID token.")
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (AccountCredentialsInvalidException e) {
             return ResponseBody
                     .<Session>builder()
                     .message("Account credentials invalid.")
                     .build()
                     .toEntity(HttpStatus.UNAUTHORIZED);
-        } catch (VerificationInvalidException e) {
-            return ResponseBody
-                    .<Session>builder()
-                    .message("Verification invalid.")
-                    .build()
-                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
                     .<Session>builder()
