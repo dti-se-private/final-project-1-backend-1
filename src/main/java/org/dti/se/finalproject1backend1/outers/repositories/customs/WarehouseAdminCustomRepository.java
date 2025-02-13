@@ -40,8 +40,8 @@ public class WarehouseAdminCustomRepository {
         String sql = String.format("""
                 SELECT json_build_object(
                         'id', warehouse_admin.id,
-                        'warehouseId', warehouse_admin.warehouse_id,
-                        'accountId', warehouse_admin.account_id
+                        'warehouse_id', warehouse_admin.warehouse_id,
+                        'account_id', warehouse_admin.account_id
                     ) as warehouse_admin
                 FROM warehouse_admin
                 ORDER BY %s
@@ -58,7 +58,6 @@ public class WarehouseAdminCustomRepository {
                                 throw new RuntimeException(e);
                             }
                         },
-                        search,
                         size,
                         page * size
                 );

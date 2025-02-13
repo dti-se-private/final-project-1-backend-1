@@ -36,7 +36,7 @@ public class WarehouseAdminRest {
             @RequestParam(defaultValue = "") List<String> filters,
             @RequestParam(defaultValue = "") String search
     ) {
-        try {
+//        try {
             List<WarehouseAdminResponse> warehouseAdmins = warehouseAdminManagementUseCase
                     .getAllWarehouseAdmins(authenticatedAccount, page, size, filters, search);
 
@@ -46,20 +46,20 @@ public class WarehouseAdminRest {
                     .data(warehouseAdmins)
                     .build()
                     .toEntity(HttpStatus.OK);
-        } catch (AccountPermissionInvalidException e) {
-            return ResponseBody
-                    .<List<WarehouseAdminResponse>>builder()
-                    .message("Account permission invalid.")
-                    .build()
-                    .toEntity(HttpStatus.FORBIDDEN);
-        } catch (Exception e) {
-            return ResponseBody
-                    .<List<WarehouseAdminResponse>>builder()
-                    .message("Internal server error.")
-                    .exception(e)
-                    .build()
-                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+//        } catch (AccountPermissionInvalidException e) {
+//            return ResponseBody
+//                    .<List<WarehouseAdminResponse>>builder()
+//                    .message("Account permission invalid.")
+//                    .build()
+//                    .toEntity(HttpStatus.FORBIDDEN);
+//        } catch (Exception e) {
+//            return ResponseBody
+//                    .<List<WarehouseAdminResponse>>builder()
+//                    .message("Internal server error.")
+//                    .exception(e)
+//                    .build()
+//                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
     }
 
     @GetMapping("/{id}")
