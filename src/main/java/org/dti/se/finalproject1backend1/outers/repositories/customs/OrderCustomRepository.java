@@ -35,6 +35,19 @@ public class OrderCustomRepository {
                 FROM (
                     SELECT json_build_object(
                         'id', "order".id,
+                        'account', (
+                            SELECT json_build_object(
+                                'id', account.id,
+                                'name', account.name,
+                                'email', account.email,
+                                'password', account.password,
+                                'phone', account.phone,
+                                'image', account.image,
+                                'is_verified', account.is_verified
+                            )
+                            FROM account
+                            WHERE account.id = "order".account_id
+                        ),
                         'total_price', "order".total_price,
                         'shipment_origin', "order".shipment_origin,
                         'shipment_destination', "order".shipment_destination,
@@ -63,6 +76,11 @@ public class OrderCustomRepository {
                                     'description', product.description,
                                     'price', product.price,
                                     'image', product.image,
+                                    'quantity', COALESCE((
+                                        SELECT sum(warehouse_product.quantity)
+                                        FROM warehouse_product
+                                        WHERE warehouse_product.product_id = product.id
+                                    ), 0),
                                     'category', json_build_object(
                                         'id', category.id,
                                         'name', category.name,
@@ -117,6 +135,19 @@ public class OrderCustomRepository {
                 FROM (
                     SELECT json_build_object(
                         'id', "order".id,
+                        'account', (
+                            SELECT json_build_object(
+                                'id', account.id,
+                                'name', account.name,
+                                'email', account.email,
+                                'password', account.password,
+                                'phone', account.phone,
+                                'image', account.image,
+                                'is_verified', account.is_verified
+                            )
+                            FROM account
+                            WHERE account.id = "order".account_id
+                        ),
                         'total_price', "order".total_price,
                         'shipment_origin', "order".shipment_origin,
                         'shipment_destination', "order".shipment_destination,
@@ -145,6 +176,11 @@ public class OrderCustomRepository {
                                     'description', product.description,
                                     'price', product.price,
                                     'image', product.image,
+                                    'quantity', COALESCE((
+                                        SELECT sum(warehouse_product.quantity)
+                                        FROM warehouse_product
+                                        WHERE warehouse_product.product_id = product.id
+                                    ), 0),
                                     'category', json_build_object(
                                         'id', category.id,
                                         'name', category.name,
@@ -206,6 +242,19 @@ public class OrderCustomRepository {
                 FROM (
                     SELECT json_build_object(
                                 'id', "order".id,
+                                'account', (
+                                    SELECT json_build_object(
+                                        'id', account.id,
+                                        'name', account.name,
+                                        'email', account.email,
+                                        'password', account.password,
+                                        'phone', account.phone,
+                                        'image', account.image,
+                                        'is_verified', account.is_verified
+                                    )
+                                    FROM account
+                                    WHERE account.id = "order".account_id
+                                ),
                                 'total_price', "order".total_price,
                                 'shipment_origin', "order".shipment_origin,
                                 'shipment_destination', "order".shipment_destination,
@@ -234,6 +283,11 @@ public class OrderCustomRepository {
                                             'description', product.description,
                                             'price', product.price,
                                             'image', product.image,
+                                            'quantity', COALESCE((
+                                                SELECT sum(warehouse_product.quantity)
+                                                FROM warehouse_product
+                                                WHERE warehouse_product.product_id = product.id
+                                            ), 0),
                                             'category', json_build_object(
                                                 'id', category.id,
                                                 'name', category.name,
@@ -284,6 +338,19 @@ public class OrderCustomRepository {
         String sql = """
                 SELECT json_build_object(
                     'id', "order".id,
+                    'account', (
+                        SELECT json_build_object(
+                            'id', account.id,
+                            'name', account.name,
+                            'email', account.email,
+                            'password', account.password,
+                            'phone', account.phone,
+                            'image', account.image,
+                            'is_verified', account.is_verified
+                        )
+                        FROM account
+                        WHERE account.id = "order".account_id
+                    ),
                     'total_price', "order".total_price,
                     'shipment_origin', "order".shipment_origin,
                     'shipment_destination', "order".shipment_destination,
@@ -312,6 +379,11 @@ public class OrderCustomRepository {
                                 'description', product.description,
                                 'price', product.price,
                                 'image', product.image,
+                                'quantity', COALESCE((
+                                    SELECT sum(warehouse_product.quantity)
+                                    FROM warehouse_product
+                                    WHERE warehouse_product.product_id = product.id
+                                ), 0),
                                 'category', json_build_object(
                                     'id', category.id,
                                     'name', category.name,
@@ -364,6 +436,19 @@ public class OrderCustomRepository {
                 FROM (
                     SELECT json_build_object(
                                 'id', "order".id,
+                                'account', (
+                                    SELECT json_build_object(
+                                        'id', account.id,
+                                        'name', account.name,
+                                        'email', account.email,
+                                        'password', account.password,
+                                        'phone', account.phone,
+                                        'image', account.image,
+                                        'is_verified', account.is_verified
+                                    )
+                                    FROM account
+                                    WHERE account.id = "order".account_id
+                                ),
                                 'total_price', "order".total_price,
                                 'shipment_origin', "order".shipment_origin,
                                 'shipment_destination', "order".shipment_destination,
@@ -392,6 +477,11 @@ public class OrderCustomRepository {
                                             'description', product.description,
                                             'price', product.price,
                                             'image', product.image,
+                                            'quantity', COALESCE((
+                                                SELECT sum(warehouse_product.quantity)
+                                                FROM warehouse_product
+                                                WHERE warehouse_product.product_id = product.id
+                                            ), 0),
                                             'category', json_build_object(
                                                 'id', category.id,
                                                 'name', category.name,
@@ -464,6 +554,19 @@ public class OrderCustomRepository {
                 FROM (
                     SELECT json_build_object(
                                 'id', "order".id,
+                                'account', (
+                                    SELECT json_build_object(
+                                        'id', account.id,
+                                        'name', account.name,
+                                        'email', account.email,
+                                        'password', account.password,
+                                        'phone', account.phone,
+                                        'image', account.image,
+                                        'is_verified', account.is_verified
+                                    )
+                                    FROM account
+                                    WHERE account.id = "order".account_id
+                                ),
                                 'total_price', "order".total_price,
                                 'shipment_origin', "order".shipment_origin,
                                 'shipment_destination', "order".shipment_destination,
@@ -492,6 +595,11 @@ public class OrderCustomRepository {
                                             'description', product.description,
                                             'price', product.price,
                                             'image', product.image,
+                                            'quantity', COALESCE((
+                                                SELECT sum(warehouse_product.quantity)
+                                                FROM warehouse_product
+                                                WHERE warehouse_product.product_id = product.id
+                                            ), 0),
                                             'category', json_build_object(
                                                 'id', category.id,
                                                 'name', category.name,

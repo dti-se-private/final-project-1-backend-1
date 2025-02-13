@@ -13,8 +13,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @Accessors(chain = true)
 public class AccountResponse extends Model {
-    private String name;
     private UUID id;
+    private String name;
     private String email;
     private String password;
     private String phone;
