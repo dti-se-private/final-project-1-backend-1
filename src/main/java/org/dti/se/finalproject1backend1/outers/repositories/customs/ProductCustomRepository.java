@@ -13,7 +13,6 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Repository
 public class ProductCustomRepository {
@@ -113,11 +112,11 @@ public class ProductCustomRepository {
                                'name', category.name,
                                'description', category.description
                            ),
-                            'quantity', (
+                            'quantity', COALESCE((
                                 SELECT sum(warehouse_product.quantity)
                                 FROM warehouse_product
                                 WHERE warehouse_product.product_id = product.id
-                            )
+                            ), 0)
                     ) as item
                     FROM category
                     INNER JOIN product ON category.id = product.category_id
@@ -156,11 +155,11 @@ public class ProductCustomRepository {
                         'name', category.name,
                         'description', category.description
                     ),
-                    'quantity', (
+                    'quantity', COALESCE((
                         SELECT sum(warehouse_product.quantity)
                         FROM warehouse_product
                         WHERE warehouse_product.product_id = product.id
-                    )
+                    ), 0)
                 ) as item
                 FROM product
                 INNER JOIN category ON product.category_id = category.id
@@ -183,122 +182,5 @@ public class ProductCustomRepository {
         } catch (EmptyResultDataAccessException e) {
             return null;
         }
-    }
-
-    public List<ProductResponse> getProducts(
-            int page,
-            int size,
-            List<String> filters,
-            String search
-    ) {
-        String order = filters.stream()
-                .map(filter -> String.format("SIMILARITY(%s::text, '%s')", filter, search))
-                .collect(Collectors.joining("+"));
-
-        if (order.isEmpty()) {
-            order = "product.id";
-        }
-
-        String sql = String.format("""
-            SELECT json_build_object(
-                'id', product.id,
-                'name', product.name,
-                'description', product.description,
-                'price', product.price,
-                'image', product.image,
-                'category', json_build_object(
-                    'id', category.id,
-                    'name', category.name,
-                    'description', category.description
-                )
-            ) as item
-            FROM product
-            JOIN category ON product.category_id = category.id
-            ORDER BY %s
-            LIMIT ?
-            OFFSET ?
-            """, order);
-
-        return oneTemplate.query(
-                sql,
-                (rs, rowNum) -> {
-                    try {
-                        return objectMapper.readValue(rs.getString("item"), new TypeReference<ProductResponse>() {});
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                },
-                size,
-                page * size
-        );
-    }
-
-    public ProductResponse getById(UUID id) {
-        String sql = """
-            SELECT json_build_object(
-                'id', product.id,
-                'name', product.name,
-                'description', product.description,
-                'price', product.price,
-                'image', product.image,
-                'category', json_build_object(
-                    'id', category.id,
-                    'name', category.name,
-                    'description', category.description
-                )
-            ) as item
-            FROM product
-            JOIN category ON product.category_id = category.id
-            WHERE product.id = ?
-            """;
-
-        return oneTemplate.queryForObject(
-                sql,
-                (rs, rowNum) -> {
-                    try {
-                        return objectMapper.readValue(rs.getString("item"), new TypeReference<ProductResponse>() {});
-                    } catch (JsonProcessingException e) {
-                        throw new RuntimeException(e);
-                    }
-                },
-                id
-        );
-    }
-
-    public void create(ProductResponse product) {
-        oneTemplate.update("""
-            INSERT INTO product (id, name, description, price, image, category_id)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-                UUID.randomUUID(),
-                product.getName(),
-                product.getDescription(),
-                product.getPrice(),
-                product.getImage(),
-                product.getCategory().getId()
-        );
-    }
-
-    public void update(ProductResponse product) {
-        oneTemplate.update("""
-            UPDATE product SET
-                name = ?,
-                description = ?,
-                price = ?,
-                image = ?,
-                category_id = ?
-            WHERE id = ?
-            """,
-                product.getName(),
-                product.getDescription(),
-                product.getPrice(),
-                product.getImage(),
-                product.getCategory().getId(),
-                product.getId()
-        );
-    }
-
-    public void delete(UUID id) {
-        oneTemplate.update("DELETE FROM product WHERE id = ?", id);
     }
 }
