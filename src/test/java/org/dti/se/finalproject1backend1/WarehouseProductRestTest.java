@@ -84,7 +84,7 @@ public class WarehouseProductRestTest extends TestConfiguration {
                 .orElseThrow(WarehouseProductNotFoundException::new);
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/warehouseProducts/{productId}", realWarehouseProduct.getId())
+                .get("/warehouse-products/" + realWarehouseProduct.getId())
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
@@ -119,6 +119,7 @@ public class WarehouseProductRestTest extends TestConfiguration {
                 .builder()
                 .productId(realProduct.getId())
                 .warehouseId(realWarehouse.getId())
+                .quantity(Math.ceil(Math.random() * 1000))
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
@@ -173,7 +174,7 @@ public class WarehouseProductRestTest extends TestConfiguration {
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .patch("/warehouseProducts/{productId}", realWarehouseProduct.getId())
+                .patch("/warehouse-products/" + realWarehouseProduct.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody))
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
@@ -208,7 +209,7 @@ public class WarehouseProductRestTest extends TestConfiguration {
                 .orElseThrow(WarehouseProductNotFoundException::new);
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .delete("/warehouseProducts/{productId}", realWarehouseProduct.getId())
+                .delete("/warehouse-products/" + realWarehouseProduct.getId())
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc

@@ -23,7 +23,7 @@ import java.util.UUID;
 public class WarehouseRest {
 
     @Autowired
-    private WarehouseUseCase warehouseService;
+    private WarehouseUseCase warehouseUseCase;
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
@@ -35,7 +35,7 @@ public class WarehouseRest {
             @RequestParam(defaultValue = "") String search
     ) {
         try {
-            List<WarehouseResponse> warehouses = warehouseService
+            List<WarehouseResponse> warehouses = warehouseUseCase
                     .getAllWarehouses(account, page, size, filters, search);
             return ResponseBody
                     .<List<WarehouseResponse>>builder()
@@ -65,7 +65,7 @@ public class WarehouseRest {
             @PathVariable UUID id
     ) {
         try {
-            WarehouseResponse warehouse = warehouseService.getWarehouse(account, id);
+            WarehouseResponse warehouse = warehouseUseCase.getWarehouse(account, id);
             return ResponseBody
                     .<WarehouseResponse>builder()
                     .message("Warehouse found.")
@@ -100,7 +100,7 @@ public class WarehouseRest {
             @RequestBody WarehouseRequest request
     ) {
         try {
-            WarehouseResponse warehouse = warehouseService.addWarehouse(account, request);
+            WarehouseResponse warehouse = warehouseUseCase.addWarehouse(account, request);
             return ResponseBody
                     .<WarehouseResponse>builder()
                     .message("Warehouse added.")
@@ -130,7 +130,7 @@ public class WarehouseRest {
             @RequestBody WarehouseRequest request
     ) {
         try {
-            WarehouseResponse warehouse = warehouseService.patchWarehouse(account, id, request);
+            WarehouseResponse warehouse = warehouseUseCase.patchWarehouse(account, id, request);
             return ResponseBody
                     .<WarehouseResponse>builder()
                     .message("Warehouse patched.")
@@ -165,7 +165,7 @@ public class WarehouseRest {
             @PathVariable UUID id
     ) {
         try {
-            warehouseService.deleteWarehouse(account, id);
+            warehouseUseCase.deleteWarehouse(account, id);
             return ResponseBody
                     .<WarehouseResponse>builder()
                     .message("Warehouse deleted.")
