@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.web.filter.GenericFilterBean;
 
@@ -73,6 +74,9 @@ public class TransactionWebFilterImpl extends GenericFilterBean {
                     httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                     return; // Exit after max retries.
                 }
+            } catch (UnexpectedRollbackException unexpectedRollbackException) {
+                logger.warn("Transaction unexpectedly rollback: {}", unexpectedRollbackException.getMessage());
+                break; // Exit without retry.
             } catch (Exception otherException) {
                 // For other exceptions, rollback and fail without retry.
                 otherException.printStackTrace();
