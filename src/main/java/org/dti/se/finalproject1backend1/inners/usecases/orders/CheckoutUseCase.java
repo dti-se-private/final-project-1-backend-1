@@ -137,6 +137,8 @@ public class CheckoutUseCase {
         }
         orderItemRepository.saveAllAndFlush(newOrderItems);
 
+        cartItemRepository.deleteAll(foundCartItems);
+
         return orderCustomRepository.getOrder(newOrder.getId());
     }
 }

@@ -15,5 +15,4 @@ import java.time.OffsetDateTime;
 public class PaymentProofRequest extends Model {
     private byte[] file;
     private String extension;
-    private OffsetDateTime time;
 }

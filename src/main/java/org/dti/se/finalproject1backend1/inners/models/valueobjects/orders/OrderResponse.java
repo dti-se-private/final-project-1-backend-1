@@ -4,6 +4,7 @@ import lombok.*;
 import lombok.experimental.Accessors;
 import org.dti.se.finalproject1backend1.inners.models.Model;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
 import org.locationtech.jts.geom.Point;
 
 import java.util.List;
@@ -18,13 +19,13 @@ import java.util.UUID;
 public class OrderResponse extends Model {
     private UUID id;
 
-    private Account account;
+    private AccountResponse account;
 
-    private Double totalPrice;
+    private Double itemPrice;
 
     private Double shipmentPrice;
 
-    private Double itemPrice;
+    private Double totalPrice;
 
     private List<OrderStatusResponse> statuses;
 
