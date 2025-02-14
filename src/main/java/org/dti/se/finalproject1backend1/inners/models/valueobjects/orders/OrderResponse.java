@@ -21,11 +21,11 @@ public class OrderResponse extends Model {
 
     private AccountResponse account;
 
-    private Double totalPrice;
+    private Double itemPrice;
 
     private Double shipmentPrice;
 
-    private Double itemPrice;
+    private Double totalPrice;
 
     private List<OrderStatusResponse> statuses;
 

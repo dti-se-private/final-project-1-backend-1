@@ -16,5 +16,5 @@ import java.util.UUID;
 public class PaymentProcessRequest extends Model {
     private UUID orderId;
     private String paymentMethod;
-    private List<PaymentProcessRequest> paymentProofs;
+    private List<PaymentProofRequest> paymentProofs;
 }

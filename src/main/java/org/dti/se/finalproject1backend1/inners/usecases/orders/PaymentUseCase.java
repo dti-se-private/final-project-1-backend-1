@@ -12,6 +12,7 @@ import org.dti.se.finalproject1backend1.outers.exceptions.orders.PaymentMethodIn
 import org.dti.se.finalproject1backend1.outers.repositories.customs.OrderCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.OrderRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.OrderStatusRepository;
+import org.dti.se.finalproject1backend1.outers.repositories.ones.PaymentProofRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -30,10 +31,10 @@ public class PaymentUseCase {
     OrderRepository orderRepository;
     @Autowired
     OrderStatusRepository orderStatusRepository;
-
+    @Autowired
+    PaymentProofRepository paymentProofRepository;
     @Autowired
     MidtransGateway midtransGateway;
-
 
     public PaymentGatewayResponse processPaymentGateway(PaymentGatewayRequest request) {
         Order foundOrder = orderRepository
@@ -84,6 +85,21 @@ public class PaymentUseCase {
                     .time(now)
                     .build();
             orderStatusRepository.saveAndFlush(newOrderStatus);
+
+            List<PaymentProof> newPaymentProofs = request
+                    .getPaymentProofs()
+                    .stream()
+                    .map(paymentProofRequest -> PaymentProof
+                            .builder()
+                            .id(UUID.randomUUID())
+                            .order(foundOrder)
+                            .file(paymentProofRequest.getFile())
+                            .extension(paymentProofRequest.getExtension())
+                            .time(now)
+                            .build()
+                    )
+                    .toList();
+            paymentProofRepository.saveAllAndFlush(newPaymentProofs);
         } else {
             throw new PaymentMethodInvalidException();
         }
