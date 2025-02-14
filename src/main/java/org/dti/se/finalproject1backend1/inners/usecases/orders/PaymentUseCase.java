@@ -2,13 +2,12 @@ package org.dti.se.finalproject1backend1.inners.usecases.orders;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.*;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.*;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.payments.PaymentLinkResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.payments.CreatePaymentLinkResponse;
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MidtransGateway;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderActionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderStatusInvalidException;
-import org.dti.se.finalproject1backend1.outers.exceptions.orders.PaymentMethodInvalidException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.OrderCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.OrderRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.OrderStatusRepository;
@@ -49,60 +48,56 @@ public class PaymentUseCase {
             throw new OrderStatusInvalidException();
         }
 
-        List<OrderItem> orderItems = foundOrder
-                .getOrderItems()
-                .stream()
-                .toList();
-
-        PaymentLinkResponse paymentLinkResponse = midtransGateway
-                .getPaymentLinkUrl(
-                        foundOrder.getId(),
-                        foundOrder.getTotalPrice(),
-                        orderItems
-                );
+        CreatePaymentLinkResponse createPaymentLinkResponse = midtransGateway
+                .getPaymentLinkUrl(foundOrder, foundOrder.getTotalPrice());
 
         return PaymentGatewayResponse
                 .builder()
-                .url(paymentLinkResponse.getPaymentUrl())
+                .url(createPaymentLinkResponse.getPaymentUrl())
                 .build();
     }
 
-    public OrderResponse processPayment(PaymentProcessRequest request) {
+    public OrderResponse processManualPayment(PaymentProcessRequest request) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
         Order foundOrder = orderRepository
                 .findById(request.getOrderId())
                 .orElseThrow(OrderNotFoundException::new);
 
-        if (request.getPaymentMethod().equals("AUTOMATIC")) {
-            orderUseCase.processOrderProcessing(request.getOrderId(), "APPROVED");
-        } else if (request.getPaymentMethod().equals("MANUAL")) {
-            OrderStatus newOrderStatus = OrderStatus
-                    .builder()
-                    .id(UUID.randomUUID())
-                    .order(foundOrder)
-                    .status("WAITING_FOR_PAYMENT_CONFIRMATION")
-                    .time(now)
-                    .build();
-            orderStatusRepository.saveAndFlush(newOrderStatus);
+        OrderStatus newOrderStatus = OrderStatus
+                .builder()
+                .id(UUID.randomUUID())
+                .order(foundOrder)
+                .status("WAITING_FOR_PAYMENT_CONFIRMATION")
+                .time(now)
+                .build();
+        orderStatusRepository.saveAndFlush(newOrderStatus);
 
-            List<PaymentProof> newPaymentProofs = request
-                    .getPaymentProofs()
-                    .stream()
-                    .map(paymentProofRequest -> PaymentProof
-                            .builder()
-                            .id(UUID.randomUUID())
-                            .order(foundOrder)
-                            .file(paymentProofRequest.getFile())
-                            .extension(paymentProofRequest.getExtension())
-                            .time(now)
-                            .build()
-                    )
-                    .toList();
-            paymentProofRepository.saveAllAndFlush(newPaymentProofs);
-        } else {
-            throw new PaymentMethodInvalidException();
-        }
+        List<PaymentProof> newPaymentProofs = request
+                .getPaymentProofs()
+                .stream()
+                .map(paymentProofRequest -> PaymentProof
+                        .builder()
+                        .id(UUID.randomUUID())
+                        .order(foundOrder)
+                        .file(paymentProofRequest.getFile())
+                        .extension(paymentProofRequest.getExtension())
+                        .time(now)
+                        .build()
+                )
+                .toList();
+        paymentProofRepository.saveAllAndFlush(newPaymentProofs);
+
+        return orderCustomRepository.getOrder(request.getOrderId());
+    }
+
+
+    public OrderResponse processAutomaticPayment(PaymentProcessRequest request) {
+        Order foundOrder = orderRepository
+                .findById(request.getOrderId())
+                .orElseThrow(OrderNotFoundException::new);
+
+        orderUseCase.processOrderProcessing(foundOrder.getId(), "APPROVED");
 
         return orderCustomRepository.getOrder(request.getOrderId());
     }

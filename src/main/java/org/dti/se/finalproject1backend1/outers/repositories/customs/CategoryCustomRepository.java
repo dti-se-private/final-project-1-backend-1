@@ -38,22 +38,23 @@ public class CategoryCustomRepository {
         }
 
         String sql = String.format("""
-            SELECT json_build_object(
-                'id', id,
-                'name', name,
-                'description', description
-            ) as item
-            FROM category
-            ORDER BY %s
-            LIMIT ?
-            OFFSET ?
-            """, order);
+                SELECT json_build_object(
+                    'id', id,
+                    'name', name,
+                    'description', description
+                ) as item
+                FROM category
+                ORDER BY %s
+                LIMIT ?
+                OFFSET ?
+                """, order);
 
         return oneTemplate.query(
                 sql,
                 (rs, rowNum) -> {
                     try {
-                        return objectMapper.readValue(rs.getString("item"), new TypeReference<CategoryResponse>() {});
+                        return objectMapper.readValue(rs.getString("item"), new TypeReference<CategoryResponse>() {
+                        });
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }
@@ -65,20 +66,21 @@ public class CategoryCustomRepository {
 
     public CategoryResponse getById(UUID id) {
         String sql = """
-            SELECT json_build_object(
-                'id', id,
-                'name', name,
-                'description', description
-            ) as item
-            FROM category
-            WHERE id = ?
-            """;
+                SELECT json_build_object(
+                    'id', id,
+                    'name', name,
+                    'description', description
+                ) as item
+                FROM category
+                WHERE id = ?
+                """;
 
         return oneTemplate.queryForObject(
                 sql,
                 (rs, rowNum) -> {
                     try {
-                        return objectMapper.readValue(rs.getString("item"), new TypeReference<CategoryResponse>() {});
+                        return objectMapper.readValue(rs.getString("item"), new TypeReference<CategoryResponse>() {
+                        });
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }
@@ -89,9 +91,9 @@ public class CategoryCustomRepository {
 
     public void create(Category category) {
         oneTemplate.update("""
-            INSERT INTO category (id, name, description)
-            VALUES (?, ?, ?)
-            """,
+                        INSERT INTO category (id, name, description)
+                        VALUES (?, ?, ?)
+                        """,
                 UUID.randomUUID(),
                 category.getName(),
                 category.getDescription()
@@ -100,10 +102,10 @@ public class CategoryCustomRepository {
 
     public void update(Category category) {
         oneTemplate.update("""
-            UPDATE category
-            SET name = ?, description = ?
-            WHERE id = ?
-            """,
+                        UPDATE category
+                        SET name = ?, description = ?
+                        WHERE id = ?
+                        """,
                 category.getName(),
                 category.getDescription(),
                 category.getId()
@@ -112,9 +114,9 @@ public class CategoryCustomRepository {
 
     public void delete(UUID id) {
         oneTemplate.update("""
-            DELETE FROM category
-            WHERE id = ?
-            """,
+                        DELETE FROM category
+                        WHERE id = ?
+                        """,
                 id
         );
     }
