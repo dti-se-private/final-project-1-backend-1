@@ -98,6 +98,7 @@ public class WarehouseProductUseCase {
                         .description(foundProduct.getCategory().getDescription())
                         .build())
                 .build());
+        warehouseProductResponse.setQuantity(warehouseProduct.getQuantity());
 
         return warehouseProductResponse;
     }
