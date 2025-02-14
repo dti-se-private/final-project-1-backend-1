@@ -112,11 +112,11 @@ public class ProductCustomRepository {
                                'name', category.name,
                                'description', category.description
                            ),
-                            'quantity', (
+                            'quantity', COALESCE((
                                 SELECT sum(warehouse_product.quantity)
                                 FROM warehouse_product
                                 WHERE warehouse_product.product_id = product.id
-                            )
+                            ), 0)
                     ) as item
                     FROM category
                     INNER JOIN product ON category.id = product.category_id
@@ -155,11 +155,11 @@ public class ProductCustomRepository {
                         'name', category.name,
                         'description', category.description
                     ),
-                    'quantity', (
+                    'quantity', COALESCE((
                         SELECT sum(warehouse_product.quantity)
                         FROM warehouse_product
                         WHERE warehouse_product.product_id = product.id
-                    )
+                    ), 0)
                 ) as item
                 FROM product
                 INNER JOIN category ON product.category_id = category.id
