@@ -4,6 +4,7 @@ import org.dti.se.finalproject1backend1.inners.models.entities.*;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductInsufficientException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.LocationCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.OrderCustomRepository;
@@ -93,26 +94,37 @@ public class OrderUseCase {
                         )
                         .orElseThrow(WarehouseProductNotFoundException::new);
 
+                Double originPostQuantity = originWarehouseProduct.getQuantity() - foundOrderItem.getQuantity();
+                Double destinationPostQuantity = destinationWarehouseProduct.getQuantity() + foundOrderItem.getQuantity();
+                if (originPostQuantity < 0 || destinationPostQuantity < 0) {
+                    throw new WarehouseProductInsufficientException();
+                }
+
                 WarehouseLedger newWarehouseLedger = WarehouseLedger
                         .builder()
                         .id(UUID.randomUUID())
                         .product(originWarehouseProduct.getProduct())
                         .originWarehouse(originWarehouseProduct.getWarehouse())
-                        .destinationWarehouse(foundOrder.getOriginWarehouse())
+                        .destinationWarehouse(destinationWarehouseProduct.getWarehouse())
                         .originPreQuantity(originWarehouseProduct.getQuantity())
-                        .originPostQuantity(originWarehouseProduct.getQuantity() - foundOrderItem.getQuantity())
+                        .originPostQuantity(originPostQuantity)
                         .destinationPreQuantity(destinationWarehouseProduct.getQuantity())
-                        .destinationPostQuantity(destinationWarehouseProduct.getQuantity() + foundOrderItem.getQuantity())
+                        .destinationPostQuantity(destinationPostQuantity)
                         .status(ledgerStatus)
                         .build();
 
-                originWarehouseProduct.setQuantity(newWarehouseLedger.getOriginPostQuantity());
-                destinationWarehouseProduct.setQuantity(newWarehouseLedger.getDestinationPostQuantity());
+                originWarehouseProduct.setQuantity(originPostQuantity);
+                destinationWarehouseProduct.setQuantity(destinationPostQuantity);
                 warehouseProductRepository.saveAndFlush(originWarehouseProduct);
                 warehouseProductRepository.saveAndFlush(destinationWarehouseProduct);
                 warehouseLedgerRepository.saveAndFlush(newWarehouseLedger);
             } else {
-                originWarehouseProduct.setQuantity(originWarehouseProduct.getQuantity() - foundOrderItem.getQuantity());
+                Double originPostQuantity = originWarehouseProduct.getQuantity() - foundOrderItem.getQuantity();
+                if (originPostQuantity < 0) {
+                    throw new WarehouseProductInsufficientException();
+                }
+
+                originWarehouseProduct.setQuantity(originPostQuantity);
                 warehouseProductRepository.saveAndFlush(originWarehouseProduct);
             }
         }

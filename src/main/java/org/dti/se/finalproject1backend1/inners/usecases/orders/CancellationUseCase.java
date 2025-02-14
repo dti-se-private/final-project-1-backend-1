@@ -61,9 +61,7 @@ public class CancellationUseCase {
             Boolean isExistsProcessingStatus = foundOrder
                     .getOrderStatuses()
                     .stream()
-                    .max(Comparator.comparing(OrderStatus::getTime))
-                    .filter(orderStatus -> orderStatus.getStatus().equals("PROCESSING"))
-                    .isPresent();
+                    .anyMatch(orderStatus -> orderStatus.getStatus().equals("PROCESSING"));
             if (isExistsProcessingStatus) {
                 throw new OrderStatusInvalidException();
             }
@@ -71,9 +69,7 @@ public class CancellationUseCase {
             Boolean isExistsShippingStatus = foundOrder
                     .getOrderStatuses()
                     .stream()
-                    .max(Comparator.comparing(OrderStatus::getTime))
-                    .filter(orderStatus -> orderStatus.getStatus().equals("SHIPPING"))
-                    .isPresent();
+                    .anyMatch(orderStatus -> orderStatus.getStatus().equals("SHIPPING"));
             if (isExistsShippingStatus) {
                 throw new OrderStatusInvalidException();
             }

@@ -41,6 +41,11 @@ public class CartCustomRepository {
                                 'description', product.description,
                                 'price', product.price,
                                 'image', product.image,
+                                'quantity', COALESCE((
+                                    SELECT sum(warehouse_product.quantity)
+                                    FROM warehouse_product
+                                    WHERE warehouse_product.product_id = product.id
+                                ), 0),
                                 'category', json_build_object(
                                     'id', category.id,
                                     'name', category.name,
