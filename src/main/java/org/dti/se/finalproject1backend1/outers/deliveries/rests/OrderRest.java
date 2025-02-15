@@ -9,10 +9,7 @@ import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountAddres
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.carts.CartItemInvalidException;
-import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderActionInvalidException;
-import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
-import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderStatusInvalidException;
-import org.dti.se.finalproject1backend1.outers.exceptions.orders.PaymentMethodInvalidException;
+import org.dti.se.finalproject1backend1.outers.exceptions.orders.*;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductInsufficientException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +21,7 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/orders")
@@ -135,13 +133,64 @@ public class OrderRest {
         }
     }
 
-    @PostMapping("/payments/process")
+    @PostMapping("/payments/automatic/process")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
-    public ResponseEntity<ResponseBody<OrderResponse>> processPayment(
+    public ResponseEntity<ResponseBody<OrderResponse>> processAutomaticPayment(
             @RequestBody PaymentProcessRequest request
     ) {
         try {
-            OrderResponse order = paymentUseCase.processPayment(request);
+            OrderResponse order = paymentUseCase.processAutomaticPayment(request);
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Order payment processed.")
+                    .data(order)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (OrderNotFoundException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Order not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (PaymentMethodInvalidException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Payment method invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (WarehouseProductNotFoundException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Warehouse product not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (WarehouseProductInsufficientException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Warehouse product insufficient.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PostMapping("/payments/manual/process")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
+    public ResponseEntity<ResponseBody<OrderResponse>> processManualPayment(
+            @RequestBody PaymentProcessRequest request
+    ) {
+        try {
+            OrderResponse order = paymentUseCase.processManualPayment(request);
             return ResponseBody
                     .<OrderResponse>builder()
                     .message("Order payment processed.")
@@ -210,6 +259,13 @@ public class OrderRest {
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
+        } catch (AccountPermissionInvalidException e) {
+            return ResponseBody
+                    .<List<OrderResponse>>builder()
+                    .message("Account permission invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.FORBIDDEN);
         } catch (Exception e) {
             return ResponseBody
                     .<List<OrderResponse>>builder()
@@ -220,6 +276,37 @@ public class OrderRest {
         }
     }
 
+    @GetMapping("/{orderId}")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
+    public ResponseEntity<ResponseBody<OrderResponse>> getOrders(
+            @AuthenticationPrincipal Account account,
+            @PathVariable UUID orderId
+    ) {
+        try {
+            OrderResponse orders = orderUseCase
+                    .getOrder(account, orderId);
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Orders found.")
+                    .data(orders)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (AccountNotFoundException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Account not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
     @GetMapping("/payment-confirmations")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")
@@ -434,6 +521,13 @@ public class OrderRest {
             return ResponseBody
                     .<PaymentGatewayResponse>builder()
                     .message("Order status invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (PaymentLinkInvalidException e) {
+            return ResponseBody
+                    .<PaymentGatewayResponse>builder()
+                    .message("Payment link invalid.")
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.BAD_REQUEST);

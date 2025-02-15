@@ -8,7 +8,7 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Order;
 import org.dti.se.finalproject1backend1.inners.models.entities.OrderStatus;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.*;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.payments.PaymentLinkResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.payments.CreatePaymentLinkResponse;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.shipments.ShipmentPricingResponse;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.shipments.ShipmentRateResponse;
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.BiteshipGateway;
@@ -434,8 +434,8 @@ public class OrderRestTest extends TestConfiguration {
                 .findFirst()
                 .orElseThrow(OrderNotFoundException::new);
 
-        Mockito.when(midtransGateway.getPaymentLinkUrl(Mockito.any(), Mockito.any(), Mockito.any()))
-                .thenReturn(PaymentLinkResponse
+        Mockito.when(midtransGateway.getPaymentLinkUrl(Mockito.any(), Mockito.any()))
+                .thenReturn(CreatePaymentLinkResponse
                         .builder()
                         .orderId(realOrder.getId())
                         .paymentUrl("https://example.com")

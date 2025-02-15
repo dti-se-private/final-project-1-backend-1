@@ -1,8 +1,10 @@
-package org.dti.se.finalproject1backend1.inners.models.valueobjects.orders;
+package org.dti.se.finalproject1backend1.inners.models.valueobjects.payments;
 
 import lombok.*;
 import lombok.experimental.Accessors;
 import org.dti.se.finalproject1backend1.inners.models.Model;
+
+import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -10,7 +12,7 @@ import org.dti.se.finalproject1backend1.inners.models.Model;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class PaymentProofRequest extends Model {
-    private byte[] file;
-    private String extension;
+public class CreatePaymentLinkResponse extends Model {
+    private UUID orderId;
+    private String paymentUrl;
 }
