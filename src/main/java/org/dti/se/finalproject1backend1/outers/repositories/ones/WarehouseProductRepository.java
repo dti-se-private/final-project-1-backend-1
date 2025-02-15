@@ -1,6 +1,5 @@
 package org.dti.se.finalproject1backend1.outers.repositories.ones;
 
-import org.dti.se.finalproject1backend1.inners.models.entities.Warehouse;
 import org.dti.se.finalproject1backend1.inners.models.entities.WarehouseProduct;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface WarehouseProductRepository extends JpaRepository<WarehouseProduct, UUID > {
+public interface WarehouseProductRepository extends JpaRepository<WarehouseProduct, UUID> {
     // search by product name or warehouse
     @Query("SELECT wp FROM WarehouseProduct wp " +
             "WHERE LOWER(wp.product.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
@@ -22,7 +21,16 @@ public interface WarehouseProductRepository extends JpaRepository<WarehouseProdu
     @Query("SELECT wp FROM WarehouseProduct wp WHERE wp.quantity >0")
     Page<WarehouseProduct> findWithFilters(String filters, Pageable pageable);
 
-    // method to update the quantity in the warehouse
-    @Query("SELECT wp FROM WarehouseProduct wp WHERE wp.product.id = :productId AND wp.warehouse.id = :warehouseId")
-    Optional<WarehouseProduct> findByProductAndWarehouse(@Param("productId") UUID productId, @Param("warehouseId") UUID warehouseId);
+    Optional<WarehouseProduct> findByProductIdAndWarehouseId(UUID productId, UUID warehouseId);
+
+//    // implement summation of quantity for product total quantity
+//    @Query("SELECT wp.product.id, SUM(wp.quantity) " +
+//            "FROM WarehouseProduct wp " +
+//            "WHERE wp.product.id IN :productIds " +
+//            "GROUP BY wp.product.id")
+//    List<Object[]> findTotalQuantitiesByProductIds(@Param("productIds") List<UUID> productIds);
+
+    // sum total of quantity
+    @Query("SELECT COALESCE(SUM(wp.quantity), 0) FROM WarehouseProduct wp WHERE wp.product.id = :productId")
+    Double sumQuantityByProductId(@Param("productId") UUID productId);
 }

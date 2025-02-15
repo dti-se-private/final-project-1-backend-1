@@ -1,73 +1,168 @@
 package org.dti.se.finalproject1backend1.outers.deliveries.rests;
 
-import org.dti.se.finalproject1backend1.inners.models.entities.Category;
-import org.dti.se.finalproject1backend1.inners.models.entities.Product;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.categories.CategoryResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
-import org.dti.se.finalproject1backend1.inners.usecases.categories.CategoryUseCase;
-import org.dti.se.finalproject1backend1.inners.usecases.products.ProductMapper;
 import org.dti.se.finalproject1backend1.inners.usecases.products.ProductUseCase;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.ProductRepository;
+import org.dti.se.finalproject1backend1.outers.exceptions.products.CategoryNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.products.ProductNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/products")
-@CrossOrigin(origins = "http://localhost:3000")
 public class ProductRest {
-    @Autowired
-    private ProductUseCase productService;
 
     @Autowired
-    private CategoryUseCase categoryService;
-
-    @Autowired
-    private ProductMapper productMapper;
+    private ProductUseCase productUseCase;
 
     @GetMapping
-    public List<ProductResponse> getAllProducts() {
-        return productService.getAllProducts()
-                .stream()
-                .map(productMapper::toProductResponse)
-                .collect(Collectors.toList());
+    public ResponseEntity<ResponseBody<List<ProductResponse>>> getProducts(
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "5") Integer size,
+            @RequestParam(defaultValue = "") String search
+    ) {
+        try {
+            List<ProductResponse> products = productUseCase.getProducts(page, size, search);
+            return ResponseBody
+                    .<List<ProductResponse>>builder()
+                    .message("Products found.")
+                    .data(products)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<List<ProductResponse>>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @GetMapping("/{id}")
-    public ProductResponse getProductById(@PathVariable UUID id) {
-        Product product = productService.getProductById(id);
-        return productMapper.toProductResponse(product);
+    @GetMapping("/{productId}")
+    public ResponseEntity<ResponseBody<ProductResponse>> getProduct(@PathVariable UUID productId) {
+        try {
+            ProductResponse product = productUseCase.getProduct(productId);
+            return ResponseBody
+                    .<ProductResponse>builder()
+                    .message("Product found.")
+                    .data(product)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (ProductNotFoundException e) {
+            return ResponseBody
+                    .<ProductResponse>builder()
+                    .message("Product not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<ProductResponse>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping
-    public ProductResponse addProduct(@RequestBody ProductRequest productRequest) {
-        Category category = categoryService.getCategoryById(productRequest.getCategoryId());
-
-        Product product = productMapper.toProduct(productRequest, category);
-        productService.addProduct(product);
-
-        ProductResponse productResponse = productMapper.toProductResponse(product);
-        return productResponse;
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
+    public ResponseEntity<ResponseBody<ProductResponse>> addProduct(@RequestBody ProductRequest request) {
+        try {
+            ProductResponse product = productUseCase.addProduct(request);
+            return ResponseBody
+                    .<ProductResponse>builder()
+                    .message("Product added.")
+                    .data(product)
+                    .build()
+                    .toEntity(HttpStatus.CREATED);
+        } catch (CategoryNotFoundException e) {
+            return ResponseBody
+                    .<ProductResponse>builder()
+                    .message("Category not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<ProductResponse>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @PutMapping("/{id}")
-    public ProductResponse updateProduct(@PathVariable UUID id, @RequestBody ProductRequest productRequest) {
-        Product existingProduct = productService.getProductById(id);
-
-        Category category = categoryService.getCategoryById(productRequest.getCategoryId());
-
-        productMapper.updateProduct(existingProduct, productRequest, category);
-        productService.updateProduct(id, existingProduct);
-        ProductResponse productResponse = productMapper.toProductResponse(existingProduct);
-        return productResponse;
+    @PatchMapping("/{productId}")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
+    public ResponseEntity<ResponseBody<ProductResponse>> patchProduct(
+            @PathVariable UUID productId,
+            @RequestBody ProductRequest request
+    ) {
+        try {
+            ProductResponse product = productUseCase.patchProduct(productId, request);
+            return ResponseBody
+                    .<ProductResponse>builder()
+                    .message("Product patched.")
+                    .data(product)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (CategoryNotFoundException e) {
+            return ResponseBody
+                    .<ProductResponse>builder()
+                    .message("Category not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (ProductNotFoundException e) {
+            return ResponseBody
+                    .<ProductResponse>builder()
+                    .message("Product not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<ProductResponse>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteProduct(UUID id) {
-        productService.deleteProduct(id);
+    @DeleteMapping("/{productId}")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
+    public ResponseEntity<ResponseBody<Void>> deleteProduct(@PathVariable UUID productId) {
+        try {
+            productUseCase.deleteProduct(productId);
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Product deleted.")
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (ProductNotFoundException e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Product not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

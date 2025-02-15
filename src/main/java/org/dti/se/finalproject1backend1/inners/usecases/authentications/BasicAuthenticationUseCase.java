@@ -2,9 +2,13 @@ package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
+import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
 import org.dti.se.finalproject1backend1.outers.deliveries.filters.AuthenticationManagerImpl;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountUnAuthorizedException;
+import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountPermissionRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.twos.SessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,7 +17,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class BasicAuthenticationUseCase {
@@ -27,10 +33,17 @@ public class BasicAuthenticationUseCase {
     SessionRepository sessionRepository;
 
     @Autowired
+    AccountPermissionRepository accountPermissionRepository;
+
+    @Autowired
     AuthenticationManagerImpl authenticationManagerImpl; // Keep the autowired, assume it's adapted
 
     public void logout(Session session) {
-        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(null, session, null);
+        UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                null,
+                session.getAccessToken(),
+                null
+        );
         authenticationManagerImpl.authenticate(authentication);
         sessionRepository.deleteByAccessToken(session.getAccessToken());
     }
@@ -39,22 +52,42 @@ public class BasicAuthenticationUseCase {
         DecodedJWT jwt = jwtAuthenticationUseCase.verify(session.getRefreshToken());
         UUID accountId = jwt.getClaim("account_id").as(UUID.class);
 
-        Account account = accountRepository.findFirstById(accountId);
-        if (account == null) {
-            throw new AccountNotFoundException();
-        }
+        Account account = accountRepository
+                .findById(accountId)
+                .orElseThrow(AccountNotFoundException::new);
+
+        AccountResponse accountResponse = AccountResponse
+                .builder()
+                .id(account.getId())
+                .name(account.getName())
+                .email(account.getEmail())
+                .phone(account.getPhone())
+                .image(account.getImage())
+                .isVerified(account.getIsVerified())
+                .build();
+
+        List<AccountPermission> permissionsList = accountPermissionRepository
+                .findByAccountId(account.getId())
+                .orElseThrow(AccountUnAuthorizedException::new);
+
+        List<String> permissions = permissionsList
+                .stream()
+                .map(AccountPermission::getPermission)
+                .collect(Collectors.toList());
 
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
         String newAccessToken = jwtAuthenticationUseCase.generate(account, now.plusSeconds(30));
         String newRefreshToken = jwtAuthenticationUseCase.generate(account, now.plusDays(3));
         Session newSession = Session
                 .builder()
-                .accountId(account.getId())
+                .account(accountResponse)
                 .accessToken(newAccessToken)
                 .refreshToken(newRefreshToken)
                 .accessTokenExpiredAt(now.plusSeconds(5))
                 .refreshTokenExpiredAt(now.plusDays(3))
+                .permissions(permissions)
                 .build();
+
         sessionRepository.setByAccessToken(newSession);
         return newSession;
     }

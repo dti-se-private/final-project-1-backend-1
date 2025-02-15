@@ -3,7 +3,6 @@ package org.dti.se.finalproject1backend1.inners.models.valueobjects.mutations;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.util.UUID;
 
 @Data
@@ -18,6 +17,5 @@ public class AddMutationRequest {
     @NotNull(message = "Destination warehouse ID is required")
     private UUID destinationWarehouseId;
 
-    @NotNull(message = "Quantity is required")
-    private BigDecimal quantity;
+    private Double quantity;
 }
