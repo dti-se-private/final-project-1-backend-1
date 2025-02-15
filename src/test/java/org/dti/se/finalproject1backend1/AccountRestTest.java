@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -36,7 +37,8 @@ public class AccountRestTest extends TestConfiguration {
     @BeforeEach
     public void beforeEach() throws Exception {
         populate();
-        auth();
+        Account selectedAccount = fakeAccounts.getFirst();
+        auth(selectedAccount);
     }
 
     @AfterEach
@@ -191,5 +193,26 @@ public class AccountRestTest extends TestConfiguration {
         assert body.getData() == null;
 
         fakeAccounts.remove(realAccount);
+    }
+
+    @Test
+    public void testGetAdmins() throws Exception {
+        Account realAccount = fakeAccounts.getFirst();
+
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .get("/accounts/admins")
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        ResponseBody<List<AccountResponse>> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
+        assert body != null;
+        assert body.getMessage().equals("Admins found.");
+        assert body.getData() != null;
     }
 }

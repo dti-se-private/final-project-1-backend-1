@@ -1,22 +1,29 @@
 package org.dti.se.finalproject1backend1.inners.usecases.accounts;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
+import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.VerificationUseCase;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
+import org.dti.se.finalproject1backend1.outers.repositories.customs.AccountCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class BasicAccountUseCase {
     @Autowired
     private AccountRepository accountRepository;
+
+    @Autowired
+    private AccountCustomRepository accountCustomRepository;
 
     @Autowired
     SecurityConfiguration securityConfiguration;
@@ -85,5 +92,19 @@ public class BasicAccountUseCase {
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);
         accountRepository.delete(account);
+    }
+
+    public List<AccountResponse> getAdmins(Account account) {
+        List<String> accountPermissions = account
+                .getAccountPermissions()
+                .stream()
+                .map(AccountPermission::getPermission)
+                .toList();
+
+        if (!accountPermissions.contains("SUPER_ADMIN")) {
+            throw new AccountPermissionInvalidException();
+        }
+
+        return accountCustomRepository.getAdmins();
     }
 }
