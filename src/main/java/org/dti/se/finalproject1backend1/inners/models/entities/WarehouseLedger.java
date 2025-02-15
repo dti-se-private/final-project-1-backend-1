@@ -47,13 +47,4 @@ public class WarehouseLedger {
 
     private String status;
 
-    @Transient
-    public WarehouseProduct getWarehouseProduct() {
-        WarehouseProduct wp = new WarehouseProduct();
-        wp.setProduct(this.product);
-        wp.setWarehouse(this.originWarehouse);
-        wp.setQuantity(this.preQuantity);
-        return wp;
-    }
-
 }

@@ -1,4 +1,4 @@
-package org.dti.se.finalproject1backend1.inners.models.valueobjects.mutations;
+package org.dti.se.finalproject1backend1.inners.models.valueobjects.stockmutation;
 
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

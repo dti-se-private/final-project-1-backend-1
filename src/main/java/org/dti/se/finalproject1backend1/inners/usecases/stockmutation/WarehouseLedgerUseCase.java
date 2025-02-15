@@ -1,120 +1,91 @@
 package org.dti.se.finalproject1backend1.inners.usecases.stockmutation;
 
 import lombok.RequiredArgsConstructor;
-import org.dti.se.finalproject1backend1.inners.models.entities.Product;
-import org.dti.se.finalproject1backend1.inners.models.entities.Warehouse;
-import org.dti.se.finalproject1backend1.inners.models.entities.WarehouseLedger;
-import org.dti.se.finalproject1backend1.inners.models.entities.WarehouseProduct;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.ProductRepository;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseLedgerRepository;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseProductRepository;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseRepository;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.dti.se.finalproject1backend1.inners.models.entities.*;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.stockmutation.WarehouseLedgerResponse;
+import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
+import org.dti.se.finalproject1backend1.outers.repositories.customs.WarehouseLedgerCustomRepository;
+import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseLedgerNotFoundException;
+import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
-import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
-@RequiredArgsConstructor
 public class WarehouseLedgerUseCase {
 
-    private final WarehouseLedgerRepository warehouseLedgerRepository;
-    private final WarehouseRepository warehouseRepository;
-    private final ProductRepository productRepository;
-    private final WarehouseProductRepository warehouseProductRepository;
+    @Autowired
+    private WarehouseLedgerCustomRepository ledgerCustomRepository;
 
-    public Page<WarehouseLedger> getWarehouseLedgers(int page, int size, String filters, String search) {
-        // Apply filtering and searching logic here (if needed)
-        return warehouseLedgerRepository.findAll(PageRequest.of(page, size));
-    }
-
-    public Optional<WarehouseLedger> getLedgerById(UUID id) {
-        return warehouseLedgerRepository.findById(id);
-    }
-
-    public WarehouseLedger addLedgerMutation(UUID productId, UUID originWarehouseId, UUID destinationWarehouseId, Double quantity) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found")); // exception based on ID
-        Warehouse originWarehouse = warehouseRepository.findById(originWarehouseId)
-                .orElseThrow(() -> new RuntimeException("Origin warehouse not found"));
-        Warehouse destinationWarehouse = warehouseRepository.findById(destinationWarehouseId)
-                .orElseThrow(() -> new RuntimeException("Destination warehouse not found"));
-
-        // Fetch warehouse product for origin and destination
-        WarehouseProduct originProduct = warehouseProductRepository.findByProductIdAndWarehouseId(originWarehouse.getId(), product.getId())
-                .orElseThrow(() -> new RuntimeException("Product not found in origin warehouse"));
-
-        WarehouseProduct destinationProduct = warehouseProductRepository.findByProductIdAndWarehouseId(destinationWarehouse.getId(), product.getId())
-                .orElseGet(() -> {
-                    // If product doesn't exist in destination warehouse, create a new record
-                    WarehouseProduct newProduct = new WarehouseProduct();
-                    newProduct.setId(UUID.randomUUID());
-                    newProduct.setWarehouse(destinationWarehouse);
-                    newProduct.setProduct(product);
-                    newProduct.setQuantity(0.0);
-                    return warehouseProductRepository.saveAndFlush(newProduct);
-                });
-
-        // Ensure there's enough stock in origin
-        if (originProduct.getQuantity() < 0) {
-            throw new RuntimeException("Insufficient stock in origin warehouse");
-        }
-        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
-
-        // Create ledger entry
-        WarehouseLedger ledger = new WarehouseLedger();
-        ledger.setId(UUID.randomUUID());
-        ledger.setProduct(product);
-        ledger.setOriginWarehouse(originWarehouse);
-        ledger.setDestinationWarehouse(destinationWarehouse);
-        ledger.setOriginPreQuantity(originProduct.getQuantity());
-        ledger.setOriginPostQuantity(originProduct.getQuantity() - quantity);
-        ledger.setTime(now);
-        ledger.setStatus("WAITING_APPROVAL");
-
-        return warehouseLedgerRepository.saveAndFlush(ledger);
-    }
-
-    public WarehouseLedger approveLedgerMutation(UUID ledgerId) {
-        WarehouseLedger ledger = warehouseLedgerRepository.findById(ledgerId)
-                .orElseThrow(() -> new RuntimeException("Ledger not found"));
-
-        if (!ledger.getStatus().equals("WAITING_APPROVAL")) {
-            throw new RuntimeException("Mutation is already processed");
+    public List<WarehouseLedgerResponse> getWarehouseLedgers(
+            Account account,
+            Integer page,
+            Integer size,
+            String search
+    ) {
+        // Direct permission check
+        if (!account.getAccountPermissions().contains("WAREHOUSE_ADMIN") &&
+                !account.getAccountPermissions().contains("SUPER_ADMIN")) {
+            throw new AccountPermissionInvalidException();
         }
 
-        // Update warehouse product stock
-        WarehouseProduct originProduct = warehouseProductRepository.findByProductIdAndWarehouseId(ledger.getOriginWarehouse().getId(), ledger.getProduct().getId())
-                .orElseThrow(() -> new RuntimeException("Origin warehouse product not found"));
-        WarehouseProduct destinationProduct = warehouseProductRepository.findByProductIdAndWarehouseId(ledger.getDestinationWarehouse().getId(), ledger.getProduct().getId())
-                .orElseThrow(() -> new RuntimeException("Destination warehouse product not found"));
-
-        originProduct.setQuantity(originProduct.getQuantity() - ledger.getOriginPostQuantity());
-        destinationProduct.setQuantity(destinationProduct.getQuantity() + ledger.getOriginPostQuantity());
-
-        warehouseProductRepository.saveAndFlush(originProduct);
-        warehouseProductRepository.saveAndFlush(destinationProduct);
-
-        // Update ledger status
-        ledger.setStatus("APPROVED");
-        return warehouseLedgerRepository.saveAndFlush(ledger);
+        // Proceed with the operation
+        return ledgerCustomRepository.getWarehouseLedgers(page, size, search);
     }
 
-    public WarehouseLedger rejectLedgerMutation(UUID ledgerId) {
-        WarehouseLedger ledger = warehouseLedgerRepository.findById(ledgerId)
-                .orElseThrow(() -> new RuntimeException("Ledger not found"));
-
-        if (!ledger.getStatus().equals("WAITING_APPROVAL")) {
-            throw new RuntimeException("Mutation is already processed");
+    public WarehouseLedgerResponse approveMutation(Account account, UUID id) {
+        // Direct permission check (only SUPER_ADMIN can approve)
+        if (!account.getAccountPermissions().contains("SUPER_ADMIN")) {
+            throw new AccountPermissionInvalidException();
         }
 
-        // Simply mark the ledger as rejected
-        ledger.setStatus("REJECTED");
-        return warehouseLedgerRepository.saveAndFlush(ledger);
+        // Proceed with approval logic
+        ledgerCustomRepository.approveMutation(id);
+        return getLedgerById(id);
+    }
+
+    public WarehouseLedgerResponse rejectMutation(Account account, UUID id) {
+        // Direct permission check (WAREHOUSE_ADMIN or SUPER_ADMIN can reject)
+        if (!account.getAccountPermissions().contains("WAREHOUSE_ADMIN") &&
+                !account.getAccountPermissions().contains("SUPER_ADMIN")) {
+            throw new AccountPermissionInvalidException();
+        }
+
+        // Proceed with rejection logic
+        ledgerCustomRepository.rejectMutation(id);
+        return getLedgerById(id);
+    }
+
+    public WarehouseLedgerResponse addMutation(
+            Account account,
+            UUID productId,
+            UUID originWarehouseId,
+            UUID destinationWarehouseId,
+            Double quantity
+    ) {
+        // Direct permission check (WAREHOUSE_ADMIN or SUPER_ADMIN can add mutations)
+        if (!account.getAccountPermissions().contains("WAREHOUSE_ADMIN") &&
+                !account.getAccountPermissions().contains("SUPER_ADMIN")) {
+            throw new AccountPermissionInvalidException();
+        }
+
+        // Proceed with adding mutation
+        return ledgerCustomRepository.addMutation(
+                productId,
+                originWarehouseId,
+                destinationWarehouseId,
+                quantity
+        );
+    }
+
+    private WarehouseLedgerResponse getLedgerById(UUID id) {
+        return ledgerCustomRepository.getWarehouseLedgers(0, 1, id.toString())
+                .stream()
+                .findFirst()
+                .orElseThrow(WarehouseLedgerNotFoundException::new);
     }
 }
 
