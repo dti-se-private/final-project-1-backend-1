@@ -122,11 +122,19 @@ public class WarehouseProductUseCase {
                 .findById(request.getProductId())
                 .orElseThrow(EntityNotFoundException::new);
 
-        WarehouseProduct warehouseProduct = new WarehouseProduct();
-        warehouseProduct.setId(UUID.randomUUID());
-        warehouseProduct.setWarehouse(warehouse);
-        warehouseProduct.setProduct(product);
-        warehouseProduct.setQuantity(request.getQuantity());
+        WarehouseProduct warehouseProduct = warehouseProductRepository
+                .findByProductIdAndWarehouseId(product.getId(), warehouse.getId())
+                .orElse(null);
+
+        if (warehouseProduct != null) {
+            warehouseProduct.setQuantity(warehouseProduct.getQuantity() + request.getQuantity());
+        } else {
+            warehouseProduct = new WarehouseProduct();
+            warehouseProduct.setId(UUID.randomUUID());
+            warehouseProduct.setWarehouse(warehouse);
+            warehouseProduct.setProduct(product);
+            warehouseProduct.setQuantity(request.getQuantity());
+        }
 
         warehouseProductRepository.saveAndFlush(warehouseProduct);
 
