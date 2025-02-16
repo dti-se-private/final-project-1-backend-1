@@ -1,5 +1,6 @@
 package org.dti.se.finalproject1backend1.inners.models.valueobjects.payments;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import lombok.experimental.Accessors;
 import org.dti.se.finalproject1backend1.inners.models.Model;
@@ -12,7 +13,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class PaymentLinkResponse extends Model {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class GetPaymentLinkResponse extends Model {
     private UUID orderId;
-    private String paymentUrl;
+    private String paymentLinkUrl;
 }

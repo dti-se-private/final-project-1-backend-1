@@ -9,8 +9,11 @@ import org.dti.se.finalproject1backend1.outers.configurations.serdes.HexStringSe
 import org.dti.se.finalproject1backend1.outers.configurations.serdes.PointDeserializer;
 import org.dti.se.finalproject1backend1.outers.configurations.serdes.PointSerializer;
 import org.locationtech.jts.geom.Point;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.client.RestTemplate;
 
 @Configuration
 public class JacksonConfiguration {
@@ -44,5 +47,12 @@ public class JacksonConfiguration {
         objectMapper.registerModule(pointModule());
         objectMapper.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE);
         return objectMapper;
+    }
+
+    @Bean
+    public RestTemplate restTemplate(ObjectMapper objectMapper) {
+        return new RestTemplateBuilder()
+                .additionalMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
+                .build();
     }
 }

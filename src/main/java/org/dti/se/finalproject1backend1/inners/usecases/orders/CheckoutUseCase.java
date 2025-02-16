@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionStatus;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -136,6 +135,8 @@ public class CheckoutUseCase {
             newOrderItems.add(newOrderItem);
         }
         orderItemRepository.saveAllAndFlush(newOrderItems);
+
+        cartItemRepository.deleteAll(foundCartItems);
 
         return orderCustomRepository.getOrder(newOrder.getId());
     }

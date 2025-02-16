@@ -63,6 +63,31 @@ public class OrderUseCase {
         }
     }
 
+
+    public OrderResponse getOrder(
+            Account account,
+            UUID orderId
+    ) {
+        List<String> accountPermissions = account
+                .getAccountPermissions()
+                .stream()
+                .map(AccountPermission::getPermission)
+                .toList();
+
+        if (accountPermissions.contains("SUPER_ADMIN")) {
+            return orderCustomRepository
+                    .getOrder(orderId);
+        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+            return orderCustomRepository
+                    .getOrder(account, orderId);
+        } else if (accountPermissions.contains("CUSTOMER")) {
+            return orderCustomRepository
+                    .getCustomerOrder(account, orderId);
+        } else {
+            throw new AccountPermissionInvalidException();
+        }
+    }
+
     public void processOrderProcessing(UUID orderId, String ledgerStatus) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
