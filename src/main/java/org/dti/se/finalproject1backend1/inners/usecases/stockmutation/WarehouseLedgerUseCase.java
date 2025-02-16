@@ -6,6 +6,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.stockmutation
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.WarehouseLedgerCustomRepository;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseLedgerNotFoundException;
+import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.stereotype.Service;
@@ -20,6 +21,9 @@ public class WarehouseLedgerUseCase {
     @Autowired
     private WarehouseLedgerCustomRepository ledgerCustomRepository;
 
+    @Autowired
+    private WarehouseRepository warehouseRepository;
+
     public List<WarehouseLedgerResponse> getWarehouseLedgers(
             Account account,
             Integer page,
@@ -30,6 +34,11 @@ public class WarehouseLedgerUseCase {
         if (!account.getAccountPermissions().contains("WAREHOUSE_ADMIN") &&
                 !account.getAccountPermissions().contains("SUPER_ADMIN")) {
             throw new AccountPermissionInvalidException();
+        }
+
+        List<UUID> warehouseIds = null;
+        if (account.getPermissions().contains("WAREHOUSE_ADMIN")) {
+            warehouseIds = warehouseRepository.findWarehouseIdsByAccountId(account.getId());
         }
 
         // Proceed with the operation
