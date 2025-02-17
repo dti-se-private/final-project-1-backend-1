@@ -60,7 +60,6 @@ public class MidtransGateway {
         }
         requestBody.put("item_details", itemDetails);
 
-
         Map<String, Object> customerDetails = new HashMap<>();
         customerDetails.put("first_name", order.getAccount().getName());
         customerDetails.put("email", order.getAccount().getEmail());
@@ -68,6 +67,7 @@ public class MidtransGateway {
         requestBody.put("customer_details", customerDetails);
 
         requestBody.put("customer_required", false);
+        requestBody.put("usage_limit", 1);
 
         try {
             String json = objectMapper.writeValueAsString(requestBody);

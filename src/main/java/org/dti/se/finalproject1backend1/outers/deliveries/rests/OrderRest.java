@@ -133,16 +133,15 @@ public class OrderRest {
         }
     }
 
-    @PostMapping("/payments/automatic/process")
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
+    @PostMapping("/automatic-payments/process")
     public ResponseEntity<ResponseBody<OrderResponse>> processAutomaticPayment(
-            @RequestBody PaymentProcessRequest request
+            @RequestBody AutomaticPaymentProcessRequest request
     ) {
         try {
             OrderResponse order = paymentUseCase.processAutomaticPayment(request);
             return ResponseBody
                     .<OrderResponse>builder()
-                    .message("Order payment processed.")
+                    .message("Order automatic payment processed.")
                     .data(order)
                     .build()
                     .toEntity(HttpStatus.OK);
@@ -184,16 +183,16 @@ public class OrderRest {
         }
     }
 
-    @PostMapping("/payments/manual/process")
+    @PostMapping("/manual-payments/process")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
     public ResponseEntity<ResponseBody<OrderResponse>> processManualPayment(
-            @RequestBody PaymentProcessRequest request
+            @RequestBody ManualPaymentProcessRequest request
     ) {
         try {
             OrderResponse order = paymentUseCase.processManualPayment(request);
             return ResponseBody
                     .<OrderResponse>builder()
-                    .message("Order payment processed.")
+                    .message("Order manual payment processed.")
                     .data(order)
                     .build()
                     .toEntity(HttpStatus.OK);

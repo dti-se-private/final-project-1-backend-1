@@ -30,6 +30,8 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 
@@ -133,6 +135,8 @@ public class OrderRestTest extends TestConfiguration {
     @Test
     @ResourceLock("locationCustomRepositoryMock")
     public void testAutomaticPayment() throws Exception {
+        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+
         Mockito.when(locationCustomRepository.getNearestExistingWarehouseProduct(Mockito.any(), Mockito.any(), Mockito.any()))
                 .thenReturn(fakeWarehouseProducts.getFirst());
 
@@ -146,14 +150,13 @@ public class OrderRestTest extends TestConfiguration {
                 .findFirst()
                 .orElseThrow(OrderNotFoundException::new);
 
-        PaymentProcessRequest requestBody = PaymentProcessRequest
+        AutomaticPaymentProcessRequest requestBody = AutomaticPaymentProcessRequest
                 .builder()
-                .orderId(realOrder.getId())
-                .paymentMethod("AUTOMATIC")
+                .orderId(String.format("%s-%s", realOrder.getId(), now.toInstant().toEpochMilli()))
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post("/orders/payments/process")
+                .post("/orders/automatic-payments/process")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
@@ -170,7 +173,7 @@ public class OrderRestTest extends TestConfiguration {
                         }
                 );
 
-        assert responseBody.getMessage().equals("Order payment processed.");
+        assert responseBody.getMessage().equals("Order automatic payment processed.");
         assert responseBody.getData() != null;
         assert responseBody.getData().getStatuses().getLast().getStatus().equals("SHIPPING");
     }
@@ -191,14 +194,20 @@ public class OrderRestTest extends TestConfiguration {
                 .findFirst()
                 .orElseThrow(OrderNotFoundException::new);
 
-        PaymentProcessRequest requestBody = PaymentProcessRequest
+        PaymentProofRequest paymentProofRequest = PaymentProofRequest
+                .builder()
+                .file("file".getBytes())
+                .extension("extension")
+                .build();
+
+        ManualPaymentProcessRequest requestBody = ManualPaymentProcessRequest
                 .builder()
                 .orderId(realOrder.getId())
-                .paymentMethod("MANUAL")
+                .paymentProofs(List.of(paymentProofRequest))
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .post("/orders/payments/process")
+                .post("/orders/manual-payments/process")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
@@ -215,7 +224,7 @@ public class OrderRestTest extends TestConfiguration {
                         }
                 );
 
-        assert responseBody.getMessage().equals("Order payment processed.");
+        assert responseBody.getMessage().equals("Order manual payment processed.");
         assert responseBody.getData() != null;
         assert responseBody.getData().getStatuses().getLast().getStatus().equals("WAITING_FOR_PAYMENT_CONFIRMATION");
     }

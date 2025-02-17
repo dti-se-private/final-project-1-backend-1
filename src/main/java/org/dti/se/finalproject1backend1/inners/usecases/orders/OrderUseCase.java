@@ -95,6 +95,15 @@ public class OrderUseCase {
                 .findById(orderId)
                 .orElseThrow(OrderNotFoundException::new);
 
+        OrderStatus newOrderStatusProcessing = OrderStatus
+                .builder()
+                .id(UUID.randomUUID())
+                .order(foundOrder)
+                .status("PROCESSING")
+                .time(now)
+                .build();
+        orderStatusRepository.saveAndFlush(newOrderStatusProcessing);
+
         List<OrderItem> foundOrderItems = orderItemRepository
                 .findAllByOrderId(foundOrder.getId());
 
@@ -154,14 +163,14 @@ public class OrderUseCase {
             }
         }
 
-        OrderStatus newOrderStatus = OrderStatus
+        OrderStatus newOrderStatusShipping = OrderStatus
                 .builder()
                 .id(UUID.randomUUID())
                 .order(foundOrder)
                 .status("SHIPPING")
                 .time(now)
                 .build();
-        orderStatusRepository.saveAndFlush(newOrderStatus);
+        orderStatusRepository.saveAndFlush(newOrderStatusShipping);
     }
 
 }
