@@ -60,7 +60,8 @@ public class SecurityConfiguration implements PasswordEncoder {
                                 "/authentications/**",
                                 "/webjars/**",
                                 "/v3/api-docs/**",
-                                "/swagger-ui/**"
+                                "/swagger-ui/**",
+                                "/orders/automatic-payments/process"
                         ).permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,

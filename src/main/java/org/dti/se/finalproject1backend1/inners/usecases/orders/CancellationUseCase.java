@@ -84,6 +84,10 @@ public class CancellationUseCase {
                 .toList();
 
         for (WarehouseLedger foundWarehouseLedger : foundWarehouseLedgers) {
+            if (foundWarehouseLedger == null) {
+                continue;
+            }
+
             Optional<WarehouseProduct> foundOriginWarehouseProduct = warehouseProductRepository
                     .findByProductIdAndWarehouseId(
                             foundWarehouseLedger.getProduct().getId(),

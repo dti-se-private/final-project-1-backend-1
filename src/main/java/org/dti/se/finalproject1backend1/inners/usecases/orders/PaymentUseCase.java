@@ -57,12 +57,20 @@ public class PaymentUseCase {
                 .build();
     }
 
-    public OrderResponse processManualPayment(PaymentProcessRequest request) {
+    public OrderResponse processManualPayment(ManualPaymentProcessRequest request) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
         Order foundOrder = orderRepository
                 .findById(request.getOrderId())
                 .orElseThrow(OrderNotFoundException::new);
+
+        List<OrderStatus> orderStatuses = orderStatusRepository
+                .findAllByOrderIdOrderByTimeAsc(foundOrder.getId());
+
+        Boolean isLastWaitingForPaymentStatus = orderStatuses.getLast().getStatus().equals("WAITING_FOR_PAYMENT");
+        if (!isLastWaitingForPaymentStatus) {
+            throw new OrderStatusInvalidException();
+        }
 
         OrderStatus newOrderStatus = OrderStatus
                 .builder()
@@ -92,14 +100,17 @@ public class PaymentUseCase {
     }
 
 
-    public OrderResponse processAutomaticPayment(PaymentProcessRequest request) {
+    public OrderResponse processAutomaticPayment(AutomaticPaymentProcessRequest request) {
+        String parsedUUID = request.getOrderId().substring(0, 36);
+        UUID orderId = UUID.fromString(parsedUUID);
+
         Order foundOrder = orderRepository
-                .findById(request.getOrderId())
+                .findById(orderId)
                 .orElseThrow(OrderNotFoundException::new);
 
         orderUseCase.processOrderProcessing(foundOrder.getId(), "APPROVED");
 
-        return orderCustomRepository.getOrder(request.getOrderId());
+        return orderCustomRepository.getOrder(orderId);
     }
 
     public List<OrderResponse> getPaymentConfirmationOrders(
