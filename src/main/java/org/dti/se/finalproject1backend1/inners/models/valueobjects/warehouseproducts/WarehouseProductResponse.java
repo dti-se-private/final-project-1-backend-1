@@ -5,6 +5,8 @@ import lombok.experimental.Accessors;
 import org.dti.se.finalproject1backend1.inners.models.Model;
 import org.dti.se.finalproject1backend1.inners.models.entities.Product;
 import org.dti.se.finalproject1backend1.inners.models.entities.Warehouse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse.WarehouseResponse;
 
 import java.util.UUID;
 
@@ -16,7 +18,7 @@ import java.util.UUID;
 @Accessors(chain = true)
 public class WarehouseProductResponse extends Model {
     private UUID id;
-    private Warehouse warehouse;
-    private Product product;
+    private WarehouseResponse warehouse;
+    private ProductResponse product;
     private Double quantity;
 }

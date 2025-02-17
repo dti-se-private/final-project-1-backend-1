@@ -73,19 +73,19 @@ public class WarehouseRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<WarehouseResponse> body = objectMapper.readValue(content, new TypeReference<>() {
-        });
+        ResponseBody<WarehouseResponse> body = objectMapper.readValue(content, new TypeReference<>() {});
         assert body != null;
         assert body.getMessage().equals("Warehouse added.");
     }
 
     @Test
-    public void testPatchWarehouse() throws Exception {
+    public void testUpdateWarehouse() throws Exception {
+        Account realAccount = fakeAccounts.getFirst();
         Warehouse realWarehouse = fakeWarehouses.getFirst();
         Point location = geometryFactory.createPoint(new Coordinate(2.0, 2.0));
         WarehouseRequest request = WarehouseRequest.builder()
-                .name(String.format("name-%s", UUID.randomUUID()))
-                .description(String.format("description-%s", UUID.randomUUID()))
+                .name("Updated Warehouse")
+                .description("Updated description")
                 .location(location)
                 .build();
 
@@ -101,19 +101,20 @@ public class WarehouseRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<WarehouseResponse> body = objectMapper.readValue(content, new TypeReference<>() {
-        });
+        ResponseBody<WarehouseResponse> body = objectMapper.readValue(content, new TypeReference<>() {});
         assert body != null;
         assert body.getMessage().equals("Warehouse patched.");
     }
 
     @Test
     public void testDeleteWarehouse() throws Exception {
+        Account realAccount = fakeAccounts.getFirst();
         Warehouse realWarehouse = fakeWarehouses.getFirst();
 
         MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .delete("/warehouses/" + realWarehouse.getId())
-                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
+                .contentType(MediaType.APPLICATION_JSON);
 
         MvcResult result = mockMvc
                 .perform(httpRequest)
@@ -121,14 +122,14 @@ public class WarehouseRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {
-        });
+        ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {});
         assert body != null;
         assert body.getMessage().equals("Warehouse deleted.");
     }
 
     @Test
     public void testGetWarehouse() throws Exception {
+        Account realAccount = fakeAccounts.getFirst();
         Warehouse realWarehouse = fakeWarehouses.getFirst();
 
         MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
@@ -142,20 +143,23 @@ public class WarehouseRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<WarehouseResponse> body = objectMapper.readValue(content, new TypeReference<>() {
-        });
+        ResponseBody<WarehouseResponse> body = objectMapper.readValue(content, new TypeReference<>() {});
         assert body != null;
         assert body.getMessage().equals("Warehouse found.");
     }
 
     @Test
-    public void testGetWarehouses() throws Exception {
+    public void testGetAllWarehouses() throws Exception {
+        Account realAccount = fakeAccounts.getFirst();
+
         MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .get("/warehouses")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .param("page", "0")
                 .param("size", "10")
-                .param("search", "");
+                .param("filters", "")
+                .param("search", "")
+                .contentType(MediaType.APPLICATION_JSON);
 
         MvcResult result = mockMvc
                 .perform(httpRequest)
@@ -163,9 +167,8 @@ public class WarehouseRestTest extends TestConfiguration {
                 .andReturn();
 
         String content = result.getResponse().getContentAsString();
-        ResponseBody<List<WarehouseResponse>> body = objectMapper.readValue(content, new TypeReference<>() {
-        });
+        ResponseBody<List<WarehouseResponse>> body = objectMapper.readValue(content, new TypeReference<>() {});
         assert body != null;
-        assert body.getMessage().equals("Warehouses found.");
+        assert body.getMessage().equals("Warehouse fetched.");
     }
 }
