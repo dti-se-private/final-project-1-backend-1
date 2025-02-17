@@ -484,7 +484,10 @@ public class TestConfiguration {
     }
 
     protected Verification getVerification(String email, String type) throws Exception {
-        Mockito.doNothing().when(mailgunGatewayMock).sendEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+        Mockito
+                .doNothing()
+                .when(mailgunGatewayMock)
+                .sendEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 
         VerificationRequest requestBody = VerificationRequest
                 .builder()

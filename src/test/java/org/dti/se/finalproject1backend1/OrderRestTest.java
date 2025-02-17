@@ -14,6 +14,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.shipments.Shi
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.BiteshipGateway;
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MidtransGateway;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderStatusNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.LocationCustomRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -299,15 +300,14 @@ public class OrderRestTest extends TestConfiguration {
 
         Order realOrder = fakeOrders
                 .stream()
-                .filter(order -> {
-                    List<OrderStatus> orderStatuses = fakeOrderStatuses
-                            .stream()
-                            .filter(orderStatus -> orderStatus.getOrder().getId().equals(order.getId()))
-                            .sorted(Comparator.comparing(OrderStatus::getTime))
-                            .toList();
-
-                    return orderStatuses.getLast().getStatus().equals("WAITING_FOR_PAYMENT_CONFIRMATION");
-                })
+                .filter(order -> fakeOrderStatuses
+                        .stream()
+                        .filter(orderStatus -> orderStatus.getOrder().getId().equals(order.getId()))
+                        .max(Comparator.comparing(OrderStatus::getTime))
+                        .orElseThrow(OrderStatusNotFoundException::new)
+                        .getStatus()
+                        .equals("WAITING_FOR_PAYMENT_CONFIRMATION")
+                )
                 .findFirst()
                 .orElseThrow();
 
