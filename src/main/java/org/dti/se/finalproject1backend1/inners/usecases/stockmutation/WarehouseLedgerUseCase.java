@@ -37,18 +37,30 @@ public class WarehouseLedgerUseCase {
         }
 
         List<UUID> warehouseIds = null;
-        if (account.getPermissions().contains("WAREHOUSE_ADMIN")) {
+        if (account.getAccountPermissions().contains("WAREHOUSE_ADMIN")) {
             warehouseIds = warehouseRepository.findWarehouseIdsByAccountId(account.getId());
         }
 
         // Proceed with the operation
-        return ledgerCustomRepository.getWarehouseLedgers(page, size, search);
+        return ledgerCustomRepository.getWarehouseLedgers(warehouseIds, page, size, search);
     }
 
     public WarehouseLedgerResponse approveMutation(Account account, UUID id) {
         // Direct permission check (only SUPER_ADMIN can approve)
         if (!account.getAccountPermissions().contains("SUPER_ADMIN")) {
             throw new AccountPermissionInvalidException();
+        }
+
+        // Fetch the ledger entry to validate warehouse association
+        WarehouseLedgerResponse ledger = getLedgerById(id);
+
+        // Check if the ledger's origin or destination warehouse is associated with the warehouse admin
+        if (account.getAccountPermissions().contains("WAREHOUSE_ADMIN")) {
+            List<UUID> warehouseIds = warehouseRepository.findWarehouseIdsByAccountId(account.getId());
+            if (!warehouseIds.contains(ledger.getOriginWarehouse().getId()) &&
+                    !warehouseIds.contains(ledger.getDestinationWarehouse().getId())) {
+                throw new AccountPermissionInvalidException();
+            }
         }
 
         // Proceed with approval logic
@@ -61,6 +73,18 @@ public class WarehouseLedgerUseCase {
         if (!account.getAccountPermissions().contains("WAREHOUSE_ADMIN") &&
                 !account.getAccountPermissions().contains("SUPER_ADMIN")) {
             throw new AccountPermissionInvalidException();
+        }
+
+        // Fetch the ledger entry to validate warehouse association
+        WarehouseLedgerResponse ledger = getLedgerById(id);
+
+        // Check if the ledger's origin or destination warehouse is associated with the warehouse admin
+        if (account.getAccountPermissions().contains("WAREHOUSE_ADMIN")) {
+            List<UUID> warehouseIds = warehouseRepository.findWarehouseIdsByAccountId(account.getId());
+            if (!warehouseIds.contains(ledger.getOriginWarehouse().getId()) &&
+                    !warehouseIds.contains(ledger.getDestinationWarehouse().getId())) {
+                throw new AccountPermissionInvalidException();
+            }
         }
 
         // Proceed with rejection logic
@@ -91,7 +115,7 @@ public class WarehouseLedgerUseCase {
     }
 
     private WarehouseLedgerResponse getLedgerById(UUID id) {
-        return ledgerCustomRepository.getWarehouseLedgers(0, 1, id.toString())
+        return ledgerCustomRepository.getWarehouseLedgers(null,0, 1, id.toString())
                 .stream()
                 .findFirst()
                 .orElseThrow(WarehouseLedgerNotFoundException::new);

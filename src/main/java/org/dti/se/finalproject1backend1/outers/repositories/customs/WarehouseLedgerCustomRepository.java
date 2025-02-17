@@ -172,6 +172,9 @@ public class WarehouseLedgerCustomRepository {
                JOIN category c ON p.category_id = c.id
                JOIN warehouse w1 ON i.origin_warehouse_id = w1.id
                JOIN warehouse w2 ON i.destination_warehouse_id = w2.id
+               ORDER BY %s
+               LIMIT ?
+               OFFSET ?
             """;
 
         return oneTemplate.queryForObject(
