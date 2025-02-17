@@ -203,6 +203,13 @@ public class OrderRest {
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
+        } catch (OrderStatusInvalidException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Order status invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (PaymentMethodInvalidException e) {
             return ResponseBody
                     .<OrderResponse>builder()

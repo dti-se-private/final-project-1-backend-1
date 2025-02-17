@@ -64,6 +64,14 @@ public class PaymentUseCase {
                 .findById(request.getOrderId())
                 .orElseThrow(OrderNotFoundException::new);
 
+        List<OrderStatus> orderStatuses = orderStatusRepository
+                .findAllByOrderIdOrderByTimeAsc(foundOrder.getId());
+
+        Boolean isLastWaitingForPaymentStatus = orderStatuses.getLast().getStatus().equals("WAITING_FOR_PAYMENT");
+        if (!isLastWaitingForPaymentStatus) {
+            throw new OrderStatusInvalidException();
+        }
+
         OrderStatus newOrderStatus = OrderStatus
                 .builder()
                 .id(UUID.randomUUID())
