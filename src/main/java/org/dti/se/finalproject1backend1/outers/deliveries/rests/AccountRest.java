@@ -1,19 +1,23 @@
 package org.dti.se.finalproject1backend1.outers.deliveries.rests;
 
+import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
 import org.dti.se.finalproject1backend1.inners.usecases.accounts.BasicAccountUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 
@@ -51,8 +55,8 @@ public class AccountRest {
         }
     }
 
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/{accountId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResponseBody<AccountResponse>> getAccount(
             @PathVariable UUID accountId
     ) {
@@ -81,8 +85,8 @@ public class AccountRest {
         }
     }
 
-    @PreAuthorize("isAuthenticated()")
     @PatchMapping(value = "/{accountId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResponseBody<AccountResponse>> patchAccount(
             @PathVariable UUID accountId,
             @RequestBody AccountRequest request
@@ -140,6 +144,36 @@ public class AccountRest {
         } catch (Exception e) {
             return ResponseBody
                     .<Void>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/admins")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
+    public ResponseEntity<ResponseBody<List<AccountResponse>>> getAdmins(
+            @AuthenticationPrincipal Account account
+    ) {
+        try {
+            List<AccountResponse> admins = basicAccountUseCase.getAdmins(account);
+            return ResponseBody
+                    .<List<AccountResponse>>builder()
+                    .message("Admins found.")
+                    .data(admins)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (AccountPermissionInvalidException e) {
+            return ResponseBody
+                    .<List<AccountResponse>>builder()
+                    .message("Account permission invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.FORBIDDEN);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<List<AccountResponse>>builder()
                     .message("Internal server error.")
                     .exception(e)
                     .build()
