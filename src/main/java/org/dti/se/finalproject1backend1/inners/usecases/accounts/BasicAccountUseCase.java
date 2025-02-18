@@ -94,17 +94,11 @@ public class BasicAccountUseCase {
         accountRepository.delete(account);
     }
 
-    public List<AccountResponse> getAdmins(Account account) {
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (!accountPermissions.contains("SUPER_ADMIN")) {
-            throw new AccountPermissionInvalidException();
-        }
-
-        return accountCustomRepository.getAdmins();
+    public List<AccountResponse> getAdmins(
+            Integer page,
+            Integer size,
+            String search
+    ) {
+        return accountCustomRepository.getAdmins(page, size, search);
     }
 }

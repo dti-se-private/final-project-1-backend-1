@@ -212,7 +212,7 @@ public class AccountRestTest extends TestConfiguration {
         ResponseBody<List<AccountResponse>> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
-        assert body.getMessage().equals("Admins found.");
+        assert body.getMessage().equals("Account Admins found.");
         assert body.getData() != null;
     }
 }

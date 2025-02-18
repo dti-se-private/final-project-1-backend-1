@@ -28,7 +28,6 @@ public class AccountAddressCustomRepository {
             Integer size,
             String search
     ) {
-
         String sql = """
                 SELECT *
                 FROM (

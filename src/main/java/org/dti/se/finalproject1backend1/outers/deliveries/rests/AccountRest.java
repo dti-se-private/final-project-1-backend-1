@@ -1,6 +1,5 @@
 package org.dti.se.finalproject1backend1.outers.deliveries.rests;
 
-import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
@@ -14,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -154,23 +152,18 @@ public class AccountRest {
     @GetMapping("/admins")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
     public ResponseEntity<ResponseBody<List<AccountResponse>>> getAdmins(
-            @AuthenticationPrincipal Account account
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "") String search
     ) {
         try {
-            List<AccountResponse> admins = basicAccountUseCase.getAdmins(account);
+            List<AccountResponse> admins = basicAccountUseCase.getAdmins(page, size, search);
             return ResponseBody
                     .<List<AccountResponse>>builder()
-                    .message("Admins found.")
+                    .message("Account Admins found.")
                     .data(admins)
                     .build()
                     .toEntity(HttpStatus.OK);
-        } catch (AccountPermissionInvalidException e) {
-            return ResponseBody
-                    .<List<AccountResponse>>builder()
-                    .message("Account permission invalid.")
-                    .exception(e)
-                    .build()
-                    .toEntity(HttpStatus.FORBIDDEN);
         } catch (Exception e) {
             return ResponseBody
                     .<List<AccountResponse>>builder()

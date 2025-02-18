@@ -2,9 +2,8 @@ package org.dti.se.finalproject1backend1.outers.deliveries.rests;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.OrderResponse;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse.WarehouseRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse.WarehouseResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouses.WarehouseRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouses.WarehouseResponse;
 import org.dti.se.finalproject1backend1.inners.usecases.warehouse.WarehouseUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseNotFoundException;
@@ -26,46 +25,46 @@ public class WarehouseRest {
     private WarehouseUseCase warehouseUseCase;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
-    public ResponseEntity<ResponseBody<List<WarehouseResponse>>> getAllWarehouses(
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")
+    public ResponseEntity<ResponseBody<List<WarehouseResponse>>> getWarehouses(
             @AuthenticationPrincipal Account account,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "") List<String> filters,
             @RequestParam(defaultValue = "") String search
     ) {
         try {
             List<WarehouseResponse> warehouses = warehouseUseCase
-                    .getAllWarehouses(account, page, size, filters, search);
+                    .getWarehouses(account, page, size, search);
             return ResponseBody
                     .<List<WarehouseResponse>>builder()
-                    .message("Warehouse fetched.")
+                    .message("Warehouses found.")
                     .data(warehouses)
                     .build()
                     .toEntity(HttpStatus.OK);
         } catch (AccountPermissionInvalidException e) {
             return ResponseBody
                     .<List<WarehouseResponse>>builder()
-                    .message("You don't have permission to access this resource.")
+                    .message("Account permission invalid.")
                     .build()
-                    .toEntity(HttpStatus.FORBIDDEN);
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
                     .<List<WarehouseResponse>>builder()
                     .message("Internal server error.")
+                    .exception(e)
                     .build()
                     .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
+    @GetMapping("/{warehouseId}")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")
     public ResponseEntity<ResponseBody<WarehouseResponse>> getWarehouse(
             @AuthenticationPrincipal Account account,
-            @PathVariable UUID id
+            @PathVariable UUID warehouseId
     ) {
         try {
-            WarehouseResponse warehouse = warehouseUseCase.getWarehouse(account, id);
+            WarehouseResponse warehouse = warehouseUseCase.getWarehouse(account, warehouseId);
             return ResponseBody
                     .<WarehouseResponse>builder()
                     .message("Warehouse found.")
@@ -75,9 +74,9 @@ public class WarehouseRest {
         } catch (AccountPermissionInvalidException e) {
             return ResponseBody
                     .<WarehouseResponse>builder()
-                    .message("You don't have permission to access this resource.")
+                    .message("Account permission invalid.")
                     .build()
-                    .toEntity(HttpStatus.FORBIDDEN);
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (WarehouseNotFoundException e) {
             return ResponseBody
                     .<WarehouseResponse>builder()
@@ -88,6 +87,7 @@ public class WarehouseRest {
             return ResponseBody
                     .<WarehouseResponse>builder()
                     .message("Internal server error.")
+                    .exception(e)
                     .build()
                     .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -96,41 +96,35 @@ public class WarehouseRest {
     @PostMapping
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
     public ResponseEntity<ResponseBody<WarehouseResponse>> addWarehouse(
-            @AuthenticationPrincipal Account account,
             @RequestBody WarehouseRequest request
     ) {
         try {
-            WarehouseResponse warehouse = warehouseUseCase.addWarehouse(account, request);
+            WarehouseResponse warehouse = warehouseUseCase.addWarehouse(request);
             return ResponseBody
                     .<WarehouseResponse>builder()
                     .message("Warehouse added.")
                     .data(warehouse)
                     .build()
                     .toEntity(HttpStatus.CREATED);
-        } catch (AccountPermissionInvalidException e) {
-            return ResponseBody
-                    .<WarehouseResponse>builder()
-                    .message("You don't have permission to access this resource.")
-                    .build()
-                    .toEntity(HttpStatus.FORBIDDEN);
         } catch (Exception e) {
             return ResponseBody
                     .<WarehouseResponse>builder()
                     .message("Internal server error.")
+                    .exception(e)
                     .build()
                     .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @PatchMapping("/{id}")
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
+    @PatchMapping("/{warehouseId}")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")
     public ResponseEntity<ResponseBody<WarehouseResponse>> patchWarehouse(
             @AuthenticationPrincipal Account account,
-            @PathVariable UUID id,
+            @PathVariable UUID warehouseId,
             @RequestBody WarehouseRequest request
     ) {
         try {
-            WarehouseResponse warehouse = warehouseUseCase.patchWarehouse(account, id, request);
+            WarehouseResponse warehouse = warehouseUseCase.patchWarehouse(account, warehouseId, request);
             return ResponseBody
                     .<WarehouseResponse>builder()
                     .message("Warehouse patched.")
@@ -140,9 +134,9 @@ public class WarehouseRest {
         } catch (AccountPermissionInvalidException e) {
             return ResponseBody
                     .<WarehouseResponse>builder()
-                    .message("You don't have permission to access this resource.")
+                    .message("Account permission invalid.")
                     .build()
-                    .toEntity(HttpStatus.FORBIDDEN);
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (WarehouseNotFoundException e) {
             return ResponseBody
                     .<WarehouseResponse>builder()
@@ -153,30 +147,24 @@ public class WarehouseRest {
             return ResponseBody
                     .<WarehouseResponse>builder()
                     .message("Internal server error.")
+                    .exception(e)
                     .build()
                     .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{warehouseId}")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
     public ResponseEntity<ResponseBody<WarehouseResponse>> deleteWarehouse(
-            @AuthenticationPrincipal Account account,
-            @PathVariable UUID id
+            @PathVariable UUID warehouseId
     ) {
         try {
-            warehouseUseCase.deleteWarehouse(account, id);
+            warehouseUseCase.deleteWarehouse(warehouseId);
             return ResponseBody
                     .<WarehouseResponse>builder()
                     .message("Warehouse deleted.")
                     .build()
                     .toEntity(HttpStatus.OK);
-        } catch (AccountPermissionInvalidException e) {
-            return ResponseBody
-                    .<WarehouseResponse>builder()
-                    .message("You don't have permission to access this resource.")
-                    .build()
-                    .toEntity(HttpStatus.FORBIDDEN);
         } catch (WarehouseNotFoundException e) {
             return ResponseBody
                     .<WarehouseResponse>builder()
@@ -187,6 +175,7 @@ public class WarehouseRest {
             return ResponseBody
                     .<WarehouseResponse>builder()
                     .message("Internal server error.")
+                    .exception(e)
                     .build()
                     .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
         }

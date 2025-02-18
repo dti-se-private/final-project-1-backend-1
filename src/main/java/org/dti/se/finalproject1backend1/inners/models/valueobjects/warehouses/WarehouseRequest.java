@@ -1,4 +1,4 @@
-package org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse;
+package org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouses;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

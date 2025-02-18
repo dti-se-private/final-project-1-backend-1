@@ -9,12 +9,12 @@ import org.dti.se.finalproject1backend1.inners.models.entities.WarehouseProduct;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouseproducts.WarehouseProductRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouseproducts.WarehouseProductResponse;
-import org.dti.se.finalproject1backend1.outers.exceptions.products.ProductNotFoundException;
-import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -25,6 +25,7 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -84,7 +85,7 @@ public class WarehouseProductRestTest extends TestConfiguration {
                 .orElseThrow(WarehouseProductNotFoundException::new);
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/warehouse-products/" + realWarehouseProduct.getId())
+                .get("/warehouse-products/{warehouseProductId}", realWarehouseProduct.getId())
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
@@ -105,15 +106,30 @@ public class WarehouseProductRestTest extends TestConfiguration {
 
     @Test
     public void testAddWarehouseProduct() throws Exception {
-        Product realProduct = fakeProducts
-                .stream()
-                .findFirst()
-                .orElseThrow(ProductNotFoundException::new);
+        Product newProduct = Product
+                .builder()
+                .id(UUID.randomUUID())
+                .category(fakeCategories.getFirst())
+                .name(String.format("name-%s", UUID.randomUUID()))
+                .description(String.format("description-%s", UUID.randomUUID()))
+                .price(Math.random() * 1000000)
+                .image(null)
+                .build();
+        fakeProducts.add(newProduct);
+        productRepository.saveAndFlush(newProduct);
+        Product realProduct = fakeProducts.getLast();
 
-        Warehouse realWarehouse = fakeWarehouses
-                .stream()
-                .findFirst()
-                .orElseThrow(WarehouseNotFoundException::new);
+        GeometryFactory geometryFactory = new GeometryFactory();
+        Warehouse newWarehouse = Warehouse
+                .builder()
+                .id(UUID.randomUUID())
+                .name(String.format("name-%s", UUID.randomUUID()))
+                .description(String.format("description-%s", UUID.randomUUID()))
+                .location(geometryFactory.createPoint(new Coordinate(Math.random() * 10, Math.random() * 10)))
+                .build();
+        fakeWarehouses.add(newWarehouse);
+        warehouseRepository.saveAndFlush(newWarehouse);
+        Warehouse realWarehouse = fakeWarehouses.getLast();
 
         WarehouseProductRequest requestBody = WarehouseProductRequest
                 .builder()
@@ -151,15 +167,8 @@ public class WarehouseProductRestTest extends TestConfiguration {
 
     @Test
     public void testPatchWarehouseProduct() throws Exception {
-        Product realProduct = fakeProducts
-                .stream()
-                .findFirst()
-                .orElseThrow(ProductNotFoundException::new);
-
-        Warehouse realWarehouse = fakeWarehouses
-                .stream()
-                .findFirst()
-                .orElseThrow(WarehouseNotFoundException::new);
+        Product realProduct = fakeProducts.getFirst();
+        Warehouse realWarehouse = fakeWarehouses.getFirst();
 
         WarehouseProduct realWarehouseProduct = fakeWarehouseProducts
                 .stream()
@@ -174,7 +183,7 @@ public class WarehouseProductRestTest extends TestConfiguration {
                 .build();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .patch("/warehouse-products/" + realWarehouseProduct.getId())
+                .patch("/warehouse-products/{warehouseProductId}", realWarehouseProduct.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody))
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
@@ -203,13 +212,10 @@ public class WarehouseProductRestTest extends TestConfiguration {
 
     @Test
     public void testDeleteWarehouseProduct() throws Exception {
-        WarehouseProduct realWarehouseProduct = fakeWarehouseProducts
-                .stream()
-                .findFirst()
-                .orElseThrow(WarehouseProductNotFoundException::new);
+        WarehouseProduct realWarehouseProduct = fakeWarehouseProducts.getFirst();
 
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .delete("/warehouse-products/" + realWarehouseProduct.getId())
+                .delete("/warehouse-products/{warehouseProductId}", realWarehouseProduct.getId())
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc

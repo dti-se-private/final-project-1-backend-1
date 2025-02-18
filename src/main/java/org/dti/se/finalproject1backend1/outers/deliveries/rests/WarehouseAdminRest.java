@@ -1,20 +1,18 @@
 package org.dti.se.finalproject1backend1.outers.deliveries.rests;
 
-import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse.admin.WarehouseAdminRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse.admin.WarehouseAdminResponse;
-import org.dti.se.finalproject1backend1.inners.usecases.warehouse.admin.WarehouseAdminManagementUseCase;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouseadmins.WarehouseAdminRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouseadmins.WarehouseAdminResponse;
+import org.dti.se.finalproject1backend1.inners.usecases.warehouse.WarehouseAdminManagementUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
-import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseAdminAndWarehouseDuplicateException;
+import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseAdminExistsException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseAdminNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,17 +27,14 @@ public class WarehouseAdminRest {
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
-    public ResponseEntity<ResponseBody<List<WarehouseAdminResponse>>> getAllWarehouseAdmins(
-            @AuthenticationPrincipal Account authenticatedAccount,
+    public ResponseEntity<ResponseBody<List<WarehouseAdminResponse>>> getWarehouseAdmins(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "") List<String> filters,
             @RequestParam(defaultValue = "") String search
     ) {
         try {
             List<WarehouseAdminResponse> warehouseAdmins = warehouseAdminManagementUseCase
-                    .getAllWarehouseAdmins(authenticatedAccount, page, size, filters, search);
-
+                    .getWarehouseAdmins(page, size, search);
             return ResponseBody
                     .<List<WarehouseAdminResponse>>builder()
                     .message("Warehouse admins found.")
@@ -51,7 +46,7 @@ public class WarehouseAdminRest {
                     .<List<WarehouseAdminResponse>>builder()
                     .message("Account permission invalid.")
                     .build()
-                    .toEntity(HttpStatus.FORBIDDEN);
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
                     .<List<WarehouseAdminResponse>>builder()
@@ -62,16 +57,14 @@ public class WarehouseAdminRest {
         }
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{warehouseAdminId}")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
-    public ResponseEntity<ResponseBody<WarehouseAdminResponse>> getWarehouseAdminById(
-            @AuthenticationPrincipal Account authenticatedAccount,
-            @PathVariable UUID id
+    public ResponseEntity<ResponseBody<WarehouseAdminResponse>> getWarehouseAdmin(
+            @PathVariable UUID warehouseAdminId
     ) {
         try {
             WarehouseAdminResponse warehouseAdmin = warehouseAdminManagementUseCase
-                    .getWarehouseAdmin(authenticatedAccount, id);
-
+                    .getWarehouseAdmin(warehouseAdminId);
             return ResponseBody
                     .<WarehouseAdminResponse>builder()
                     .message("Warehouse admin found.")
@@ -83,7 +76,7 @@ public class WarehouseAdminRest {
                     .<WarehouseAdminResponse>builder()
                     .message("Account permission invalid.")
                     .build()
-                    .toEntity(HttpStatus.FORBIDDEN);
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (WarehouseAdminNotFoundException e) {
             return ResponseBody
                     .<WarehouseAdminResponse>builder()
@@ -102,17 +95,15 @@ public class WarehouseAdminRest {
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
-    public ResponseEntity<ResponseBody<WarehouseAdminResponse>> assignWarehouseAdmin(
-            @AuthenticationPrincipal Account authenticatedAccount,
+    public ResponseEntity<ResponseBody<WarehouseAdminResponse>> addWarehouseAdmin(
             @RequestBody WarehouseAdminRequest warehouseAdminRequest
     ) {
         try {
             WarehouseAdminResponse warehouseAdmin = warehouseAdminManagementUseCase
-                    .assignWarehouseAdmin(authenticatedAccount, warehouseAdminRequest);
-
+                    .addWarehouseAdmin(warehouseAdminRequest);
             return ResponseBody
                     .<WarehouseAdminResponse>builder()
-                    .message("Warehouse admin assigned.")
+                    .message("Warehouse admin added.")
                     .data(warehouseAdmin)
                     .build()
                     .toEntity(HttpStatus.CREATED);
@@ -128,10 +119,10 @@ public class WarehouseAdminRest {
                     .message("Warehouse not found.")
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
-        } catch (WarehouseAdminAndWarehouseDuplicateException e) {
+        } catch (WarehouseAdminExistsException e) {
             return ResponseBody
                     .<WarehouseAdminResponse>builder()
-                    .message("Warehouse admin and warehouse already assigned.")
+                    .message("Warehouse admin exists.")
                     .build()
                     .toEntity(HttpStatus.CONFLICT);
         } catch (AccountPermissionInvalidException e) {
@@ -139,7 +130,7 @@ public class WarehouseAdminRest {
                     .<WarehouseAdminResponse>builder()
                     .message("Account permission invalid.")
                     .build()
-                    .toEntity(HttpStatus.FORBIDDEN);
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
                     .<WarehouseAdminResponse>builder()
@@ -150,20 +141,18 @@ public class WarehouseAdminRest {
         }
     }
 
-    @PatchMapping("/{id}")
+    @PatchMapping("/{warehouseAdminId}")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
-    public ResponseEntity<ResponseBody<WarehouseAdminResponse>> updateWarehouseAdmin(
-            @AuthenticationPrincipal Account authenticatedAccount,
-            @PathVariable UUID id,
+    public ResponseEntity<ResponseBody<WarehouseAdminResponse>> patchWarehouseAdmin(
+            @PathVariable UUID warehouseAdminId,
             @RequestBody WarehouseAdminRequest warehouseAdminRequest
     ) {
         try {
             WarehouseAdminResponse warehouseAdmin = warehouseAdminManagementUseCase
-                    .updateWarehouseAdmin(authenticatedAccount, id, warehouseAdminRequest);
-
+                    .patchWarehouseAdmin(warehouseAdminId, warehouseAdminRequest);
             return ResponseBody
                     .<WarehouseAdminResponse>builder()
-                    .message("Warehouse admin updated.")
+                    .message("Warehouse admin patched.")
                     .data(warehouseAdmin)
                     .build()
                     .toEntity(HttpStatus.OK);
@@ -172,7 +161,7 @@ public class WarehouseAdminRest {
                     .<WarehouseAdminResponse>builder()
                     .message("Account permission invalid.")
                     .build()
-                    .toEntity(HttpStatus.FORBIDDEN);
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (WarehouseAdminNotFoundException e) {
             return ResponseBody
                     .<WarehouseAdminResponse>builder()
@@ -201,14 +190,13 @@ public class WarehouseAdminRest {
         }
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{warehouseAdminId}")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
     public ResponseEntity<ResponseBody<Void>> deleteWarehouseAdmin(
-            @AuthenticationPrincipal Account authenticatedAccount,
-            @PathVariable UUID id
+            @PathVariable UUID warehouseAdminId
     ) {
         try {
-            warehouseAdminManagementUseCase.deleteWarehouseAdmin(authenticatedAccount, id);
+            warehouseAdminManagementUseCase.deleteWarehouseAdmin(warehouseAdminId);
             return ResponseBody
                     .<Void>builder()
                     .message("Warehouse admin deleted.")
@@ -219,7 +207,7 @@ public class WarehouseAdminRest {
                     .<Void>builder()
                     .message("Account permission invalid.")
                     .build()
-                    .toEntity(HttpStatus.FORBIDDEN);
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (WarehouseAdminNotFoundException e) {
             return ResponseBody
                     .<Void>builder()
