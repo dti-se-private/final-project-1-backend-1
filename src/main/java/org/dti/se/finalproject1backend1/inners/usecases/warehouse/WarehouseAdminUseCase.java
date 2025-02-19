@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
-public class WarehouseAdminManagementUseCase {
+public class WarehouseAdminUseCase {
 
     @Autowired
     private WarehouseAdminCustomRepository warehouseCustomRepository;

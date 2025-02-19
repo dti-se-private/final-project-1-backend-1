@@ -92,10 +92,21 @@ public class WarehouseUseCase {
                 .findById(warehouseId)
                 .orElseThrow(WarehouseNotFoundException::new);
 
-        Boolean isAccountAssociatedWithWarehouse = warehouseAdminRepository
-                .existsByAccountIdAndWarehouseId(account.getId(), warehouseId);
+        List<String> accountPermissions = account
+                .getAccountPermissions()
+                .stream()
+                .map(AccountPermission::getPermission)
+                .toList();
 
-        if (!isAccountAssociatedWithWarehouse) {
+        if (accountPermissions.contains("SUPER_ADMIN")) {
+            // Do nothing.
+        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+            Boolean isAccountAssociatedWithWarehouse = warehouseAdminRepository
+                    .existsByAccountIdAndWarehouseId(account.getId(), warehouse.getId());
+            if (!isAccountAssociatedWithWarehouse) {
+                throw new AccountPermissionInvalidException();
+            }
+        } else {
             throw new AccountPermissionInvalidException();
         }
 

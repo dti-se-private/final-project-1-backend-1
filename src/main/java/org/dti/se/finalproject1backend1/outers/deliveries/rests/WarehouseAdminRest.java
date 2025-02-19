@@ -3,7 +3,7 @@ package org.dti.se.finalproject1backend1.outers.deliveries.rests;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouseadmins.WarehouseAdminRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouseadmins.WarehouseAdminResponse;
-import org.dti.se.finalproject1backend1.inners.usecases.warehouse.WarehouseAdminManagementUseCase;
+import org.dti.se.finalproject1backend1.inners.usecases.warehouse.WarehouseAdminUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseAdminExistsException;
@@ -23,7 +23,7 @@ import java.util.UUID;
 public class WarehouseAdminRest {
 
     @Autowired
-    private WarehouseAdminManagementUseCase warehouseAdminManagementUseCase;
+    private WarehouseAdminUseCase warehouseAdminUseCase;
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
@@ -33,7 +33,7 @@ public class WarehouseAdminRest {
             @RequestParam(defaultValue = "") String search
     ) {
         try {
-            List<WarehouseAdminResponse> warehouseAdmins = warehouseAdminManagementUseCase
+            List<WarehouseAdminResponse> warehouseAdmins = warehouseAdminUseCase
                     .getWarehouseAdmins(page, size, search);
             return ResponseBody
                     .<List<WarehouseAdminResponse>>builder()
@@ -63,7 +63,7 @@ public class WarehouseAdminRest {
             @PathVariable UUID warehouseAdminId
     ) {
         try {
-            WarehouseAdminResponse warehouseAdmin = warehouseAdminManagementUseCase
+            WarehouseAdminResponse warehouseAdmin = warehouseAdminUseCase
                     .getWarehouseAdmin(warehouseAdminId);
             return ResponseBody
                     .<WarehouseAdminResponse>builder()
@@ -99,7 +99,7 @@ public class WarehouseAdminRest {
             @RequestBody WarehouseAdminRequest warehouseAdminRequest
     ) {
         try {
-            WarehouseAdminResponse warehouseAdmin = warehouseAdminManagementUseCase
+            WarehouseAdminResponse warehouseAdmin = warehouseAdminUseCase
                     .addWarehouseAdmin(warehouseAdminRequest);
             return ResponseBody
                     .<WarehouseAdminResponse>builder()
@@ -148,7 +148,7 @@ public class WarehouseAdminRest {
             @RequestBody WarehouseAdminRequest warehouseAdminRequest
     ) {
         try {
-            WarehouseAdminResponse warehouseAdmin = warehouseAdminManagementUseCase
+            WarehouseAdminResponse warehouseAdmin = warehouseAdminUseCase
                     .patchWarehouseAdmin(warehouseAdminId, warehouseAdminRequest);
             return ResponseBody
                     .<WarehouseAdminResponse>builder()
@@ -196,7 +196,7 @@ public class WarehouseAdminRest {
             @PathVariable UUID warehouseAdminId
     ) {
         try {
-            warehouseAdminManagementUseCase.deleteWarehouseAdmin(warehouseAdminId);
+            warehouseAdminUseCase.deleteWarehouseAdmin(warehouseAdminId);
             return ResponseBody
                     .<Void>builder()
                     .message("Warehouse admin deleted.")

@@ -151,14 +151,6 @@ public class PaymentUseCase {
         }
 
         if (request.getAction().equals("APPROVE")) {
-            OrderStatus newOrderStatus = OrderStatus
-                    .builder()
-                    .id(UUID.randomUUID())
-                    .order(foundOrder)
-                    .status("PROCESSING")
-                    .time(now)
-                    .build();
-            orderStatusRepository.saveAndFlush(newOrderStatus);
             orderUseCase.processOrderProcessing(request.getOrderId(), "APPROVED");
         } else if (request.getAction().equals("REJECT")) {
             OrderStatus newOrderStatus = OrderStatus

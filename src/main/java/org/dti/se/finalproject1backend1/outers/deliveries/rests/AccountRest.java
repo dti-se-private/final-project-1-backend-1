@@ -6,7 +6,6 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.Acco
 import org.dti.se.finalproject1backend1.inners.usecases.accounts.BasicAccountUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
-import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;

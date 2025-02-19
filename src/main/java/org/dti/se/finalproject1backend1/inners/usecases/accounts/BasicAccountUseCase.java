@@ -1,13 +1,11 @@
 package org.dti.se.finalproject1backend1.inners.usecases.accounts;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
-import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.VerificationUseCase;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
-import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.AccountCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
