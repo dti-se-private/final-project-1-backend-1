@@ -708,14 +708,15 @@ public class OrderCustomRepository {
                             ) as item
                     FROM "order"
                     WHERE "order".id in (
-                        SELECT order_status.order_id
-                        FROM order_status
-                        WHERE order_status.id in (
-                            SELECT DISTINCT ON (order_status.order_id) order_status.id
+                        SELECT sq2.order_id
+                        FROM (
+                            SELECT *
                             FROM order_status
-                            ORDER BY order_status.order_id, order_status.time DESC
-                        )
-                        AND order_status.status = 'WAITING_FOR_PAYMENT_CONFIRMATION'
+                            WHERE order_status.order_id = "order".id
+                            ORDER BY order_status.time DESC
+                            LIMIT 1
+                        ) as sq2
+                        WHERE sq2.status = 'WAITING_FOR_PAYMENT_CONFIRMATION'
                     )
                     AND "order".id in (
                         SELECT DISTINCT order_item.order_id
@@ -826,14 +827,15 @@ public class OrderCustomRepository {
                             ) as item
                     FROM "order"
                     WHERE "order".id in (
-                        SELECT order_status.order_id
-                        FROM order_status
-                        WHERE order_status.id in (
-                            SELECT DISTINCT ON (order_status.order_id) order_status.id
+                        SELECT sq2.order_id
+                        FROM (
+                            SELECT *
                             FROM order_status
-                            ORDER BY order_status.order_id, order_status.time DESC
-                        )
-                        AND order_status.status = 'WAITING_FOR_PAYMENT_CONFIRMATION'
+                            WHERE order_status.order_id = "order".id
+                            ORDER BY order_status.time DESC
+                            LIMIT 1
+                        ) as sq2
+                        WHERE sq2.status = 'WAITING_FOR_PAYMENT_CONFIRMATION'
                     )
                 ) as sq1
                 ORDER BY SIMILARITY(sq1.item::text, ?) DESC

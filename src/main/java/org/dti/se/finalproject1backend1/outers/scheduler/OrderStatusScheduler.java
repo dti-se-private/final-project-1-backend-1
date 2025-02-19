@@ -19,4 +19,9 @@ public class OrderStatusScheduler {
     public void scheduleMaxTimeShippingOrderStatus() {
         orderStatusCustomRepository.proceedShippingToConfirmedAfterTwoDays();
     }
+
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.SECONDS)
+    public void scheduleMaxTimeWaitingForPaymentOrderStatus() {
+        orderStatusCustomRepository.proceedWaitingForPaymentToCancelledAfterOneHours();
+    }
 }

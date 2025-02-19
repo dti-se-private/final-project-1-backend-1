@@ -21,14 +21,39 @@ public class OrderStatusCustomRepository {
                 INSERT INTO order_status (id, order_id, status, time)
                 SELECT uuid_generate_v4(), sq1.order_id, 'ORDER_CONFIRMED', now()
                 FROM order_status as sq1
-                WHERE sq1.status = 'SHIPPING'
-                AND now() - sq1.time >= interval '2 days'
-                AND sq1.order_id NOT IN (
-                    SELECT DISTINCT sq2.order_id
-                    FROM order_status AS sq2
-                    WHERE sq2.status = 'ORDER_CONFIRMED'
-                    AND sq2.order_id = sq1.order_id
+                WHERE sq1.order_id in (
+                    SELECT sq2.order_id
+                    FROM (
+                        SELECT *
+                        FROM order_status as sq3
+                        WHERE sq3.order_id = sq1.order_id
+                        ORDER BY sq3.time DESC
+                        LIMIT 1
+                    ) as sq2
+                    WHERE sq2.status = 'SHIPPING'
                 )
+                AND now() - sq1.time >= interval '2 days'
+                """;
+        oneTemplate.update(sql);
+    }
+
+    public void proceedWaitingForPaymentToCancelledAfterOneHours() {
+        String sql = """
+                INSERT INTO order_status (id, order_id, status, time)
+                SELECT uuid_generate_v4(), sq1.order_id, 'CANCELED', now()
+                FROM order_status as sq1
+                WHERE sq1.order_id in (
+                    SELECT sq2.order_id
+                    FROM (
+                        SELECT *
+                        FROM order_status as sq3
+                        WHERE sq3.order_id = sq1.order_id
+                        ORDER BY sq3.time DESC
+                        LIMIT 1
+                    ) as sq2
+                    WHERE sq2.status = 'WAITING_FOR_PAYMENT'
+                )
+                AND now() - sq1.time >= interval '1 hours'
                 """;
         oneTemplate.update(sql);
     }
