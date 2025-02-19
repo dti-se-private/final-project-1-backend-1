@@ -222,7 +222,7 @@ public class TestConfiguration {
 
         fakeAccounts.forEach(account -> {
             for (int i = 0; i < 5; i++) {
-                Warehouse orderOriginWarehouse = fakeWarehouses.get((int) Math.floor(Math.random() * fakeWarehouses.size()));
+                Warehouse orderOriginWarehouse = fakeWarehouses.get(i);
                 Order newOrder = Order
                         .builder()
                         .id(UUID.randomUUID())
