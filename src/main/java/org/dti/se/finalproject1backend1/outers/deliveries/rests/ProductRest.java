@@ -4,6 +4,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
 import org.dti.se.finalproject1backend1.inners.usecases.products.ProductUseCase;
+import org.dti.se.finalproject1backend1.outers.exceptions.blobs.ObjectSizeExceededException;
 import org.dti.se.finalproject1backend1.outers.exceptions.products.CategoryNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.products.ProductNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,6 +85,13 @@ public class ProductRest {
                     .data(product)
                     .build()
                     .toEntity(HttpStatus.CREATED);
+        } catch (ObjectSizeExceededException e) {
+            return ResponseBody
+                    .<ProductResponse>builder()
+                    .message("Object size exceeded.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (CategoryNotFoundException e) {
             return ResponseBody
                     .<ProductResponse>builder()
@@ -115,6 +123,13 @@ public class ProductRest {
                     .data(product)
                     .build()
                     .toEntity(HttpStatus.OK);
+        } catch (ObjectSizeExceededException e) {
+            return ResponseBody
+                    .<ProductResponse>builder()
+                    .message("Object size exceeded.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (CategoryNotFoundException e) {
             return ResponseBody
                     .<ProductResponse>builder()

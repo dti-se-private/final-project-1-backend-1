@@ -6,6 +6,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.Acco
 import org.dti.se.finalproject1backend1.inners.usecases.accounts.BasicAccountUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.blobs.ObjectSizeExceededException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +37,13 @@ public class AccountRest {
                     .data(savedAccount)
                     .build()
                     .toEntity(HttpStatus.CREATED);
+        } catch (ObjectSizeExceededException e) {
+            return ResponseBody
+                    .<AccountResponse>builder()
+                    .message("Object size exceeded.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (AccountExistsException e) {
             return ResponseBody
                     .<AccountResponse>builder()
@@ -96,6 +104,13 @@ public class AccountRest {
                     .data(patchedAccount)
                     .build()
                     .toEntity(HttpStatus.OK);
+        } catch (ObjectSizeExceededException e) {
+            return ResponseBody
+                    .<AccountResponse>builder()
+                    .message("Object size exceeded.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (AccountNotFoundException e) {
             return ResponseBody
                     .<AccountResponse>builder()

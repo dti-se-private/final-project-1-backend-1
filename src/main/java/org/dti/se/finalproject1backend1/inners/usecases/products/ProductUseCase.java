@@ -4,6 +4,7 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Category;
 import org.dti.se.finalproject1backend1.inners.models.entities.Product;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
+import org.dti.se.finalproject1backend1.outers.exceptions.blobs.ObjectSizeExceededException;
 import org.dti.se.finalproject1backend1.outers.exceptions.products.CategoryNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.products.ProductNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.ProductCustomRepository;
@@ -45,6 +46,10 @@ public class ProductUseCase {
     }
 
     public ProductResponse addProduct(@RequestBody ProductRequest request) {
+        if (request.getImage() != null && request.getImage().length > 1024000) {
+            throw new ObjectSizeExceededException();
+        }
+
         Category foundCategory = categoryRepository
                 .findById(request.getCategoryId())
                 .orElseThrow(CategoryNotFoundException::new);
@@ -68,6 +73,10 @@ public class ProductUseCase {
             @PathVariable UUID id,
             @RequestBody ProductRequest request
     ) {
+        if (request.getImage() != null && request.getImage().length > 1024000) {
+            throw new ObjectSizeExceededException();
+        }
+
         Product foundProduct = productRepository
                 .findById(id)
                 .orElseThrow(ProductNotFoundException::new);
