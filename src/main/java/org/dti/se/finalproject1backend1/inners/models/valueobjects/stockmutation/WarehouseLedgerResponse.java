@@ -1,8 +1,8 @@
 package org.dti.se.finalproject1backend1.inners.models.valueobjects.stockmutation;
 import lombok.*;
+import org.dti.se.finalproject1backend1.inners.models.entities.WarehouseLedger;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse.WarehouseResponse;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouseproducts.WarehouseProductResponse;
+
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -14,8 +14,8 @@ import java.util.UUID;
 public class WarehouseLedgerResponse {
     private UUID id;
     private ProductResponse product;
-    private WarehouseResponse originWarehouse;
-    private WarehouseResponse destinationWarehouse;
+    private WarehouseLedger originWarehouse;
+    private WarehouseLedger destinationWarehouse;
     private Double originPreQuantity;
     private Double originPostQuantity;
     private Double destinationPreQuantity;
