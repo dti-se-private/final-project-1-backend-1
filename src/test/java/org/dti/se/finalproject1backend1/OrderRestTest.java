@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class OrderRestTest extends TestConfiguration {
 
     @Autowired
-    private MockMvc mockMvc;
+    MockMvc mockMvc;
 
     @MockitoBean
     protected LocationCustomRepository locationCustomRepository;
@@ -55,7 +55,7 @@ public class OrderRestTest extends TestConfiguration {
     protected MidtransGateway midtransGateway;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    ObjectMapper objectMapper;
 
     @BeforeEach
     public void beforeEach() throws Exception {

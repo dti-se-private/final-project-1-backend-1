@@ -21,15 +21,15 @@ import java.util.UUID;
 public class WarehouseUseCase {
 
     @Autowired
-    private WarehouseRepository warehouseRepository;
+    WarehouseRepository warehouseRepository;
 
     @Autowired
-    private WarehouseCustomRepository warehouseCustomRepository;
+    WarehouseCustomRepository warehouseCustomRepository;
 
     @Autowired
-    private AccountPermissionRepository accountPermissionRepository;
+    AccountPermissionRepository accountPermissionRepository;
     @Autowired
-    private WarehouseAdminRepository warehouseAdminRepository;
+    WarehouseAdminRepository warehouseAdminRepository;
 
     public List<WarehouseResponse> getWarehouses(
             Account account,

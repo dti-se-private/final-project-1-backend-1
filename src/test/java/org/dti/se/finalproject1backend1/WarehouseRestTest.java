@@ -32,12 +32,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class WarehouseRestTest extends TestConfiguration {
 
     @Autowired
-    private MockMvc mockMvc;
+    MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    ObjectMapper objectMapper;
 
-    private GeometryFactory geometryFactory = new GeometryFactory();
+    GeometryFactory geometryFactory = new GeometryFactory();
 
     @BeforeEach
     public void beforeEach() throws Exception {

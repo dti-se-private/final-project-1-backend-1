@@ -13,7 +13,7 @@ import java.util.List;
 public class StatisticCustomRepository {
 
     @Autowired
-    private JdbcTemplate jdbcTemplate;
+    JdbcTemplate jdbcTemplate;
 
     public List<StatisticSeriesResponse> retrieveTransactionAmountAverage(Account account, String period) {
         return jdbcTemplate

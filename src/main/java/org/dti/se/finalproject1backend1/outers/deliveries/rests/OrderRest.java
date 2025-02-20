@@ -37,7 +37,7 @@ public class OrderRest {
     @Autowired
     CancellationUseCase cancellationUseCase;
     @Autowired
-    private ShipmentUseCase shipmentUseCase;
+    ShipmentUseCase shipmentUseCase;
 
 
     @PostMapping("/try-checkout")

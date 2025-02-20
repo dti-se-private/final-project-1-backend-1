@@ -18,10 +18,10 @@ import java.util.UUID;
 @Service
 public class BasicAccountUseCase {
     @Autowired
-    private AccountRepository accountRepository;
+    AccountRepository accountRepository;
 
     @Autowired
-    private AccountCustomRepository accountCustomRepository;
+    AccountCustomRepository accountCustomRepository;
 
     @Autowired
     SecurityConfiguration securityConfiguration;

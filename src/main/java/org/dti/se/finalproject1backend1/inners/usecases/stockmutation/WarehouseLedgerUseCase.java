@@ -22,10 +22,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class WarehouseLedgerUseCase {
 
-    private final WarehouseLedgerRepository warehouseLedgerRepository;
-    private final WarehouseRepository warehouseRepository;
-    private final ProductRepository productRepository;
-    private final WarehouseProductRepository warehouseProductRepository;
+    WarehouseLedgerRepository warehouseLedgerRepository;
+    WarehouseRepository warehouseRepository;
+    ProductRepository productRepository;
+    WarehouseProductRepository warehouseProductRepository;
 
     public Page<WarehouseLedger> getWarehouseLedgers(int page, int size, String filters, String search) {
         // Apply filtering and searching logic here (if needed)

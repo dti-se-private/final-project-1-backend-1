@@ -14,7 +14,7 @@ import java.util.UUID;
 @RequestMapping("/warehouse-ledgers")
 @RequiredArgsConstructor
 public class WarehouseLedgerRest {
-    private final WarehouseLedgerUseCase warehouseLedgerService;
+    WarehouseLedgerUseCase warehouseLedgerService;
 
     @GetMapping
 //    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")

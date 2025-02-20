@@ -19,7 +19,7 @@ public class ProductCustomRepository {
 
     @Autowired
     @Qualifier("oneTemplate")
-    private JdbcTemplate oneTemplate;
+    JdbcTemplate oneTemplate;
 
     @Autowired
     ObjectMapper objectMapper;

@@ -50,7 +50,7 @@ public class TestConfiguration {
     @Autowired
     protected AccountAddressRepository accountAddressRepository;
     @Autowired
-    private AccountPermissionRepository accountPermissionRepository;
+    AccountPermissionRepository accountPermissionRepository;
     @Autowired
     protected WarehouseRepository warehouseRepository;
     @Autowired
@@ -77,7 +77,7 @@ public class TestConfiguration {
     @MockitoBean
     protected MailgunGateway mailgunGatewayMock;
     @MockitoBean
-    private GoogleIdTokenVerifier googleIdTokenVerifier;
+    GoogleIdTokenVerifier googleIdTokenVerifier;
 
     @Autowired
     protected SecurityConfiguration securityConfiguration;

@@ -22,7 +22,7 @@ import java.util.UUID;
 @RequestMapping(value = "/accounts")
 public class AccountRest {
     @Autowired
-    private BasicAccountUseCase basicAccountUseCase;
+    BasicAccountUseCase basicAccountUseCase;
 
     @PostMapping
     public ResponseEntity<ResponseBody<AccountResponse>> addAccount(

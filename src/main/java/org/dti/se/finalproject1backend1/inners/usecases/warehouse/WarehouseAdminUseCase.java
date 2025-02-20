@@ -26,19 +26,19 @@ import java.util.UUID;
 public class WarehouseAdminUseCase {
 
     @Autowired
-    private WarehouseAdminCustomRepository warehouseCustomRepository;
+    WarehouseAdminCustomRepository warehouseCustomRepository;
 
     @Autowired
-    private WarehouseAdminRepository warehouseAdminRepository;
+    WarehouseAdminRepository warehouseAdminRepository;
 
     @Autowired
-    private AccountRepository accountRepository;
+    AccountRepository accountRepository;
 
     @Autowired
-    private WarehouseRepository warehouseRepository;
+    WarehouseRepository warehouseRepository;
 
     @Autowired
-    private AccountPermissionRepository accountPermissionRepository;
+    AccountPermissionRepository accountPermissionRepository;
 
     public List<WarehouseAdminResponse> getWarehouseAdmins(
             Integer page,

@@ -20,7 +20,7 @@ import java.util.UUID;
 public class ProductRest {
 
     @Autowired
-    private ProductUseCase productUseCase;
+    ProductUseCase productUseCase;
 
     @GetMapping
     public ResponseEntity<ResponseBody<List<ProductResponse>>> getProducts(
