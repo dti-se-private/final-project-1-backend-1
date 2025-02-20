@@ -3,10 +3,8 @@ package org.dti.se.finalproject1backend1.inners.models.valueobjects.warehousepro
 import lombok.*;
 import lombok.experimental.Accessors;
 import org.dti.se.finalproject1backend1.inners.models.Model;
-import org.dti.se.finalproject1backend1.inners.models.entities.Product;
-import org.dti.se.finalproject1backend1.inners.models.entities.Warehouse;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.products.ProductResponse;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse.WarehouseResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouses.WarehouseResponse;
 
 import java.util.UUID;
 

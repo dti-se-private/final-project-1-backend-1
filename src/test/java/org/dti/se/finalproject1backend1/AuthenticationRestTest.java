@@ -37,13 +37,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AuthenticationRestTest extends TestConfiguration {
 
     @Autowired
-    private MockMvc mockMvc;
+    MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    ObjectMapper objectMapper;
 
     @MockitoBean
-    private GoogleIdTokenVerifier authGoogleIdTokenVerifier;
+    GoogleIdTokenVerifier authGoogleIdTokenVerifier;
 
     @BeforeEach
     public void beforeEach() {

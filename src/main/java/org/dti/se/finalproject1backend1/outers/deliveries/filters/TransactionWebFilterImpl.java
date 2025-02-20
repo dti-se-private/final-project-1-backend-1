@@ -26,12 +26,12 @@ public class TransactionWebFilterImpl extends GenericFilterBean {
 
     @Autowired
     @Qualifier("oneTransactionManager")
-    private PlatformTransactionManager transactionManager;
+    PlatformTransactionManager transactionManager;
 
-    private static final Logger logger = LoggerFactory.getLogger(TransactionWebFilterImpl.class);
+    static final Logger logger = LoggerFactory.getLogger(TransactionWebFilterImpl.class);
 
-    private static final Long MAX_RETRIES = 3L;
-    private static final Long RETRY_DELAY_MS = 100L;
+    static final Long MAX_RETRIES = 3L;
+    static final Long RETRY_DELAY_MS = 100L;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {

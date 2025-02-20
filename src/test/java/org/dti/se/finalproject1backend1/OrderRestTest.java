@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class OrderRestTest extends TestConfiguration {
 
     @Autowired
-    private MockMvc mockMvc;
+    MockMvc mockMvc;
 
     @MockitoBean
     protected LocationCustomRepository locationCustomRepository;
@@ -55,7 +55,7 @@ public class OrderRestTest extends TestConfiguration {
     protected MidtransGateway midtransGateway;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    ObjectMapper objectMapper;
 
     @BeforeEach
     public void beforeEach() throws Exception {
@@ -187,10 +187,13 @@ public class OrderRestTest extends TestConfiguration {
 
         Order realOrder = fakeOrders
                 .stream()
-                .filter(order -> order
-                        .getOrderStatuses()
+                .filter(order -> fakeOrderStatuses
                         .stream()
-                        .noneMatch(orderStatus -> orderStatus.getStatus().equals("WAITING_FOR_PAYMENT_CONFIRMATION"))
+                        .filter(orderStatus -> orderStatus.getOrder().getId().equals(order.getId()))
+                        .max(Comparator.comparing(OrderStatus::getTime))
+                        .orElseThrow(OrderStatusNotFoundException::new)
+                        .getStatus()
+                        .equals("WAITING_FOR_PAYMENT")
                 )
                 .findFirst()
                 .orElseThrow(OrderNotFoundException::new);
@@ -309,7 +312,7 @@ public class OrderRestTest extends TestConfiguration {
                         .equals("WAITING_FOR_PAYMENT_CONFIRMATION")
                 )
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(OrderNotFoundException::new);
 
         OrderProcessRequest requestBody = OrderProcessRequest
                 .builder()
@@ -348,7 +351,7 @@ public class OrderRestTest extends TestConfiguration {
                     List<OrderStatus> orderStatuses = fakeOrderStatuses
                             .stream()
                             .filter(orderStatus -> orderStatus.getOrder().getId().equals(order.getId()))
-                            .sorted((a, b) -> a.getTime().compareTo(b.getTime()))
+                            .sorted(Comparator.comparing(OrderStatus::getTime))
                             .toList();
 
                     return orderStatuses.getLast().getStatus().equals("WAITING_FOR_PAYMENT_CONFIRMATION");

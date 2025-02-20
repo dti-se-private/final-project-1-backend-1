@@ -6,6 +6,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.Acco
 import org.dti.se.finalproject1backend1.inners.usecases.accounts.BasicAccountUseCase;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.blobs.ObjectSizeExceededException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 
@@ -21,7 +23,7 @@ import java.util.UUID;
 @RequestMapping(value = "/accounts")
 public class AccountRest {
     @Autowired
-    private BasicAccountUseCase basicAccountUseCase;
+    BasicAccountUseCase basicAccountUseCase;
 
     @PostMapping
     public ResponseEntity<ResponseBody<AccountResponse>> addAccount(
@@ -35,6 +37,13 @@ public class AccountRest {
                     .data(savedAccount)
                     .build()
                     .toEntity(HttpStatus.CREATED);
+        } catch (ObjectSizeExceededException e) {
+            return ResponseBody
+                    .<AccountResponse>builder()
+                    .message("Object size exceeded.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (AccountExistsException e) {
             return ResponseBody
                     .<AccountResponse>builder()
@@ -51,8 +60,8 @@ public class AccountRest {
         }
     }
 
-    @PreAuthorize("isAuthenticated()")
     @GetMapping(value = "/{accountId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResponseBody<AccountResponse>> getAccount(
             @PathVariable UUID accountId
     ) {
@@ -81,8 +90,8 @@ public class AccountRest {
         }
     }
 
-    @PreAuthorize("isAuthenticated()")
     @PatchMapping(value = "/{accountId}")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ResponseBody<AccountResponse>> patchAccount(
             @PathVariable UUID accountId,
             @RequestBody AccountRequest request
@@ -95,6 +104,13 @@ public class AccountRest {
                     .data(patchedAccount)
                     .build()
                     .toEntity(HttpStatus.OK);
+        } catch (ObjectSizeExceededException e) {
+            return ResponseBody
+                    .<AccountResponse>builder()
+                    .message("Object size exceeded.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (AccountNotFoundException e) {
             return ResponseBody
                     .<AccountResponse>builder()
@@ -140,6 +156,31 @@ public class AccountRest {
         } catch (Exception e) {
             return ResponseBody
                     .<Void>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/admins")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
+    public ResponseEntity<ResponseBody<List<AccountResponse>>> getAdmins(
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "") String search
+    ) {
+        try {
+            List<AccountResponse> admins = basicAccountUseCase.getAdmins(page, size, search);
+            return ResponseBody
+                    .<List<AccountResponse>>builder()
+                    .message("Account Admins found.")
+                    .data(admins)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<List<AccountResponse>>builder()
                     .message("Internal server error.")
                     .exception(e)
                     .build()

@@ -28,7 +28,7 @@ import java.util.HashMap;
 public class OneDatastoreConfiguration {
 
     @Autowired
-    private Environment environment;
+    Environment environment;
 
     @Bean
     public DataSource oneDataSource() {
