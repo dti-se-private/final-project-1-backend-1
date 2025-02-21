@@ -2,6 +2,7 @@ package org.dti.se.finalproject1backend1;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.statistics.StatisticSeriesResponse;
 import org.junit.jupiter.api.AfterEach;
@@ -33,7 +34,8 @@ public class StatisticRestTest extends TestConfiguration {
     @BeforeEach
     public void beforeEach() throws Exception {
         populate();
-        auth();
+        Account selectedAccount = fakeAccounts.getFirst();
+        auth(selectedAccount);
     }
 
     @AfterEach
@@ -43,10 +45,10 @@ public class StatisticRestTest extends TestConfiguration {
     }
 
     @Test
-    public void testEventTransactionAmountStatistic() throws Exception {
+    public void testProductStockStatistic() throws Exception {
         MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/statistics/events")
-                .param("type", "transactionAmount")
+                .get("/statistics/product-stocks")
+                .param("operation", "current")
                 .param("aggregation", "sum")
                 .param("period", "day")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
@@ -65,26 +67,4 @@ public class StatisticRestTest extends TestConfiguration {
         assert body.getData() != null;
     }
 
-    @Test
-    public void testEventParticipantCountStatistic() throws Exception {
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/statistics/events")
-                .param("type", "participantCount")
-                .param("aggregation", "sum")
-                .param("period", "day")
-                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
-                .contentType(MediaType.APPLICATION_JSON);
-
-        MvcResult result = mockMvc
-                .perform(request)
-                .andExpect(status().isOk())
-                .andReturn();
-
-        String content = result.getResponse().getContentAsString();
-        ResponseBody<List<StatisticSeriesResponse>> body = objectMapper.readValue(content, new TypeReference<>() {
-        });
-        assert body != null;
-        assert body.getMessage() != null;
-        assert body.getData() != null;
-    }
 }

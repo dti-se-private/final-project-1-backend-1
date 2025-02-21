@@ -89,13 +89,13 @@ public class PaymentUseCase {
                 throw new ObjectSizeExceededException();
             }
             PaymentProof newPaymentProof = PaymentProof
-                        .builder()
-                        .id(UUID.randomUUID())
-                        .order(foundOrder)
-                        .file(paymentProofRequest.getFile())
-                        .extension(paymentProofRequest.getExtension())
-                        .time(now)
-                        .build();
+                    .builder()
+                    .id(UUID.randomUUID())
+                    .order(foundOrder)
+                    .file(paymentProofRequest.getFile())
+                    .extension(paymentProofRequest.getExtension())
+                    .time(now)
+                    .build();
             newPaymentProofs.add(newPaymentProof);
         }
         paymentProofRepository.saveAllAndFlush(newPaymentProofs);
