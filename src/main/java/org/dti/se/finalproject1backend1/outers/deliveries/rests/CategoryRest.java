@@ -19,7 +19,7 @@ import java.util.UUID;
 public class CategoryRest {
 
     @Autowired
-    private CategoryUseCase categoryUseCase;
+    CategoryUseCase categoryUseCase;
 
     @GetMapping
     public ResponseEntity<ResponseBody<List<CategoryResponse>>> getCategories(

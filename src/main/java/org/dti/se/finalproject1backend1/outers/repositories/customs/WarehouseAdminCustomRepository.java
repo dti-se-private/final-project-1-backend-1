@@ -3,14 +3,15 @@ package org.dti.se.finalproject1backend1.outers.repositories.customs;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse.admin.WarehouseAdminResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouseadmins.WarehouseAdminResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.UUID;
 
 @Repository
 public class WarehouseAdminCustomRepository {
@@ -22,44 +23,102 @@ public class WarehouseAdminCustomRepository {
     @Autowired
     ObjectMapper objectMapper;
 
-    public List<WarehouseAdminResponse> getAllWarehouseAdmins(
+    public List<WarehouseAdminResponse> getWarehouseAdmins(
             Integer page,
             Integer size,
-            List<String> filters,
             String search
     ) {
-        String order = filters
-                .stream()
-                .map(filter -> String.format("SIMILARITY(%s::text, '%s')", filter, search))
-                .collect(Collectors.joining("+"));
-
-        if (order.isEmpty()) {
-            order = "warehouse_admin.id";
-        }
-
-        String sql = String.format("""
-                SELECT json_build_object(
+        String sql = """
+                SELECT *
+                FROM (
+                    SELECT json_build_object(
                         'id', warehouse_admin.id,
-                        'warehouse_id', warehouse_admin.warehouse_id,
-                        'account_id', warehouse_admin.account_id
-                    ) as warehouse_admin
-                FROM warehouse_admin
-                ORDER BY %s
+                        'warehouse', json_build_object(
+                            'id', warehouse.id,
+                            'name', warehouse.name,
+                            'description', warehouse.description,
+                            'location', warehouse.location
+                        ),
+                        'account', json_build_object(
+                            'id', account.id,
+                            'name', account.name,
+                            'email', account.email,
+                            'password', account.password,
+                            'phone', account.phone,
+                            'image', account.image,
+                            'is_verified', account.is_verified
+                        )
+                    ) as item
+                    FROM warehouse_admin
+                    INNER JOIN warehouse ON warehouse_admin.warehouse_id = warehouse.id
+                    INNER JOIN account ON warehouse_admin.account_id = account.id
+                ) as sq1
+                ORDER BY SIMILARITY(sq1.item::text, ?) DESC
                 LIMIT ?
                 OFFSET ?
-                """, order);
+                """;
 
         return oneTemplate
                 .query(sql,
                         (rs, rowNum) -> {
                             try {
-                                return objectMapper.readValue(rs.getString("warehouse_admin"), new TypeReference<>() {});
+                                return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
+                                });
                             } catch (JsonProcessingException e) {
                                 throw new RuntimeException(e);
                             }
                         },
+                        search,
                         size,
                         page * size
                 );
+    }
+
+    public WarehouseAdminResponse getWarehouseAdmin(UUID warehouseAdminId) {
+        String sql = """
+                SELECT *
+                FROM (
+                    SELECT json_build_object(
+                        'id', warehouse_admin.id,
+                        'warehouse', json_build_object(
+                            'id', warehouse.id,
+                            'name', warehouse.name,
+                            'description', warehouse.description,
+                            'location', warehouse.location
+                        ),
+                        'account', json_build_object(
+                            'id', account.id,
+                            'name', account.name,
+                            'email', account.email,
+                            'password', account.password,
+                            'phone', account.phone,
+                            'image', account.image,
+                            'is_verified', account.is_verified
+                        )
+                    ) as item
+                    FROM warehouse_admin
+                    INNER JOIN warehouse ON warehouse_admin.warehouse_id = warehouse.id
+                    INNER JOIN account ON warehouse_admin.account_id = account.id
+                    WHERE warehouse_admin.id = ?
+                ) as sq1
+                LIMIT 1
+                """;
+
+        try {
+            return oneTemplate
+                    .queryForObject(sql,
+                            (rs, rowNum) -> {
+                                try {
+                                    return objectMapper.readValue(rs.getString("item"), new TypeReference<>() {
+                                    });
+                                } catch (JsonProcessingException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            },
+                            warehouseAdminId
+                    );
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 }

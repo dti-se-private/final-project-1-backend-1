@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,19 +58,25 @@ public class CancellationUseCase {
         }
 
         if (accountPermissions.contains("CUSTOMER")) {
-            Boolean isExistsProcessingStatus = foundOrder
+            List<String> validCancelStatuses = List.of("WAITING_FOR_PAYMENT", "WAITING_FOR_PAYMENT_CONFIRMATION");
+            Boolean isValidStatus = foundOrder
                     .getOrderStatuses()
                     .stream()
-                    .anyMatch(orderStatus -> orderStatus.getStatus().equals("PROCESSING"));
-            if (isExistsProcessingStatus) {
+                    .max(Comparator.comparing(OrderStatus::getTime))
+                    .stream()
+                    .anyMatch(orderStatus -> validCancelStatuses.contains(orderStatus.getStatus()));
+            if (!isValidStatus) {
                 throw new OrderStatusInvalidException();
             }
         } else if (accountPermissions.contains("WAREHOUSE_ADMIN") || accountPermissions.contains("SUPER_ADMIN")) {
-            Boolean isExistsShippingStatus = foundOrder
+            List<String> validCancelStatuses = List.of("WAITING_FOR_PAYMENT", "WAITING_FOR_PAYMENT_CONFIRMATION", "PROCESSING");
+            Boolean isValidStatus = foundOrder
                     .getOrderStatuses()
                     .stream()
-                    .anyMatch(orderStatus -> orderStatus.getStatus().equals("SHIPPING"));
-            if (isExistsShippingStatus) {
+                    .max(Comparator.comparing(OrderStatus::getTime))
+                    .stream()
+                    .anyMatch(orderStatus -> validCancelStatuses.contains(orderStatus.getStatus()));
+            if (!isValidStatus) {
                 throw new OrderStatusInvalidException();
             }
         } else {

@@ -18,10 +18,10 @@ import java.util.UUID;
 public class VerificationUseCase {
 
     @Autowired
-    private VerificationRepository verificationRepository;
+    VerificationRepository verificationRepository;
 
     @Autowired
-    private MailgunGateway mailgunGateway;
+    MailgunGateway mailgunGateway;
 
     public void send(VerificationRequest request) {
         String otp = generateOtp();
@@ -60,7 +60,7 @@ public class VerificationUseCase {
         return true;
     }
 
-    private String generateOtp() {
+    String generateOtp() {
         Random random = new Random();
         int otp = 100000 + random.nextInt(900000);
         return String.valueOf(otp);

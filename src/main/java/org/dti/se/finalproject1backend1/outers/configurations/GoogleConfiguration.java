@@ -23,7 +23,7 @@ import java.util.Collections;
 public class GoogleConfiguration {
 
     @Autowired
-    private Environment environment;
+    Environment environment;
 
     @Bean
     public GoogleIdTokenVerifier verifier() throws GeneralSecurityException, IOException {

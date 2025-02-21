@@ -6,17 +6,23 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.Acco
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.VerificationUseCase;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.blobs.ObjectSizeExceededException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
+import org.dti.se.finalproject1backend1.outers.repositories.customs.AccountCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class BasicAccountUseCase {
     @Autowired
-    private AccountRepository accountRepository;
+    AccountRepository accountRepository;
+
+    @Autowired
+    AccountCustomRepository accountCustomRepository;
 
     @Autowired
     SecurityConfiguration securityConfiguration;
@@ -25,6 +31,10 @@ public class BasicAccountUseCase {
     VerificationUseCase verificationUseCase;
 
     public AccountResponse addAccount(AccountRequest request) {
+        if (request.getImage() != null && request.getImage().length > 1024000) {
+            throw new ObjectSizeExceededException();
+        }
+
         String encodedPassword = securityConfiguration.encode(request.getPassword());
         Account account = Account
                 .builder()
@@ -59,6 +69,10 @@ public class BasicAccountUseCase {
     }
 
     public AccountResponse patchAccount(UUID id, AccountRequest request) {
+        if (request.getImage() != null && request.getImage().length > 1024000) {
+            throw new ObjectSizeExceededException();
+        }
+
         Account accountToPatch = accountRepository
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);
@@ -85,5 +99,13 @@ public class BasicAccountUseCase {
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);
         accountRepository.delete(account);
+    }
+
+    public List<AccountResponse> getAdmins(
+            Integer page,
+            Integer size,
+            String search
+    ) {
+        return accountCustomRepository.getAdmins(page, size, search);
     }
 }

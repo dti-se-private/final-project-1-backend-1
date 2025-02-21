@@ -73,7 +73,7 @@ public class LoginAuthenticationUseCase {
         return getSession(account);
     }
 
-    private Session getSession(Account account) {
+    Session getSession(Account account) {
         AccountResponse accountResponse = AccountResponse
                 .builder()
                 .id(account.getId())

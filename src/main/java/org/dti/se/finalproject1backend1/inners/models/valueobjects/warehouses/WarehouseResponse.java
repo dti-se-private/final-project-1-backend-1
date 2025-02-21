@@ -1,10 +1,11 @@
-package org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse.admin;
+package org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouses;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
+import org.locationtech.jts.geom.Point;
 
 import java.util.UUID;
 
@@ -13,8 +14,10 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class WarehouseAdminResponse {
+public class WarehouseResponse {
     private UUID id;
-    private UUID warehouseId;
-    private UUID accountId;
+    private String name;
+    private String description;
+    private Point location;
+
 }
