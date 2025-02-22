@@ -43,10 +43,5 @@ public class Product {
 
     @OneToMany(mappedBy = "product")
     @Builder.Default
-    private Set<WarehouseLedger> warehouseLedgers = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "product")
-    @Builder.Default
     private Set<WarehouseProduct> warehouseProducts = new LinkedHashSet<>();
-
 }

@@ -95,29 +95,13 @@ public class CancellationUseCase {
                 continue;
             }
 
-            Optional<WarehouseProduct> foundOriginWarehouseProduct = warehouseProductRepository
-                    .findByProductIdAndWarehouseId(
-                            foundWarehouseLedger.getProduct().getId(),
-                            foundWarehouseLedger.getOriginWarehouse().getId()
-                    );
-            if (foundOriginWarehouseProduct.isEmpty()) {
-                throw new WarehouseProductNotFoundException();
-            }
+            WarehouseProduct originWarehouseProduct = foundWarehouseLedger.getOriginWarehouseProduct();
+            WarehouseProduct destinationWarehouseProduct = foundWarehouseLedger.getDestinationWarehouseProduct();
 
-            Optional<WarehouseProduct> foundDestinationWarehouseProduct = warehouseProductRepository
-                    .findByProductIdAndWarehouseId(
-                            foundWarehouseLedger.getProduct().getId(),
-                            foundWarehouseLedger.getDestinationWarehouse().getId()
-                    );
-            if (foundDestinationWarehouseProduct.isEmpty()) {
-                throw new WarehouseProductNotFoundException();
-            }
+            OrderItem foundOrderItem = foundWarehouseLedger.getOrderItem();
 
-            OrderItem foundOrderItem = foundWarehouseLedger
-                    .getOrderItem();
-
-            Double originPostQuantity = foundDestinationWarehouseProduct.get().getQuantity() - foundOrderItem.getQuantity();
-            Double destinationPostQuantity = foundOriginWarehouseProduct.get().getQuantity() + foundOrderItem.getQuantity();
+            Double originPostQuantity = destinationWarehouseProduct.getQuantity() - foundOrderItem.getQuantity();
+            Double destinationPostQuantity = originWarehouseProduct.getQuantity() + foundOrderItem.getQuantity();
 
             if (originPostQuantity < 0 || destinationPostQuantity < 0) {
                 throw new WarehouseProductInsufficientException();
@@ -126,23 +110,22 @@ public class CancellationUseCase {
             WarehouseLedger newWarehouseLedger = WarehouseLedger
                     .builder()
                     .id(UUID.randomUUID())
-                    .product(foundWarehouseLedger.getProduct())
-                    .originWarehouse(foundWarehouseLedger.getDestinationWarehouse())
-                    .destinationWarehouse(foundWarehouseLedger.getOriginWarehouse())
-                    .originPreQuantity(foundDestinationWarehouseProduct.get().getQuantity())
+                    .originWarehouseProduct(foundWarehouseLedger.getDestinationWarehouseProduct())
+                    .destinationWarehouseProduct(foundWarehouseLedger.getOriginWarehouseProduct())
+                    .originPreQuantity(destinationWarehouseProduct.getQuantity())
                     .originPostQuantity(originPostQuantity)
-                    .destinationPreQuantity(foundOriginWarehouseProduct.get().getQuantity())
+                    .destinationPreQuantity(originWarehouseProduct.getQuantity())
                     .destinationPostQuantity(destinationPostQuantity)
                     .time(now)
                     .status("APPROVED")
                     .build();
 
-            foundDestinationWarehouseProduct.get().setQuantity(newWarehouseLedger.getOriginPostQuantity());
-            foundOriginWarehouseProduct.get().setQuantity(newWarehouseLedger.getDestinationPostQuantity());
+            destinationWarehouseProduct.setQuantity(newWarehouseLedger.getOriginPostQuantity());
+            originWarehouseProduct.setQuantity(newWarehouseLedger.getDestinationPostQuantity());
 
             warehouseLedgerRepository.saveAndFlush(newWarehouseLedger);
-            warehouseProductRepository.saveAndFlush(foundDestinationWarehouseProduct.get());
-            warehouseProductRepository.saveAndFlush(foundOriginWarehouseProduct.get());
+            warehouseProductRepository.saveAndFlush(destinationWarehouseProduct);
+            warehouseProductRepository.saveAndFlush(originWarehouseProduct);
         }
 
         OrderStatus newOrderStatus = OrderStatus
