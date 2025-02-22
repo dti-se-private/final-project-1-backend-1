@@ -18,13 +18,13 @@ import java.util.UUID;
 @Service
 public class AccountAddressUseCase {
     @Autowired
-    private AccountAddressRepository accountAddressRepository;
+    AccountAddressRepository accountAddressRepository;
 
     @Autowired
-    private AccountAddressCustomRepository accountAddressCustomRepository;
+    AccountAddressCustomRepository accountAddressCustomRepository;
 
     @Autowired
-    private AccountRepository accountRepository;
+    AccountRepository accountRepository;
 
     public AccountAddressResponse addAddress(Account account, AccountAddressRequest request) {
         Account foundAccount = accountRepository
@@ -126,7 +126,7 @@ public class AccountAddressUseCase {
         accountAddressRepository.delete(foundAccountAddress);
     }
 
-    private void setAllAddressesToNonPrimary(Account account) {
+    public void setAllAddressesToNonPrimary(Account account) {
         Account foundAccount = accountRepository
                 .findById(account.getId())
                 .orElseThrow(AccountNotFoundException::new);

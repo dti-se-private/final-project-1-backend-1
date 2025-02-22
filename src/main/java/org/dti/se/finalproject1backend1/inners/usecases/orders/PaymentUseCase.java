@@ -5,6 +5,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.*;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.payments.CreatePaymentLinkResponse;
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MidtransGateway;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
+import org.dti.se.finalproject1backend1.outers.exceptions.blobs.ObjectSizeExceededException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderActionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.OrderStatusInvalidException;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -81,19 +83,21 @@ public class PaymentUseCase {
                 .build();
         orderStatusRepository.saveAndFlush(newOrderStatus);
 
-        List<PaymentProof> newPaymentProofs = request
-                .getPaymentProofs()
-                .stream()
-                .map(paymentProofRequest -> PaymentProof
-                        .builder()
-                        .id(UUID.randomUUID())
-                        .order(foundOrder)
-                        .file(paymentProofRequest.getFile())
-                        .extension(paymentProofRequest.getExtension())
-                        .time(now)
-                        .build()
-                )
-                .toList();
+        List<PaymentProof> newPaymentProofs = new ArrayList<>();
+        for (PaymentProofRequest paymentProofRequest : request.getPaymentProofs()) {
+            if (paymentProofRequest.getFile() != null && paymentProofRequest.getFile().length > 1024000) {
+                throw new ObjectSizeExceededException();
+            }
+            PaymentProof newPaymentProof = PaymentProof
+                    .builder()
+                    .id(UUID.randomUUID())
+                    .order(foundOrder)
+                    .file(paymentProofRequest.getFile())
+                    .extension(paymentProofRequest.getExtension())
+                    .time(now)
+                    .build();
+            newPaymentProofs.add(newPaymentProof);
+        }
         paymentProofRepository.saveAllAndFlush(newPaymentProofs);
 
         return orderCustomRepository.getOrder(request.getOrderId());
@@ -151,14 +155,6 @@ public class PaymentUseCase {
         }
 
         if (request.getAction().equals("APPROVE")) {
-            OrderStatus newOrderStatus = OrderStatus
-                    .builder()
-                    .id(UUID.randomUUID())
-                    .order(foundOrder)
-                    .status("PROCESSING")
-                    .time(now)
-                    .build();
-            orderStatusRepository.saveAndFlush(newOrderStatus);
             orderUseCase.processOrderProcessing(request.getOrderId(), "APPROVED");
         } else if (request.getAction().equals("REJECT")) {
             OrderStatus newOrderStatus = OrderStatus

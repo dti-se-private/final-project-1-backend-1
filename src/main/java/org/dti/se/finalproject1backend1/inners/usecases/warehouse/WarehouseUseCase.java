@@ -1,19 +1,16 @@
 package org.dti.se.finalproject1backend1.inners.usecases.warehouse;
 
-import jakarta.validation.constraints.NotNull;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
 import org.dti.se.finalproject1backend1.inners.models.entities.Warehouse;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse.WarehouseRequest;
-import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouse.WarehouseResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouses.WarehouseRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouses.WarehouseResponse;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.WarehouseCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountPermissionRepository;
+import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseAdminRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseRepository;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.CoordinateSequence;
-import org.locationtech.jts.geom.GeometryFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,21 +21,20 @@ import java.util.UUID;
 public class WarehouseUseCase {
 
     @Autowired
-    private WarehouseRepository warehouseRepository;
+    WarehouseRepository warehouseRepository;
 
     @Autowired
-    private WarehouseCustomRepository warehouseCustomRepository;
+    WarehouseCustomRepository warehouseCustomRepository;
 
     @Autowired
-    private AccountPermissionRepository accountPermissionRepository;
+    AccountPermissionRepository accountPermissionRepository;
+    @Autowired
+    WarehouseAdminRepository warehouseAdminRepository;
 
-    private GeometryFactory geometryFactory = new GeometryFactory();
-
-    public List<WarehouseResponse> getAllWarehouses(
+    public List<WarehouseResponse> getWarehouses(
             Account account,
             Integer page,
             Integer size,
-            List<String> filters,
             String search
     ) {
         List<String> accountPermissions = account
@@ -47,11 +43,14 @@ public class WarehouseUseCase {
                 .map(AccountPermission::getPermission)
                 .toList();
 
-        if (!accountPermissions.contains("SUPER_ADMIN")) {
+        if (accountPermissions.contains("SUPER_ADMIN")) {
+            return warehouseCustomRepository.getWarehouses(page, size, search);
+        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+            return warehouseCustomRepository.getAccountWarehouses(account, page, size, search);
+        } else {
             throw new AccountPermissionInvalidException();
         }
 
-        return warehouseCustomRepository.getAllWarehouses(page, size, filters, search);
     }
 
     public WarehouseResponse getWarehouse(Account account, UUID warehouseId) {
@@ -61,79 +60,22 @@ public class WarehouseUseCase {
                 .map(AccountPermission::getPermission)
                 .toList();
 
-        if (!accountPermissions.contains("SUPER_ADMIN")) {
+        if (accountPermissions.contains("SUPER_ADMIN")) {
+            return warehouseCustomRepository.getWarehouse(warehouseId);
+        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+            return warehouseCustomRepository.getAccountWarehouse(account, warehouseId);
+        } else {
             throw new AccountPermissionInvalidException();
         }
-
-        Warehouse warehouse = warehouseRepository
-                .findById(warehouseId)
-                .orElseThrow(WarehouseNotFoundException::new);
-
-        WarehouseResponse warehouseResponse = new WarehouseResponse();
-        warehouseResponse.setId(warehouse.getId());
-        warehouseResponse.setName(warehouse.getName());
-        warehouseResponse.setDescription(warehouse.getDescription());
-        warehouseResponse.setLocation(warehouse.getLocation());
-
-        return warehouseResponse;
     }
 
-    public WarehouseResponse addWarehouse(Account account, WarehouseRequest request) {
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (!accountPermissions.contains("SUPER_ADMIN")) {
-            throw new AccountPermissionInvalidException();
-        }
-
-        Warehouse warehouse = new Warehouse();
-        warehouse.setId(UUID.randomUUID());
-        return getAddOrPatchWarehouseResponse(request, warehouse);
-    }
-
-    public WarehouseResponse patchWarehouse(Account account, UUID warehouseId, WarehouseRequest request) {
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (!accountPermissions.contains("SUPER_ADMIN")) {
-            throw new AccountPermissionInvalidException();
-        }
-
-        Warehouse warehouse = warehouseRepository
-                .findById(warehouseId)
-                .orElseThrow(WarehouseNotFoundException::new);
-
-        return getAddOrPatchWarehouseResponse(request, warehouse);
-    }
-
-    public void deleteWarehouse(Account account, UUID warehouseId) {
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (!accountPermissions.contains("SUPER_ADMIN")) {
-            throw new AccountPermissionInvalidException();
-        }
-
-        warehouseRepository.deleteById(warehouseId);
-    }
-
-    @NotNull
-    private WarehouseResponse getAddOrPatchWarehouseResponse(
-            WarehouseRequest request,
-            Warehouse warehouse
-    ) {
-        warehouse.setName(request.getName());
-        warehouse.setDescription(request.getDescription());
-        warehouse.setLocation(geometryFactory.createPoint(new Coordinate(request.getLocation().getX(), request.getLocation().getY())));
+    public WarehouseResponse addWarehouse(WarehouseRequest request) {
+        Warehouse warehouse = Warehouse.builder()
+                .id(UUID.randomUUID())
+                .name(request.getName())
+                .description(request.getDescription())
+                .location(request.getLocation())
+                .build();
 
         warehouseRepository.saveAndFlush(warehouse);
 
@@ -143,5 +85,51 @@ public class WarehouseUseCase {
                 .description(warehouse.getDescription())
                 .location(warehouse.getLocation())
                 .build();
+    }
+
+    public WarehouseResponse patchWarehouse(Account account, UUID warehouseId, WarehouseRequest request) {
+        Warehouse warehouse = warehouseRepository
+                .findById(warehouseId)
+                .orElseThrow(WarehouseNotFoundException::new);
+
+        List<String> accountPermissions = account
+                .getAccountPermissions()
+                .stream()
+                .map(AccountPermission::getPermission)
+                .toList();
+
+        if (accountPermissions.contains("SUPER_ADMIN")) {
+            // Do nothing.
+        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+            Boolean isAccountAssociatedWithWarehouse = warehouseAdminRepository
+                    .existsByAccountIdAndWarehouseId(account.getId(), warehouse.getId());
+            if (!isAccountAssociatedWithWarehouse) {
+                throw new AccountPermissionInvalidException();
+            }
+        } else {
+            throw new AccountPermissionInvalidException();
+        }
+
+        warehouse.setName(request.getName());
+        warehouse.setDescription(request.getDescription());
+        warehouse.setLocation(request.getLocation());
+
+        warehouseRepository.saveAndFlush(warehouse);
+
+        return WarehouseResponse.builder()
+                .id(warehouse.getId())
+                .name(warehouse.getName())
+                .description(warehouse.getDescription())
+                .location(warehouse.getLocation())
+                .build();
+
+    }
+
+    public void deleteWarehouse(UUID warehouseId) {
+        Warehouse warehouse = warehouseRepository
+                .findById(warehouseId)
+                .orElseThrow(WarehouseNotFoundException::new);
+
+        warehouseRepository.deleteById(warehouseId);
     }
 }

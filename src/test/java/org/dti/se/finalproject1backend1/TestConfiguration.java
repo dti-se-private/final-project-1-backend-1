@@ -50,7 +50,7 @@ public class TestConfiguration {
     @Autowired
     protected AccountAddressRepository accountAddressRepository;
     @Autowired
-    private AccountPermissionRepository accountPermissionRepository;
+    AccountPermissionRepository accountPermissionRepository;
     @Autowired
     protected WarehouseRepository warehouseRepository;
     @Autowired
@@ -77,7 +77,7 @@ public class TestConfiguration {
     @MockitoBean
     protected MailgunGateway mailgunGatewayMock;
     @MockitoBean
-    private GoogleIdTokenVerifier googleIdTokenVerifier;
+    GoogleIdTokenVerifier googleIdTokenVerifier;
 
     @Autowired
     protected SecurityConfiguration securityConfiguration;
@@ -135,9 +135,9 @@ public class TestConfiguration {
                     .build();
             fakePermissions.add(newPermission);
         }
-        accountRepository.saveAll(fakeAccounts);
-        accountAddressRepository.saveAll(fakeAccountAddresses);
-        accountPermissionRepository.saveAll(fakePermissions);
+        accountRepository.saveAllAndFlush(fakeAccounts);
+        accountAddressRepository.saveAllAndFlush(fakeAccountAddresses);
+        accountPermissionRepository.saveAllAndFlush(fakePermissions);
 
         for (int i = 0; i < 5; i++) {
             Warehouse newWarehouse = Warehouse
@@ -149,7 +149,7 @@ public class TestConfiguration {
                     .build();
             fakeWarehouses.add(newWarehouse);
         }
-        warehouseRepository.saveAll(fakeWarehouses);
+        warehouseRepository.saveAllAndFlush(fakeWarehouses);
 
         for (int i = 0; i < 5; i++) {
             Category newCategory = Category
@@ -160,7 +160,7 @@ public class TestConfiguration {
                     .build();
             fakeCategories.add(newCategory);
         }
-        categoryRepository.saveAll(fakeCategories);
+        categoryRepository.saveAllAndFlush(fakeCategories);
 
         fakeCategories.forEach(category -> {
             for (int i = 0; i < 5; i++) {
@@ -176,7 +176,7 @@ public class TestConfiguration {
                 fakeProducts.add(newProduct);
             }
         });
-        productRepository.saveAll(fakeProducts);
+        productRepository.saveAllAndFlush(fakeProducts);
 
         fakeProducts.forEach(product -> {
             fakeWarehouses.forEach(warehouse -> {
@@ -190,7 +190,7 @@ public class TestConfiguration {
                 fakeWarehouseProducts.add(newWarehouseProduct);
             });
         });
-        warehouseProductRepository.saveAll(fakeWarehouseProducts);
+        warehouseProductRepository.saveAllAndFlush(fakeWarehouseProducts);
 
         fakeAccounts.forEach(account -> {
             fakeProducts.forEach(product -> {
@@ -204,7 +204,7 @@ public class TestConfiguration {
                 fakeCartItems.add(newCartItem);
             });
         });
-        cartItemRepository.saveAll(fakeCartItems);
+        cartItemRepository.saveAllAndFlush(fakeCartItems);
 
         List<String> ledgerStatuses = List.of(
                 "WAITING_FOR_APPROVAL",
@@ -222,7 +222,7 @@ public class TestConfiguration {
 
         fakeAccounts.forEach(account -> {
             for (int i = 0; i < 5; i++) {
-                Warehouse orderOriginWarehouse = fakeWarehouses.get((int) Math.floor(Math.random() * fakeWarehouses.size()));
+                Warehouse orderOriginWarehouse = fakeWarehouses.get(i);
                 Order newOrder = Order
                         .builder()
                         .id(UUID.randomUUID())
@@ -248,14 +248,22 @@ public class TestConfiguration {
                 }
 
                 fakeProducts.forEach(product -> {
-                    Warehouse originWarehouse = fakeWarehouses.get((int) Math.floor(Math.random() * fakeWarehouses.size()));
+                    WarehouseProduct originWarehouseProduct = fakeWarehouseProducts
+                            .stream()
+                            .filter(warehouseProduct -> warehouseProduct.getWarehouse().equals(orderOriginWarehouse) && warehouseProduct.getProduct().equals(product))
+                            .findFirst()
+                            .orElseThrow();
+                    WarehouseProduct destinationWarehouseProduct = fakeWarehouseProducts
+                            .stream()
+                            .filter(warehouseProduct -> warehouseProduct.getWarehouse().equals(orderOriginWarehouse) && warehouseProduct.getProduct().equals(product))
+                            .findFirst()
+                            .orElseThrow();
                     String ledgerStatus = ledgerStatuses.get((int) Math.floor(Math.random() * ledgerStatuses.size()));
                     WarehouseLedger newWarehouseLedger = WarehouseLedger
                             .builder()
                             .id(UUID.randomUUID())
-                            .product(product)
-                            .originWarehouse(originWarehouse)
-                            .destinationWarehouse(orderOriginWarehouse)
+                            .originWarehouseProduct(originWarehouseProduct)
+                            .destinationWarehouseProduct(destinationWarehouseProduct)
                             .originPreQuantity(Math.ceil(Math.random() * 100))
                             .originPostQuantity(Math.ceil(Math.random() * 100))
                             .destinationPreQuantity(Math.ceil(Math.random() * 100))
@@ -277,20 +285,18 @@ public class TestConfiguration {
                 });
             }
         });
-        orderRepository.saveAll(fakeOrders);
-        orderStatusRepository.saveAll(fakeOrderStatuses);
-        warehouseLedgerRepository.saveAll(fakeWarehouseLedger);
-        orderItemRepository.saveAll(fakeOrderItems);
+        orderRepository.saveAllAndFlush(fakeOrders);
+        orderStatusRepository.saveAllAndFlush(fakeOrderStatuses);
+        warehouseLedgerRepository.saveAllAndFlush(fakeWarehouseLedger);
+        orderItemRepository.saveAllAndFlush(fakeOrderItems);
 
-        Account adminAccountForWarehouseAdmin = fakeAccounts.get(1);
-        Warehouse warehouseForWarehouseAdmin = fakeWarehouses.get(1);
         WarehouseAdmin warehouseAdmin = WarehouseAdmin.builder()
                 .id(UUID.randomUUID())
-                .account(adminAccountForWarehouseAdmin)
-                .warehouse(warehouseForWarehouseAdmin)
+                .account(fakeAccounts.getFirst())
+                .warehouse(fakeWarehouses.getFirst())
                 .build();
         fakeWarehouseAdmins.add(warehouseAdmin);
-        warehouseAdminRepository.save(warehouseAdmin);
+        warehouseAdminRepository.saveAllAndFlush(fakeWarehouseAdmins);
     }
 
     public void depopulate() {

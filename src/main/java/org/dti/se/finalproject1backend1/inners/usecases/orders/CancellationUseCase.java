@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,19 +58,25 @@ public class CancellationUseCase {
         }
 
         if (accountPermissions.contains("CUSTOMER")) {
-            Boolean isExistsProcessingStatus = foundOrder
+            List<String> validCancelStatuses = List.of("WAITING_FOR_PAYMENT", "WAITING_FOR_PAYMENT_CONFIRMATION");
+            Boolean isValidStatus = foundOrder
                     .getOrderStatuses()
                     .stream()
-                    .anyMatch(orderStatus -> orderStatus.getStatus().equals("PROCESSING"));
-            if (isExistsProcessingStatus) {
+                    .max(Comparator.comparing(OrderStatus::getTime))
+                    .stream()
+                    .anyMatch(orderStatus -> validCancelStatuses.contains(orderStatus.getStatus()));
+            if (!isValidStatus) {
                 throw new OrderStatusInvalidException();
             }
         } else if (accountPermissions.contains("WAREHOUSE_ADMIN") || accountPermissions.contains("SUPER_ADMIN")) {
-            Boolean isExistsShippingStatus = foundOrder
+            List<String> validCancelStatuses = List.of("WAITING_FOR_PAYMENT", "WAITING_FOR_PAYMENT_CONFIRMATION", "PROCESSING");
+            Boolean isValidStatus = foundOrder
                     .getOrderStatuses()
                     .stream()
-                    .anyMatch(orderStatus -> orderStatus.getStatus().equals("SHIPPING"));
-            if (isExistsShippingStatus) {
+                    .max(Comparator.comparing(OrderStatus::getTime))
+                    .stream()
+                    .anyMatch(orderStatus -> validCancelStatuses.contains(orderStatus.getStatus()));
+            if (!isValidStatus) {
                 throw new OrderStatusInvalidException();
             }
         } else {
@@ -88,29 +95,13 @@ public class CancellationUseCase {
                 continue;
             }
 
-            Optional<WarehouseProduct> foundOriginWarehouseProduct = warehouseProductRepository
-                    .findByProductIdAndWarehouseId(
-                            foundWarehouseLedger.getProduct().getId(),
-                            foundWarehouseLedger.getOriginWarehouse().getId()
-                    );
-            if (foundOriginWarehouseProduct.isEmpty()) {
-                throw new WarehouseProductNotFoundException();
-            }
+            WarehouseProduct originWarehouseProduct = foundWarehouseLedger.getOriginWarehouseProduct();
+            WarehouseProduct destinationWarehouseProduct = foundWarehouseLedger.getDestinationWarehouseProduct();
 
-            Optional<WarehouseProduct> foundDestinationWarehouseProduct = warehouseProductRepository
-                    .findByProductIdAndWarehouseId(
-                            foundWarehouseLedger.getProduct().getId(),
-                            foundWarehouseLedger.getDestinationWarehouse().getId()
-                    );
-            if (foundDestinationWarehouseProduct.isEmpty()) {
-                throw new WarehouseProductNotFoundException();
-            }
+            OrderItem foundOrderItem = foundWarehouseLedger.getOrderItem();
 
-            OrderItem foundOrderItem = foundWarehouseLedger
-                    .getOrderItem();
-
-            Double originPostQuantity = foundDestinationWarehouseProduct.get().getQuantity() - foundOrderItem.getQuantity();
-            Double destinationPostQuantity = foundOriginWarehouseProduct.get().getQuantity() + foundOrderItem.getQuantity();
+            Double originPostQuantity = destinationWarehouseProduct.getQuantity() - foundOrderItem.getQuantity();
+            Double destinationPostQuantity = originWarehouseProduct.getQuantity() + foundOrderItem.getQuantity();
 
             if (originPostQuantity < 0 || destinationPostQuantity < 0) {
                 throw new WarehouseProductInsufficientException();
@@ -119,23 +110,22 @@ public class CancellationUseCase {
             WarehouseLedger newWarehouseLedger = WarehouseLedger
                     .builder()
                     .id(UUID.randomUUID())
-                    .product(foundWarehouseLedger.getProduct())
-                    .originWarehouse(foundWarehouseLedger.getDestinationWarehouse())
-                    .destinationWarehouse(foundWarehouseLedger.getOriginWarehouse())
-                    .originPreQuantity(foundDestinationWarehouseProduct.get().getQuantity())
+                    .originWarehouseProduct(foundWarehouseLedger.getDestinationWarehouseProduct())
+                    .destinationWarehouseProduct(foundWarehouseLedger.getOriginWarehouseProduct())
+                    .originPreQuantity(destinationWarehouseProduct.getQuantity())
                     .originPostQuantity(originPostQuantity)
-                    .destinationPreQuantity(foundOriginWarehouseProduct.get().getQuantity())
+                    .destinationPreQuantity(originWarehouseProduct.getQuantity())
                     .destinationPostQuantity(destinationPostQuantity)
                     .time(now)
                     .status("APPROVED")
                     .build();
 
-            foundDestinationWarehouseProduct.get().setQuantity(newWarehouseLedger.getOriginPostQuantity());
-            foundOriginWarehouseProduct.get().setQuantity(newWarehouseLedger.getDestinationPostQuantity());
+            destinationWarehouseProduct.setQuantity(newWarehouseLedger.getOriginPostQuantity());
+            originWarehouseProduct.setQuantity(newWarehouseLedger.getDestinationPostQuantity());
 
             warehouseLedgerRepository.saveAndFlush(newWarehouseLedger);
-            warehouseProductRepository.saveAndFlush(foundDestinationWarehouseProduct.get());
-            warehouseProductRepository.saveAndFlush(foundOriginWarehouseProduct.get());
+            warehouseProductRepository.saveAndFlush(destinationWarehouseProduct);
+            warehouseProductRepository.saveAndFlush(originWarehouseProduct);
         }
 
         OrderStatus newOrderStatus = OrderStatus

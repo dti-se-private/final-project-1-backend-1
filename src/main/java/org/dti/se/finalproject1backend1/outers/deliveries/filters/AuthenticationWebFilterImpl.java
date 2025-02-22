@@ -21,7 +21,7 @@ import java.io.IOException;
 public class AuthenticationWebFilterImpl extends OncePerRequestFilter {
 
     @Autowired
-    private AuthenticationManager authenticationManager;
+    AuthenticationManager authenticationManager;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {

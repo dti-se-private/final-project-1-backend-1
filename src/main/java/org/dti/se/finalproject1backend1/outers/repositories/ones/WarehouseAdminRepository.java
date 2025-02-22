@@ -11,5 +11,5 @@ import java.util.UUID;
 public interface WarehouseAdminRepository extends JpaRepository<WarehouseAdmin, UUID> {
     Optional<WarehouseAdmin> findById(UUID id);
 
-    boolean existsByAccountIdAndWarehouseId(UUID accountId, UUID warehouseId);
+    Boolean existsByAccountIdAndWarehouseId(UUID accountId, UUID warehouseId);
 }

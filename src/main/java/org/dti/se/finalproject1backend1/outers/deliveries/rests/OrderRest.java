@@ -8,6 +8,7 @@ import org.dti.se.finalproject1backend1.inners.usecases.orders.*;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountAddressNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
+import org.dti.se.finalproject1backend1.outers.exceptions.blobs.ObjectSizeExceededException;
 import org.dti.se.finalproject1backend1.outers.exceptions.carts.CartItemInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.orders.*;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductInsufficientException;
@@ -37,7 +38,7 @@ public class OrderRest {
     @Autowired
     CancellationUseCase cancellationUseCase;
     @Autowired
-    private ShipmentUseCase shipmentUseCase;
+    ShipmentUseCase shipmentUseCase;
 
 
     @PostMapping("/try-checkout")
@@ -196,6 +197,13 @@ public class OrderRest {
                     .data(order)
                     .build()
                     .toEntity(HttpStatus.OK);
+        } catch (ObjectSizeExceededException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Object size exceeded.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (OrderNotFoundException e) {
             return ResponseBody
                     .<OrderResponse>builder()

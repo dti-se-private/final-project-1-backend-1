@@ -30,16 +30,16 @@ import java.nio.file.ProviderNotFoundException;
 @RequestMapping(value = "/authentications")
 public class AuthenticationRest {
     @Autowired
-    private BasicAuthenticationUseCase basicAuthenticationUseCase;
+    BasicAuthenticationUseCase basicAuthenticationUseCase;
 
     @Autowired
-    private LoginAuthenticationUseCase loginAuthenticationUseCase;
+    LoginAuthenticationUseCase loginAuthenticationUseCase;
 
     @Autowired
-    private RegisterAuthenticationUseCase registerAuthenticationUseCase;
+    RegisterAuthenticationUseCase registerAuthenticationUseCase;
 
     @Autowired
-    private ResetPasswordUseCase resetPasswordUseCase;
+    ResetPasswordUseCase resetPasswordUseCase;
 
     @PostMapping(value = "/registers/internal")
     public ResponseEntity<ResponseBody<AccountResponse>> registerByInternal(

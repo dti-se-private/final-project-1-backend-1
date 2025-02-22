@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/statistics/product-sales")
 @RequiredArgsConstructor
 public class SalesStatisticsRest {
-//    private final SalesStatisticsUseCase salesStatisticsService;
+//    final SalesStatisticsUseCase salesStatisticsService;
 //
 ////    @GetMapping
 ////    public ResponseEntity<List<Map<String, Object>>> getProductSalesStatistics(
