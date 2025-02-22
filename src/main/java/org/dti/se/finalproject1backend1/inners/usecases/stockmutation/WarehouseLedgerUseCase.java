@@ -1,18 +1,15 @@
 package org.dti.se.finalproject1backend1.inners.usecases.stockmutation;
 
-import lombok.RequiredArgsConstructor;
-import org.dti.se.finalproject1backend1.inners.models.entities.*;
+import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.stockmutation.WarehouseLedgerResponse;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
-import org.dti.se.finalproject1backend1.outers.repositories.customs.WarehouseLedgerCustomRepository;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseLedgerNotFoundException;
+import org.dti.se.finalproject1backend1.outers.repositories.customs.WarehouseLedgerCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -36,13 +33,8 @@ public class WarehouseLedgerUseCase {
             throw new AccountPermissionInvalidException();
         }
 
-        List<UUID> warehouseIds = null;
-        if (account.getAccountPermissions().contains("WAREHOUSE_ADMIN")) {
-            warehouseIds = warehouseRepository.findWarehouseIdsByAccountId(account.getId());
-        }
-
         // Proceed with the operation
-        return ledgerCustomRepository.getWarehouseLedgers(warehouseIds, page, size, search);
+        return ledgerCustomRepository.getWarehouseLedgers(account, page, size, search);
     }
 
     public WarehouseLedgerResponse approveMutation(Account account, UUID id) {
@@ -57,8 +49,8 @@ public class WarehouseLedgerUseCase {
         // Check if the ledger's origin or destination warehouse is associated with the warehouse admin
         if (account.getAccountPermissions().contains("WAREHOUSE_ADMIN")) {
             List<UUID> warehouseIds = warehouseRepository.findWarehouseIdsByAccountId(account.getId());
-            if (!warehouseIds.contains(ledger.getOriginWarehouse().getId()) &&
-                    !warehouseIds.contains(ledger.getDestinationWarehouse().getId())) {
+            if (!warehouseIds.contains(ledger.getOriginWarehouseProduct().getWarehouse().getId()) &&
+                    !warehouseIds.contains(ledger.getDestinationWarehouseProduct().getWarehouse().getId())) {
                 throw new AccountPermissionInvalidException();
             }
         }
@@ -81,8 +73,8 @@ public class WarehouseLedgerUseCase {
         // Check if the ledger's origin or destination warehouse is associated with the warehouse admin
         if (account.getAccountPermissions().contains("WAREHOUSE_ADMIN")) {
             List<UUID> warehouseIds = warehouseRepository.findWarehouseIdsByAccountId(account.getId());
-            if (!warehouseIds.contains(ledger.getOriginWarehouse().getId()) &&
-                    !warehouseIds.contains(ledger.getDestinationWarehouse().getId())) {
+            if (!warehouseIds.contains(ledger.getOriginWarehouseProduct().getWarehouse().getId()) &&
+                    !warehouseIds.contains(ledger.getDestinationWarehouseProduct().getWarehouse().getId())) {
                 throw new AccountPermissionInvalidException();
             }
         }
@@ -115,7 +107,7 @@ public class WarehouseLedgerUseCase {
     }
 
     private WarehouseLedgerResponse getLedgerById(UUID id) {
-        return ledgerCustomRepository.getWarehouseLedgers(null,0, 1, id.toString())
+        return ledgerCustomRepository.getWarehouseLedgers(null, 0, 1, id.toString())
                 .stream()
                 .findFirst()
                 .orElseThrow(WarehouseLedgerNotFoundException::new);
