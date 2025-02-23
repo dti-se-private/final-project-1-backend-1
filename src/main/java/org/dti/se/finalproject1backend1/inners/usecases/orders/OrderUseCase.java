@@ -114,8 +114,7 @@ public class OrderUseCase {
             WarehouseProduct originWarehouseProduct = locationCustomRepository
                     .getNearestExistingWarehouseProduct(
                             foundOrder.getShipmentOrigin(),
-                            foundOrderItem.getProduct().getId(),
-                            foundOrderItem.getQuantity()
+                            foundOrderItem.getProduct().getId()
                     );
 
             if (originWarehouseProduct == null) {

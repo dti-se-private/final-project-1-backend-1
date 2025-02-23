@@ -138,7 +138,7 @@ public class OrderRestTest extends TestConfiguration {
     public void testAutomaticPayment() throws Exception {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
-        Mockito.when(locationCustomRepository.getNearestExistingWarehouseProduct(Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(locationCustomRepository.getNearestExistingWarehouseProduct(Mockito.any(), Mockito.any()))
                 .thenReturn(fakeWarehouseProducts.getFirst());
 
         Order realOrder = fakeOrders
@@ -182,7 +182,7 @@ public class OrderRestTest extends TestConfiguration {
     @Test
     @ResourceLock("locationCustomRepositoryMock")
     public void testManualPayment() throws Exception {
-        Mockito.when(locationCustomRepository.getNearestExistingWarehouseProduct(Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(locationCustomRepository.getNearestExistingWarehouseProduct(Mockito.any(), Mockito.any()))
                 .thenReturn(fakeWarehouseProducts.getFirst());
 
         Order realOrder = fakeOrders
@@ -298,7 +298,7 @@ public class OrderRestTest extends TestConfiguration {
     @Test
     @ResourceLock("locationCustomRepositoryMock")
     public void testApprovePaymentConfirmationOrder() throws Exception {
-        Mockito.when(locationCustomRepository.getNearestExistingWarehouseProduct(Mockito.any(), Mockito.any(), Mockito.any()))
+        Mockito.when(locationCustomRepository.getNearestExistingWarehouseProduct(Mockito.any(), Mockito.any()))
                 .thenReturn(fakeWarehouseProducts.getFirst());
 
         Order realOrder = fakeOrders
