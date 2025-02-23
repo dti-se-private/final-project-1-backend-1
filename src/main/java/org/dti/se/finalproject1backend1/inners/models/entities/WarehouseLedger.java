@@ -21,16 +21,12 @@ public class WarehouseLedger {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "product_id", nullable = false)
-    private Product product;
+    @JoinColumn(name = "origin_warehouse_product_id", nullable = false)
+    private WarehouseProduct originWarehouseProduct;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "origin_warehouse_id", nullable = false)
-    private Warehouse originWarehouse;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "destination_warehouse_id", nullable = false)
-    private Warehouse destinationWarehouse;
+    @JoinColumn(name = "destination_warehouse_product_id", nullable = false)
+    private WarehouseProduct destinationWarehouseProduct;
 
     @OneToOne(mappedBy = "warehouseLedger")
     private OrderItem orderItem;

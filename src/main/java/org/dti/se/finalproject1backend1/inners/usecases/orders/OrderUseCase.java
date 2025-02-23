@@ -161,9 +161,8 @@ public class OrderUseCase {
                 WarehouseLedger newWarehouseLedger = WarehouseLedger
                         .builder()
                         .id(UUID.randomUUID())
-                        .product(originWarehouseProduct.getProduct())
-                        .originWarehouse(originWarehouseProduct.getWarehouse())
-                        .destinationWarehouse(destinationWarehouseProduct.getWarehouse())
+                        .originWarehouseProduct(originWarehouseProduct)
+                        .destinationWarehouseProduct(destinationWarehouseProduct)
                         .originPreQuantity(originWarehouseProduct.getQuantity())
                         .originPostQuantity(originPostQuantity)
                         .destinationPreQuantity(destinationWarehouseProduct.getQuantity())
@@ -203,7 +202,7 @@ public class OrderUseCase {
                 .id(UUID.randomUUID())
                 .order(foundOrder)
                 .status("SHIPPING")
-                .time(now)
+                .time(now.plusSeconds(1))
                 .build();
         orderStatusRepository.saveAndFlush(newOrderStatusShipping);
     }

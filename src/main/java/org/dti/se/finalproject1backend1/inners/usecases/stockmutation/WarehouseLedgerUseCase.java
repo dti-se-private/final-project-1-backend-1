@@ -68,9 +68,8 @@ public class WarehouseLedgerUseCase {
         // Create ledger entry
         WarehouseLedger ledger = new WarehouseLedger();
         ledger.setId(UUID.randomUUID());
-        ledger.setProduct(product);
-        ledger.setOriginWarehouse(originWarehouse);
-        ledger.setDestinationWarehouse(destinationWarehouse);
+        ledger.setOriginWarehouseProduct(originProduct);
+        ledger.setDestinationWarehouseProduct(destinationProduct);
         ledger.setOriginPreQuantity(originProduct.getQuantity());
         ledger.setOriginPostQuantity(originProduct.getQuantity() - quantity);
         ledger.setTime(now);
@@ -88,10 +87,8 @@ public class WarehouseLedgerUseCase {
         }
 
         // Update warehouse product stock
-        WarehouseProduct originProduct = warehouseProductRepository.findByProductIdAndWarehouseId(ledger.getOriginWarehouse().getId(), ledger.getProduct().getId())
-                .orElseThrow(() -> new RuntimeException("Origin warehouse product not found"));
-        WarehouseProduct destinationProduct = warehouseProductRepository.findByProductIdAndWarehouseId(ledger.getDestinationWarehouse().getId(), ledger.getProduct().getId())
-                .orElseThrow(() -> new RuntimeException("Destination warehouse product not found"));
+        WarehouseProduct originProduct = ledger.getOriginWarehouseProduct();
+        WarehouseProduct destinationProduct = ledger.getDestinationWarehouseProduct();
 
         originProduct.setQuantity(originProduct.getQuantity() - ledger.getOriginPostQuantity());
         destinationProduct.setQuantity(destinationProduct.getQuantity() + ledger.getOriginPostQuantity());

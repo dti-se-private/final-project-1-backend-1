@@ -248,14 +248,22 @@ public class TestConfiguration {
                 }
 
                 fakeProducts.forEach(product -> {
-                    Warehouse originWarehouse = fakeWarehouses.get((int) Math.floor(Math.random() * fakeWarehouses.size()));
+                    WarehouseProduct originWarehouseProduct = fakeWarehouseProducts
+                            .stream()
+                            .filter(warehouseProduct -> warehouseProduct.getWarehouse().equals(orderOriginWarehouse) && warehouseProduct.getProduct().equals(product))
+                            .findFirst()
+                            .orElseThrow();
+                    WarehouseProduct destinationWarehouseProduct = fakeWarehouseProducts
+                            .stream()
+                            .filter(warehouseProduct -> warehouseProduct.getWarehouse().equals(orderOriginWarehouse) && warehouseProduct.getProduct().equals(product))
+                            .findFirst()
+                            .orElseThrow();
                     String ledgerStatus = ledgerStatuses.get((int) Math.floor(Math.random() * ledgerStatuses.size()));
                     WarehouseLedger newWarehouseLedger = WarehouseLedger
                             .builder()
                             .id(UUID.randomUUID())
-                            .product(product)
-                            .originWarehouse(originWarehouse)
-                            .destinationWarehouse(orderOriginWarehouse)
+                            .originWarehouseProduct(originWarehouseProduct)
+                            .destinationWarehouseProduct(destinationWarehouseProduct)
                             .originPreQuantity(Math.ceil(Math.random() * 100))
                             .originPostQuantity(Math.ceil(Math.random() * 100))
                             .destinationPreQuantity(Math.ceil(Math.random() * 100))
