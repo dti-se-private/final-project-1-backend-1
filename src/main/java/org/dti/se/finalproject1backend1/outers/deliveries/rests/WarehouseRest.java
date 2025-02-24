@@ -22,7 +22,7 @@ import java.util.UUID;
 public class WarehouseRest {
 
     @Autowired
-    private WarehouseUseCase warehouseUseCase;
+    WarehouseUseCase warehouseUseCase;
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")

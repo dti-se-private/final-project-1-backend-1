@@ -16,16 +16,16 @@ import java.security.ProviderException;
 @Service
 public class ResetPasswordUseCase {
     @Autowired
-    private AccountRepository accountRepository;
+    AccountRepository accountRepository;
 
     @Autowired
-    private ProviderRepository providerRepository;
+    ProviderRepository providerRepository;
 
     @Autowired
-    private VerificationUseCase verificationUseCase;
+    VerificationUseCase verificationUseCase;
 
     @Autowired
-    private SecurityConfiguration securityConfiguration;
+    SecurityConfiguration securityConfiguration;
 
     public void resetPassword(String email, String newPassword, String otp) {
         Account account = accountRepository.findByEmail(email)

@@ -26,13 +26,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class VerificationRestTest extends TestConfiguration {
 
     @Autowired
-    private MockMvc mockMvc;
+    MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    ObjectMapper objectMapper;
 
-    private String testEmail;
-    private String testType;
+    String testEmail;
+    String testType;
 
     @BeforeEach
     public void setUp() {

@@ -56,7 +56,7 @@ public class LocationCustomRepository {
         }
     }
 
-    public WarehouseProduct getNearestExistingWarehouseProduct(Point location, UUID productId, Double quantity) {
+    public WarehouseProduct getNearestExistingWarehouseProduct(Point location, UUID productId) {
         String sql = """
                 SELECT json_build_object(
                     'id', warehouse_product.id,
@@ -84,7 +84,7 @@ public class LocationCustomRepository {
                 JOIN warehouse ON warehouse_product.warehouse_id = warehouse.id
                 JOIN product ON warehouse_product.product_id = product.id
                 JOIN category ON product.category_id = category.id
-                WHERE product.id = ? AND warehouse_product.quantity >= ?
+                WHERE product.id = ?
                 ORDER BY warehouse.location <-> ST_SetSRID(ST_MakePoint(?, ?), 4326) ASC
                 LIMIT 1
                 """;
@@ -100,7 +100,6 @@ public class LocationCustomRepository {
                                 }
                             },
                             productId,
-                            quantity,
                             location.getX(),
                             location.getY()
                     );

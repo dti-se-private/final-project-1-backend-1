@@ -15,7 +15,7 @@ import java.util.Objects;
 public class TwoDatastoreConfiguration {
 
     @Autowired
-    private Environment environment;
+    Environment environment;
 
     @Bean
     public RedisConnectionFactory reactiveRedisConnectionFactory() {

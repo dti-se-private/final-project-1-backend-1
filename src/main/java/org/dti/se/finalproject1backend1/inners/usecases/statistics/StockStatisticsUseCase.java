@@ -6,8 +6,8 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class StockStatisticsUseCase {
-//    private final WarehouseLedgerRepository warehouseLedgerRepository;
-////    private final AuthService authService; // To get user role and warehouse access
+//    final WarehouseLedgerRepository warehouseLedgerRepository;
+////    final AuthService authService; // To get user role and warehouse access
 //
 //    public List<Map<String, Object>> getProductStockStatistics(
 //            List<UUID> warehouseIds,

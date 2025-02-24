@@ -10,13 +10,12 @@ import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseNo
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductExistsException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.WarehouseProductCustomRepository;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.ProductRepository;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseAdminRepository;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseProductRepository;
-import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseRepository;
+import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.OffsetDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -24,18 +23,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class WarehouseProductUseCase {
     @Autowired
-    private WarehouseProductRepository warehouseProductRepository;
-
+    WarehouseProductRepository warehouseProductRepository;
     @Autowired
-    private WarehouseProductCustomRepository warehouseProductCustomRepository;
-
+    WarehouseProductCustomRepository warehouseProductCustomRepository;
     @Autowired
-    private WarehouseRepository warehouseRepository;
-
+    WarehouseRepository warehouseRepository;
     @Autowired
-    private ProductRepository productRepository;
+    StockLedgerRepository stockLedgerRepository;
     @Autowired
-    private WarehouseAdminRepository warehouseAdminRepository;
+    ProductRepository productRepository;
+    @Autowired
+    WarehouseAdminRepository warehouseAdminRepository;
 
     public List<WarehouseProductResponse> getWarehouseProducts(
             Account account,
@@ -79,6 +77,8 @@ public class WarehouseProductUseCase {
     }
 
     public WarehouseProductResponse addWarehouseProduct(Account account, WarehouseProductRequest request) {
+        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+
         Warehouse warehouse = warehouseRepository
                 .findById(request.getWarehouseId())
                 .orElseThrow(WarehouseNotFoundException::new);
@@ -112,19 +112,32 @@ public class WarehouseProductUseCase {
             throw new AccountPermissionInvalidException();
         }
 
-        WarehouseProduct warehouseProduct = WarehouseProduct.builder()
+        WarehouseProduct warehouseProduct = WarehouseProduct
+                .builder()
                 .id(UUID.randomUUID())
                 .warehouse(warehouse)
                 .product(product)
                 .quantity(request.getQuantity())
                 .build();
-
         warehouseProductRepository.saveAndFlush(warehouseProduct);
+
+        StockLedger stockLedger = StockLedger
+                .builder()
+                .id(UUID.randomUUID())
+                .warehouseProduct(warehouseProduct)
+                .preQuantity(0.0)
+                .postQuantity(warehouseProduct.getQuantity())
+                .time(now)
+                .build();
+        stockLedgerRepository.saveAndFlush(stockLedger);
+
 
         return warehouseProductCustomRepository.getWarehouseProduct(warehouseProduct.getId());
     }
 
     public WarehouseProductResponse patchWarehouseProduct(Account account, UUID warehouseProductId, WarehouseProductRequest request) {
+        OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
+
         Warehouse warehouse = warehouseRepository
                 .findById(request.getWarehouseId())
                 .orElseThrow(WarehouseNotFoundException::new);
@@ -155,10 +168,19 @@ public class WarehouseProductUseCase {
             throw new AccountPermissionInvalidException();
         }
 
+        StockLedger stockLedger = StockLedger
+                .builder()
+                .id(UUID.randomUUID())
+                .warehouseProduct(warehouseProduct)
+                .preQuantity(warehouseProduct.getQuantity())
+                .postQuantity(request.getQuantity())
+                .time(now)
+                .build();
+        stockLedgerRepository.saveAndFlush(stockLedger);
+
         warehouseProduct.setWarehouse(warehouse);
         warehouseProduct.setProduct(product);
         warehouseProduct.setQuantity(request.getQuantity());
-
         warehouseProductRepository.saveAndFlush(warehouseProduct);
 
         return warehouseProductCustomRepository.getWarehouseProduct(warehouseProduct.getId());

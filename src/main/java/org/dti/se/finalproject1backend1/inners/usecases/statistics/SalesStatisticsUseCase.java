@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class SalesStatisticsUseCase {
-//    private final WarehouseLedgerRepository warehouseLedgerRepository;
+//    final WarehouseLedgerRepository warehouseLedgerRepository;
 //
 //    public double getTotalSalesByProduct(UUID productId, OffsetDateTime startDate, OffsetDateTime endDate) {
 //        List<WarehouseLedger> ledgers = warehouseLedgerRepository.findByProductIdAndTimeBetween(productId, startDate, endDate);

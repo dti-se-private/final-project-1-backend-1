@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class VerificationRest {
 
     @Autowired
-    private VerificationUseCase verificationUseCase;
+    VerificationUseCase verificationUseCase;
 
     @PostMapping("/send")
     public ResponseEntity<ResponseBody<Void>> send(

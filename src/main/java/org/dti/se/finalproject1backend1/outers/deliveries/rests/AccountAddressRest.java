@@ -22,7 +22,7 @@ import java.util.UUID;
 public class AccountAddressRest {
 
     @Autowired
-    private AccountAddressUseCase accountAddressUseCase;
+    AccountAddressUseCase accountAddressUseCase;
 
     @PostMapping
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
