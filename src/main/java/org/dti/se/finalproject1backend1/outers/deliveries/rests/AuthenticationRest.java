@@ -13,6 +13,8 @@ import org.dti.se.finalproject1backend1.inners.usecases.authentications.ResetPas
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountCredentialsInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.providers.ProviderInvalidException;
+import org.dti.se.finalproject1backend1.outers.exceptions.providers.ProviderNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationExpiredException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
@@ -23,8 +25,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.nio.file.ProviderNotFoundException;
 
 @RestController
 @RequestMapping(value = "/authentications")
@@ -132,10 +132,10 @@ public class AuthenticationRest {
             @RequestBody ResetPasswordRequest request
     ) {
         try {
-            resetPasswordUseCase.resetPassword(request.getEmail(), request.getNewPassword(), request.getOtp());
+            resetPasswordUseCase.resetPassword(request);
             return ResponseBody
                     .<Void>builder()
-                    .message("Password reset successfully.")
+                    .message("Password reset succeed.")
                     .build()
                     .toEntity(HttpStatus.OK);
         } catch (AccountNotFoundException e) {
@@ -150,12 +150,18 @@ public class AuthenticationRest {
                     .message("Provider not found.")
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
-        } catch (VerificationNotFoundException e) {
+        } catch (ProviderInvalidException e) {
             return ResponseBody
                     .<Void>builder()
-                    .message("Verification not found.")
+                    .message("Provider invalid, only internal provider can reset password.")
                     .build()
-                    .toEntity(HttpStatus.NOT_FOUND);
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (VerificationInvalidException e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Verification invalid.")
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
                     .<Void>builder()

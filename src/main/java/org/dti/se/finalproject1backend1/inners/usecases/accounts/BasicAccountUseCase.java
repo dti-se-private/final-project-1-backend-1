@@ -1,6 +1,7 @@
 package org.dti.se.finalproject1backend1.inners.usecases.accounts;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
+import org.dti.se.finalproject1backend1.inners.models.entities.Provider;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
 import org.dti.se.finalproject1backend1.inners.usecases.authentications.VerificationUseCase;
@@ -77,17 +78,29 @@ public class BasicAccountUseCase {
                 .findById(id)
                 .orElseThrow(AccountNotFoundException::new);
 
-        Boolean verifyResult = verificationUseCase.verifyOtp(request.getEmail(), request.getOtp(), "UPDATE_ACCOUNT");
-        if (!verifyResult) {
-            throw new VerificationInvalidException();
+        List<Provider> providers = accountToPatch
+                .getProviders()
+                .stream()
+                .toList();
+
+        Boolean isProviderContainInternal = providers
+                .stream()
+                .anyMatch(provider -> provider.getName().equals("INTERNAL"));
+
+        if (isProviderContainInternal) {
+            Boolean verifyResult = verificationUseCase.verifyOtp(request.getEmail(), request.getOtp(), "UPDATE_ACCOUNT");
+            if (!verifyResult) {
+                throw new VerificationInvalidException();
+            }
+
+            accountToPatch.setName(request.getName());
+            String encodedPassword = securityConfiguration.encode(request.getPassword());
+            accountToPatch.setPassword(encodedPassword);
         }
 
-        accountToPatch.setEmail(request.getEmail());
         accountToPatch.setName(request.getName());
         accountToPatch.setPhone(request.getPhone());
         accountToPatch.setImage(request.getImage());
-        String encodedPassword = securityConfiguration.encode(request.getPassword());
-        accountToPatch.setPassword(encodedPassword);
 
         Account patchedAccount = accountRepository.saveAndFlush(accountToPatch);
 

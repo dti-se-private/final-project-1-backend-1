@@ -21,4 +21,5 @@ public class Session extends Model {
     private OffsetDateTime accessTokenExpiredAt;
     private OffsetDateTime refreshTokenExpiredAt;
     private List<String> permissions;
+    private List<String> providers;
 }

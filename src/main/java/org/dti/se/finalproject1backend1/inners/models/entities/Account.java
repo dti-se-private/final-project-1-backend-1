@@ -40,6 +40,10 @@ public class Account extends Model {
 
     @OneToMany(mappedBy = "account")
     @Builder.Default
+    private Set<Provider> providers = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "account")
+    @Builder.Default
     private Set<AccountAddress> accountAddresses = new LinkedHashSet<>();
 
     @OneToMany(mappedBy = "account")
