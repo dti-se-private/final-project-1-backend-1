@@ -103,7 +103,7 @@ public class ProductRestTest extends TestConfiguration {
         assert responseBody.getData().getId().equals(realProduct.getId());
         assert responseBody.getData().getName().equals(realProduct.getName());
         assert responseBody.getData().getDescription().equals(realProduct.getDescription());
-        assert Math.ceil(responseBody.getData().getPrice()) == Math.ceil(realProduct.getPrice());
+        assert responseBody.getData().getPrice().equals(realProduct.getPrice());
         assert Arrays.equals(responseBody.getData().getImage(), realProduct.getImage());
         assert responseBody.getData().getCategory().getId().equals(realProduct.getCategory().getId());
         assert responseBody.getData().getCategory().getName().equals(realProduct.getCategory().getName());

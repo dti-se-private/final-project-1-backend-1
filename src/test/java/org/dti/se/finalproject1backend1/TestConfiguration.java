@@ -48,6 +48,8 @@ public class TestConfiguration {
     @Autowired
     protected AccountRepository accountRepository;
     @Autowired
+    protected ProviderRepository providerRepository;
+    @Autowired
     protected AccountAddressRepository accountAddressRepository;
     @Autowired
     AccountPermissionRepository accountPermissionRepository;
@@ -83,6 +85,7 @@ public class TestConfiguration {
     protected SecurityConfiguration securityConfiguration;
 
     protected List<Account> fakeAccounts = new ArrayList<>();
+    protected List<Provider> fakeProviders = new ArrayList<>();
     protected List<AccountAddress> fakeAccountAddresses = new ArrayList<>();
     protected List<AccountPermission> fakePermissions = new ArrayList<>();
     protected List<Warehouse> fakeWarehouses = new ArrayList<>();
@@ -118,6 +121,14 @@ public class TestConfiguration {
                     .build();
             fakeAccounts.add(newAccount);
 
+            Provider newProvider = Provider
+                    .builder()
+                    .id(UUID.randomUUID())
+                    .account(newAccount)
+                    .name("INTERNAL")
+                    .build();
+            fakeProviders.add(newProvider);
+
             AccountAddress newAccountAddress = AccountAddress
                     .builder()
                     .id(UUID.randomUUID())
@@ -136,6 +147,7 @@ public class TestConfiguration {
             fakePermissions.add(newPermission);
         }
         accountRepository.saveAllAndFlush(fakeAccounts);
+        providerRepository.saveAllAndFlush(fakeProviders);
         accountAddressRepository.saveAllAndFlush(fakeAccountAddresses);
         accountPermissionRepository.saveAllAndFlush(fakePermissions);
 
@@ -170,7 +182,7 @@ public class TestConfiguration {
                         .category(category)
                         .name(String.format("name-%s", UUID.randomUUID()))
                         .description(String.format("description-%s", UUID.randomUUID()))
-                        .price(Math.random() * 1000000)
+                        .price(Math.ceil(Math.random() * 1000000))
                         .image(null)
                         .build();
                 fakeProducts.add(newProduct);

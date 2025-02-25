@@ -10,7 +10,13 @@ import org.dti.se.finalproject1backend1.outers.repositories.customs.LocationCust
 import org.dti.se.finalproject1backend1.outers.repositories.customs.OrderCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -37,6 +43,14 @@ public class OrderUseCase {
     LocationCustomRepository locationCustomRepository;
     @Autowired
     StockLedgerRepository stockLedgerRepository;
+
+    @Autowired
+    @Qualifier("oneTransactionTemplate")
+    TransactionTemplate transactionTemplate;
+
+    @Autowired
+    @Qualifier("oneTransactionManager")
+    PlatformTransactionManager transactionManager;
 
 
     public List<OrderResponse> getOrders(
@@ -90,7 +104,7 @@ public class OrderUseCase {
         }
     }
 
-    public void processOrderProcessing(UUID orderId, String ledgerStatus) {
+    public void processOrderProcessing(UUID orderId, String ledgerStatus) throws Exception {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
         Order foundOrder = orderRepository
@@ -109,117 +123,124 @@ public class OrderUseCase {
         List<OrderItem> foundOrderItems = orderItemRepository
                 .findAllByOrderId(foundOrder.getId());
 
-        // Get nearest warehouse product from order shipment origin warehouse.
-        for (OrderItem foundOrderItem : foundOrderItems) {
-            WarehouseProduct originWarehouseProduct = locationCustomRepository
-                    .getNearestExistingWarehouseProduct(
-                            foundOrder.getShipmentOrigin(),
-                            foundOrderItem.getProduct().getId()
-                    );
+        // Transactional stock mutation.
+        Exception stockMutationException = null;
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.setIsolationLevel(TransactionDefinition.ISOLATION_DEFAULT);
+        TransactionStatus status = transactionManager.getTransaction(definition);
+        try {
+            for (OrderItem foundOrderItem : foundOrderItems) {
+                // Get nearest warehouse product from order shipment origin warehouse.
+                WarehouseProduct originWarehouseProduct = locationCustomRepository
+                        .getNearestExistingWarehouseProduct(
+                                foundOrder.getShipmentOrigin(),
+                                foundOrderItem.getProduct().getId()
+                        );
 
-            if (originWarehouseProduct == null) {
-                throw new WarehouseProductNotFoundException();
-            }
-
-            WarehouseProduct destinationWarehouseProduct = warehouseProductRepository
-                    .findByProductIdAndWarehouseId(
-                            foundOrderItem.getProduct().getId(),
-                            foundOrder.getOriginWarehouse().getId()
-                    )
-                    .orElseThrow(WarehouseProductNotFoundException::new);
-
-            // If order origin warehouse is different from nearest warehouse.
-            // Assumes both sides have a warehouse product.
-            if (!originWarehouseProduct.getWarehouse().getId().equals(destinationWarehouseProduct.getWarehouse().getId())) {
-                Double originPostQuantity = originWarehouseProduct.getQuantity() - foundOrderItem.getQuantity();
-                Double destinationPostQuantity = destinationWarehouseProduct.getQuantity() + foundOrderItem.getQuantity();
-                if (originPostQuantity < 0 || destinationPostQuantity < 0) {
-                    OrderStatus newOrderStatusCanceled = OrderStatus
-                            .builder()
-                            .id(UUID.randomUUID())
-                            .order(foundOrder)
-                            .status("CANCELED")
-                            .time(now)
-                            .build();
-                    orderStatusRepository.saveAndFlush(newOrderStatusCanceled);
-                    throw new WarehouseProductInsufficientException();
+                if (originWarehouseProduct == null) {
+                    throw new WarehouseProductNotFoundException();
                 }
 
-                StockLedger originStockLedger = StockLedger
-                        .builder()
-                        .id(UUID.randomUUID())
-                        .warehouseProduct(originWarehouseProduct)
-                        .preQuantity(originWarehouseProduct.getQuantity())
-                        .postQuantity(originPostQuantity)
-                        .time(now)
-                        .build();
-                stockLedgerRepository.saveAndFlush(originStockLedger);
+                WarehouseProduct destinationWarehouseProduct = warehouseProductRepository
+                        .findByProductIdAndWarehouseId(
+                                foundOrderItem.getProduct().getId(),
+                                foundOrder.getOriginWarehouse().getId()
+                        )
+                        .orElseThrow(WarehouseProductNotFoundException::new);
+
+                // Move warehouse stocks first if the nearest origin warehouse is different from destination warehouse.
+                // Assumes both sides have a warehouse product.
+                if (!originWarehouseProduct.getWarehouse().getId().equals(destinationWarehouseProduct.getWarehouse().getId())) {
+                    Double originPostQuantity = originWarehouseProduct.getQuantity() - foundOrderItem.getQuantity();
+                    Double destinationPostQuantity = destinationWarehouseProduct.getQuantity() + foundOrderItem.getQuantity();
+                    if (originPostQuantity < 0 || destinationPostQuantity < 0) {
+                        throw new WarehouseProductInsufficientException();
+                    }
+
+                    StockLedger originStockLedger = StockLedger
+                            .builder()
+                            .id(UUID.randomUUID())
+                            .warehouseProduct(originWarehouseProduct)
+                            .preQuantity(originWarehouseProduct.getQuantity())
+                            .postQuantity(originPostQuantity)
+                            .time(now)
+                            .build();
+                    stockLedgerRepository.saveAndFlush(originStockLedger);
+
+                    StockLedger destinationStockLedger = StockLedger
+                            .builder()
+                            .id(UUID.randomUUID())
+                            .warehouseProduct(destinationWarehouseProduct)
+                            .preQuantity(destinationWarehouseProduct.getQuantity())
+                            .postQuantity(destinationPostQuantity)
+                            .time(now)
+                            .build();
+                    stockLedgerRepository.saveAndFlush(destinationStockLedger);
+
+                    WarehouseLedger newWarehouseLedger = WarehouseLedger
+                            .builder()
+                            .id(UUID.randomUUID())
+                            .originWarehouseProduct(originWarehouseProduct)
+                            .destinationWarehouseProduct(destinationWarehouseProduct)
+                            .originPreQuantity(originWarehouseProduct.getQuantity())
+                            .originPostQuantity(originPostQuantity)
+                            .destinationPreQuantity(destinationWarehouseProduct.getQuantity())
+                            .destinationPostQuantity(destinationPostQuantity)
+                            .status(ledgerStatus)
+                            .build();
+
+                    originWarehouseProduct.setQuantity(originPostQuantity);
+                    destinationWarehouseProduct.setQuantity(destinationPostQuantity);
+                    warehouseProductRepository.saveAndFlush(originWarehouseProduct);
+                    warehouseProductRepository.saveAndFlush(destinationWarehouseProduct);
+                    warehouseLedgerRepository.saveAndFlush(newWarehouseLedger);
+                }
+
+                // Use warehouse product for order item.
+                Double warehouseProductQuantity = destinationWarehouseProduct.getQuantity() - foundOrderItem.getQuantity();
+                if (warehouseProductQuantity < 0) {
+                    throw new WarehouseProductInsufficientException();
+                }
 
                 StockLedger destinationStockLedger = StockLedger
                         .builder()
                         .id(UUID.randomUUID())
                         .warehouseProduct(destinationWarehouseProduct)
                         .preQuantity(destinationWarehouseProduct.getQuantity())
-                        .postQuantity(destinationPostQuantity)
+                        .postQuantity(warehouseProductQuantity)
                         .time(now)
                         .build();
                 stockLedgerRepository.saveAndFlush(destinationStockLedger);
 
-                WarehouseLedger newWarehouseLedger = WarehouseLedger
-                        .builder()
-                        .id(UUID.randomUUID())
-                        .originWarehouseProduct(originWarehouseProduct)
-                        .destinationWarehouseProduct(destinationWarehouseProduct)
-                        .originPreQuantity(originWarehouseProduct.getQuantity())
-                        .originPostQuantity(originPostQuantity)
-                        .destinationPreQuantity(destinationWarehouseProduct.getQuantity())
-                        .destinationPostQuantity(destinationPostQuantity)
-                        .status(ledgerStatus)
-                        .build();
-
-                originWarehouseProduct.setQuantity(originPostQuantity);
-                destinationWarehouseProduct.setQuantity(destinationPostQuantity);
-                warehouseProductRepository.saveAndFlush(originWarehouseProduct);
+                destinationWarehouseProduct.setQuantity(warehouseProductQuantity);
                 warehouseProductRepository.saveAndFlush(destinationWarehouseProduct);
-                warehouseLedgerRepository.saveAndFlush(newWarehouseLedger);
             }
+        } catch (Exception exception) {
+            stockMutationException = exception;
+            transactionManager.rollback(status);
+        }
+        transactionManager.commit(status);
 
-            // Use warehouse product for order item.
-            Double warehouseProductQuantity = destinationWarehouseProduct.getQuantity() - foundOrderItem.getQuantity();
-            if (warehouseProductQuantity < 0) {
-                OrderStatus newOrderStatusCanceled = OrderStatus
-                        .builder()
-                        .id(UUID.randomUUID())
-                        .order(foundOrder)
-                        .status("CANCELED")
-                        .time(now)
-                        .build();
-                orderStatusRepository.saveAndFlush(newOrderStatusCanceled);
-                throw new WarehouseProductInsufficientException();
-            }
-
-            StockLedger destinationStockLedger = StockLedger
+        if (stockMutationException != null) {
+            OrderStatus newOrderStatusFailed = OrderStatus
                     .builder()
                     .id(UUID.randomUUID())
-                    .warehouseProduct(destinationWarehouseProduct)
-                    .preQuantity(destinationWarehouseProduct.getQuantity())
-                    .postQuantity(warehouseProductQuantity)
-                    .time(now)
+                    .order(foundOrder)
+                    .status("CANCELED")
+                    .time(now.plusSeconds(1))
                     .build();
-            stockLedgerRepository.saveAndFlush(destinationStockLedger);
-
-            destinationWarehouseProduct.setQuantity(warehouseProductQuantity);
-            warehouseProductRepository.saveAndFlush(destinationWarehouseProduct);
+            orderStatusRepository.saveAndFlush(newOrderStatusFailed);
+            throw stockMutationException;
+        } else {
+            OrderStatus newOrderStatusShipping = OrderStatus
+                    .builder()
+                    .id(UUID.randomUUID())
+                    .order(foundOrder)
+                    .status("SHIPPING")
+                    .time(now.plusSeconds(1))
+                    .build();
+            orderStatusRepository.saveAndFlush(newOrderStatusShipping);
         }
-
-        OrderStatus newOrderStatusShipping = OrderStatus
-                .builder()
-                .id(UUID.randomUUID())
-                .order(foundOrder)
-                .status("SHIPPING")
-                .time(now.plusSeconds(1))
-                .build();
-        orderStatusRepository.saveAndFlush(newOrderStatusShipping);
     }
 
 }

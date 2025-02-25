@@ -93,7 +93,7 @@ public class BasicAccountUseCase {
                 throw new VerificationInvalidException();
             }
 
-            accountToPatch.setName(request.getName());
+            accountToPatch.setEmail(request.getEmail());
             String encodedPassword = securityConfiguration.encode(request.getPassword());
             accountToPatch.setPassword(encodedPassword);
         }
