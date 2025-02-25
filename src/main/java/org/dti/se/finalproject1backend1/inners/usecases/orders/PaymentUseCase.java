@@ -104,7 +104,7 @@ public class PaymentUseCase {
     }
 
 
-    public OrderResponse processAutomaticPayment(AutomaticPaymentProcessRequest request) {
+    public OrderResponse processAutomaticPayment(AutomaticPaymentProcessRequest request) throws Exception {
         String parsedUUID = request.getOrderId().substring(0, 36);
         UUID orderId = UUID.fromString(parsedUUID);
 
@@ -140,7 +140,7 @@ public class PaymentUseCase {
         }
     }
 
-    public OrderResponse processPaymentConfirmation(OrderProcessRequest request) {
+    public OrderResponse processPaymentConfirmation(OrderProcessRequest request) throws Exception {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
         Order foundOrder = orderRepository
                 .findById(request.getOrderId())

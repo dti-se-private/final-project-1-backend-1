@@ -123,7 +123,7 @@ public class AccountRestTest extends TestConfiguration {
         Account realAccount = fakeAccounts.getFirst();
         String encodedPassword = securityConfiguration.encode(rawPassword);
 
-        String newEmail = "new-email@example.com";
+        String newEmail = String.format("email-%s", UUID.randomUUID());
         String otpType = "UPDATE_ACCOUNT";
         Verification verification = getVerification(newEmail, otpType);
         String updateEmailOtp = verification.getCode();

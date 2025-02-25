@@ -253,7 +253,7 @@ public class AuthenticationRestTest extends TestConfiguration {
         ResponseBody<Void> body = objectMapper.readValue(content, new TypeReference<>() {
         });
         assert body != null;
-        assert body.getMessage().equals("Password reset successfully.");
+        assert body.getMessage().equals("Password reset succeed.");
         assert body.getData() == null;
 
         Account resetPasswordAccount = Account
