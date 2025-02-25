@@ -134,6 +134,14 @@ public class OrderUseCase {
                 Double originPostQuantity = originWarehouseProduct.getQuantity() - foundOrderItem.getQuantity();
                 Double destinationPostQuantity = destinationWarehouseProduct.getQuantity() + foundOrderItem.getQuantity();
                 if (originPostQuantity < 0 || destinationPostQuantity < 0) {
+                    OrderStatus newOrderStatusCanceled = OrderStatus
+                            .builder()
+                            .id(UUID.randomUUID())
+                            .order(foundOrder)
+                            .status("CANCELED")
+                            .time(now)
+                            .build();
+                    orderStatusRepository.saveAndFlush(newOrderStatusCanceled);
                     throw new WarehouseProductInsufficientException();
                 }
 
@@ -179,6 +187,14 @@ public class OrderUseCase {
             // Use warehouse product for order item.
             Double warehouseProductQuantity = destinationWarehouseProduct.getQuantity() - foundOrderItem.getQuantity();
             if (warehouseProductQuantity < 0) {
+                OrderStatus newOrderStatusCanceled = OrderStatus
+                        .builder()
+                        .id(UUID.randomUUID())
+                        .order(foundOrder)
+                        .status("CANCELED")
+                        .time(now)
+                        .build();
+                orderStatusRepository.saveAndFlush(newOrderStatusCanceled);
                 throw new WarehouseProductInsufficientException();
             }
 
