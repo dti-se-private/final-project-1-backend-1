@@ -63,7 +63,11 @@ public class MidtransGateway {
         Map<String, Object> customerDetails = new HashMap<>();
         customerDetails.put("first_name", order.getAccount().getName());
         customerDetails.put("email", order.getAccount().getEmail());
-        customerDetails.put("phone", order.getAccount().getPhone());
+        String phone = order.getAccount().getPhone();
+        if (!(phone.length() >= 5 && phone.length() <= 20)) {
+            phone = "00000";
+        }
+        customerDetails.put("phone", phone);
         requestBody.put("customer_details", customerDetails);
 
         requestBody.put("customer_required", false);

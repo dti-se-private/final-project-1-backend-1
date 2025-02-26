@@ -124,9 +124,10 @@ public class OrderUseCase {
                 .findAllByOrderId(foundOrder.getId());
 
         // Transactional stock mutation.
-        Exception stockMutationException = null;
+        // Use REQUIRES_NEW to prevent outer transaction rollback.
+        // It should use NESTED, but it's not supported by hibernate.
         DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
-        definition.setIsolationLevel(TransactionDefinition.ISOLATION_DEFAULT);
+        definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         TransactionStatus status = transactionManager.getTransaction(definition);
         try {
             for (OrderItem foundOrderItem : foundOrderItems) {
@@ -215,23 +216,7 @@ public class OrderUseCase {
                 destinationWarehouseProduct.setQuantity(warehouseProductQuantity);
                 warehouseProductRepository.saveAndFlush(destinationWarehouseProduct);
             }
-        } catch (Exception exception) {
-            stockMutationException = exception;
-            transactionManager.rollback(status);
-        }
-        transactionManager.commit(status);
-
-        if (stockMutationException != null) {
-            OrderStatus newOrderStatusFailed = OrderStatus
-                    .builder()
-                    .id(UUID.randomUUID())
-                    .order(foundOrder)
-                    .status("CANCELED")
-                    .time(now.plusSeconds(1))
-                    .build();
-            orderStatusRepository.saveAndFlush(newOrderStatusFailed);
-            throw stockMutationException;
-        } else {
+            transactionManager.commit(status);
             OrderStatus newOrderStatusShipping = OrderStatus
                     .builder()
                     .id(UUID.randomUUID())
@@ -240,7 +225,17 @@ public class OrderUseCase {
                     .time(now.plusSeconds(1))
                     .build();
             orderStatusRepository.saveAndFlush(newOrderStatusShipping);
+        } catch (Exception exception) {
+            transactionManager.rollback(status);
+            OrderStatus newOrderStatusFailed = OrderStatus
+                    .builder()
+                    .id(UUID.randomUUID())
+                    .order(foundOrder)
+                    .status("CANCELED")
+                    .time(now.plusSeconds(1))
+                    .build();
+            orderStatusRepository.saveAndFlush(newOrderStatusFailed);
+            throw exception;
         }
     }
-
 }

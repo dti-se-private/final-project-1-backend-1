@@ -54,11 +54,11 @@ public class OrderCustomRepository {
                         'shipment_price', "order".shipment_price,
                         'item_price', "order".item_price,
                         'statuses', (
-                            SELECT json_agg(json_build_object(
+                            SELECT COALESCE(json_agg(json_build_object(
                                 'id', order_status.id,
                                 'status', order_status.status,
                                 'time', order_status.time
-                            ))
+                            )), '[]'::json)
                             FROM (
                                 SELECT *
                                 FROM order_status
@@ -67,7 +67,7 @@ public class OrderCustomRepository {
                             ) as order_status
                         ),
                         'items', (
-                            SELECT json_agg(json_build_object(
+                            SELECT COALESCE(json_agg(json_build_object(
                                 'id', order_item.id,
                                 'quantity', order_item.quantity,
                                 'product', json_build_object(
@@ -87,19 +87,19 @@ public class OrderCustomRepository {
                                         'description', category.description
                                     )
                                 )
-                            ))
+                            )), '[]'::json)
                             FROM order_item
                             INNER JOIN product ON order_item.product_id = product.id
                             INNER JOIN category ON product.category_id = category.id
                             WHERE order_item.order_id = "order".id
                         ),
                          'payment_proofs', (
-                             SELECT json_agg(json_build_object(
+                             SELECT COALESCE(json_agg(json_build_object(
                                  'id', payment_proof.id,
                                  'file', payment_proof.file,
                                  'extension', payment_proof.extension,
                                  'time', payment_proof.time
-                             ))
+                             )), '[]'::json)
                              FROM payment_proof
                              WHERE payment_proof.order_id = "order".id
                          )
@@ -155,11 +155,11 @@ public class OrderCustomRepository {
                     'shipment_price', "order".shipment_price,
                     'item_price', "order".item_price,
                     'statuses', (
-                        SELECT json_agg(json_build_object(
+                        SELECT COALESCE(json_agg(json_build_object(
                             'id', order_status.id,
                             'status', order_status.status,
                             'time', order_status.time
-                        ))
+                        )), '[]'::json)
                         FROM (
                             SELECT *
                             FROM order_status
@@ -168,7 +168,7 @@ public class OrderCustomRepository {
                         ) as order_status
                     ),
                     'items', (
-                        SELECT json_agg(json_build_object(
+                        SELECT COALESCE(json_agg(json_build_object(
                             'id', order_item.id,
                             'quantity', order_item.quantity,
                             'product', json_build_object(
@@ -188,19 +188,19 @@ public class OrderCustomRepository {
                                     'description', category.description
                                 )
                             )
-                        ))
+                        )), '[]'::json)
                         FROM order_item
                         INNER JOIN product ON order_item.product_id = product.id
                         INNER JOIN category ON product.category_id = category.id
                         WHERE order_item.order_id = "order".id
                     ),
                      'payment_proofs', (
-                         SELECT json_agg(json_build_object(
+                         SELECT COALESCE(json_agg(json_build_object(
                              'id', payment_proof.id,
                              'file', payment_proof.file,
                              'extension', payment_proof.extension,
                              'time', payment_proof.time
-                         ))
+                         )), '[]'::json)
                          FROM payment_proof
                          WHERE payment_proof.order_id = "order".id
                      )
@@ -250,11 +250,11 @@ public class OrderCustomRepository {
                         'shipment_price', "order".shipment_price,
                         'item_price', "order".item_price,
                         'statuses', (
-                            SELECT json_agg(json_build_object(
+                            SELECT COALESCE(json_agg(json_build_object(
                                 'id', order_status.id,
                                 'status', order_status.status,
                                 'time', order_status.time
-                            ))
+                            )), '[]'::json)
                             FROM (
                                 SELECT *
                                 FROM order_status
@@ -263,7 +263,7 @@ public class OrderCustomRepository {
                             ) as order_status
                         ),
                         'items', (
-                            SELECT json_agg(json_build_object(
+                            SELECT COALESCE(json_agg(json_build_object(
                                 'id', order_item.id,
                                 'quantity', order_item.quantity,
                                 'product', json_build_object(
@@ -283,19 +283,19 @@ public class OrderCustomRepository {
                                         'description', category.description
                                     )
                                 )
-                            ))
+                            )), '[]'::json)
                             FROM order_item
                             INNER JOIN product ON order_item.product_id = product.id
                             INNER JOIN category ON product.category_id = category.id
                             WHERE order_item.order_id = "order".id
                         ),
                         'payment_proofs', (
-                            SELECT json_agg(json_build_object(
+                            SELECT COALESCE(json_agg(json_build_object(
                                 'id', payment_proof.id,
                                 'file', payment_proof.file,
                                 'extension', payment_proof.extension,
                                 'time', payment_proof.time
-                            ))
+                            )), '[]'::json)
                             FROM payment_proof
                             WHERE payment_proof.order_id = "order".id
                         )
@@ -357,11 +357,11 @@ public class OrderCustomRepository {
                                 'shipment_price', "order".shipment_price,
                                 'item_price', "order".item_price,
                                 'statuses', (
-                                    SELECT json_agg(json_build_object(
+                                    SELECT COALESCE(json_agg(json_build_object(
                                         'id', order_status.id,
                                         'status', order_status.status,
                                         'time', order_status.time
-                                    ))
+                                    )), '[]'::json)
                                     FROM (
                                         SELECT *
                                         FROM order_status
@@ -370,7 +370,7 @@ public class OrderCustomRepository {
                                     ) as order_status
                                 ),
                                 'items', (
-                                    SELECT json_agg(json_build_object(
+                                    SELECT COALESCE(json_agg(json_build_object(
                                         'id', order_item.id,
                                         'quantity', order_item.quantity,
                                         'product', json_build_object(
@@ -390,19 +390,19 @@ public class OrderCustomRepository {
                                                 'description', category.description
                                             )
                                         )
-                                    ))
+                                    )), '[]'::json)
                                     FROM order_item
                                     INNER JOIN product ON order_item.product_id = product.id
                                     INNER JOIN category ON product.category_id = category.id
                                     WHERE order_item.order_id = "order".id
                                 ),
                                 'payment_proofs', (
-                                    SELECT json_agg(json_build_object(
+                                    SELECT COALESCE(json_agg(json_build_object(
                                         'id', payment_proof.id,
                                         'file', payment_proof.file,
                                         'extension', payment_proof.extension,
                                         'time', payment_proof.time
-                                    ))
+                                    )), '[]'::json)
                                     FROM payment_proof
                                     WHERE payment_proof.order_id = "order".id
                                 )
@@ -453,11 +453,11 @@ public class OrderCustomRepository {
                     'shipment_price', "order".shipment_price,
                     'item_price', "order".item_price,
                     'statuses', (
-                        SELECT json_agg(json_build_object(
+                        SELECT COALESCE(json_agg(json_build_object(
                             'id', order_status.id,
                             'status', order_status.status,
                             'time', order_status.time
-                        ))
+                        )), '[]'::json)
                         FROM (
                             SELECT *
                             FROM order_status
@@ -466,7 +466,7 @@ public class OrderCustomRepository {
                         ) as order_status
                     ),
                     'items', (
-                        SELECT json_agg(json_build_object(
+                        SELECT COALESCE(json_agg(json_build_object(
                             'id', order_item.id,
                             'quantity', order_item.quantity,
                             'product', json_build_object(
@@ -486,19 +486,19 @@ public class OrderCustomRepository {
                                     'description', category.description
                                 )
                             )
-                        ))
+                        )), '[]'::json)
                         FROM order_item
                         INNER JOIN product ON order_item.product_id = product.id
                         INNER JOIN category ON product.category_id = category.id
                         WHERE order_item.order_id = "order".id
                     ),
                     'payment_proofs', (
-                        SELECT json_agg(json_build_object(
+                        SELECT COALESCE(json_agg(json_build_object(
                             'id', payment_proof.id,
                             'file', payment_proof.file,
                             'extension', payment_proof.extension,
                             'time', payment_proof.time
-                        ))
+                        )), '[]'::json)
                         FROM payment_proof
                         WHERE payment_proof.order_id = "order".id
                     )
@@ -549,11 +549,11 @@ public class OrderCustomRepository {
                     'shipment_price', "order".shipment_price,
                     'item_price', "order".item_price,
                     'statuses', (
-                        SELECT json_agg(json_build_object(
+                        SELECT COALESCE(json_agg(json_build_object(
                             'id', order_status.id,
                             'status', order_status.status,
                             'time', order_status.time
-                        ))
+                        )), '[]'::json)
                         FROM (
                             SELECT *
                             FROM order_status
@@ -562,7 +562,7 @@ public class OrderCustomRepository {
                         ) as order_status
                     ),
                     'items', (
-                        SELECT json_agg(json_build_object(
+                        SELECT COALESCE(json_agg(json_build_object(
                             'id', order_item.id,
                             'quantity', order_item.quantity,
                             'product', json_build_object(
@@ -582,19 +582,19 @@ public class OrderCustomRepository {
                                     'description', category.description
                                 )
                             )
-                        ))
+                        )), '[]'::json)
                         FROM order_item
                         INNER JOIN product ON order_item.product_id = product.id
                         INNER JOIN category ON product.category_id = category.id
                         WHERE order_item.order_id = "order".id
                     ),
                     'payment_proofs', (
-                        SELECT json_agg(json_build_object(
+                        SELECT COALESCE(json_agg(json_build_object(
                             'id', payment_proof.id,
                             'file', payment_proof.file,
                             'extension', payment_proof.extension,
                             'time', payment_proof.time
-                        ))
+                        )), '[]'::json)
                         FROM payment_proof
                         WHERE payment_proof.order_id = "order".id
                     )
@@ -656,11 +656,11 @@ public class OrderCustomRepository {
                                 'shipment_price', "order".shipment_price,
                                 'item_price', "order".item_price,
                                 'statuses', (
-                                    SELECT json_agg(json_build_object(
+                                    SELECT COALESCE(json_agg(json_build_object(
                                         'id', order_status.id,
                                         'status', order_status.status,
                                         'time', order_status.time
-                                    ))
+                                    )), '[]'::json)
                                     FROM (
                                         SELECT *
                                         FROM order_status
@@ -669,7 +669,7 @@ public class OrderCustomRepository {
                                     ) as order_status
                                 ),
                                 'items', (
-                                    SELECT json_agg(json_build_object(
+                                    SELECT COALESCE(json_agg(json_build_object(
                                         'id', order_item.id,
                                         'quantity', order_item.quantity,
                                         'product', json_build_object(
@@ -689,19 +689,19 @@ public class OrderCustomRepository {
                                                 'description', category.description
                                             )
                                         )
-                                    ))
+                                    )), '[]'::json)
                                     FROM order_item
                                     INNER JOIN product ON order_item.product_id = product.id
                                     INNER JOIN category ON product.category_id = category.id
                                     WHERE order_item.order_id = "order".id
                                 ),
                                 'payment_proofs', (
-                                    SELECT json_agg(json_build_object(
+                                    SELECT COALESCE(json_agg(json_build_object(
                                         'id', payment_proof.id,
                                         'file', payment_proof.file,
                                         'extension', payment_proof.extension,
                                         'time', payment_proof.time
-                                    ))
+                                    )), '[]'::json)
                                     FROM payment_proof
                                     WHERE payment_proof.order_id = "order".id
                                 )
@@ -775,11 +775,11 @@ public class OrderCustomRepository {
                                 'shipment_price', "order".shipment_price,
                                 'item_price', "order".item_price,
                                 'statuses', (
-                                    SELECT json_agg(json_build_object(
+                                    SELECT COALESCE(json_agg(json_build_object(
                                         'id', order_status.id,
                                         'status', order_status.status,
                                         'time', order_status.time
-                                    ))
+                                    )), '[]'::json)
                                     FROM (
                                         SELECT *
                                         FROM order_status
@@ -788,7 +788,7 @@ public class OrderCustomRepository {
                                     ) as order_status
                                 ),
                                 'items', (
-                                    SELECT json_agg(json_build_object(
+                                    SELECT COALESCE(json_agg(json_build_object(
                                         'id', order_item.id,
                                         'quantity', order_item.quantity,
                                         'product', json_build_object(
@@ -808,19 +808,19 @@ public class OrderCustomRepository {
                                                 'description', category.description
                                             )
                                         )
-                                    ))
+                                    )), '[]'::json)
                                     FROM order_item
                                     INNER JOIN product ON order_item.product_id = product.id
                                     INNER JOIN category ON product.category_id = category.id
                                     WHERE order_item.order_id = "order".id
                                 ),
                                 'payment_proofs', (
-                                    SELECT json_agg(json_build_object(
+                                    SELECT COALESCE(json_agg(json_build_object(
                                         'id', payment_proof.id,
                                         'file', payment_proof.file,
                                         'extension', payment_proof.extension,
                                         'time', payment_proof.time
-                                    ))
+                                    )), '[]'::json)
                                     FROM payment_proof
                                     WHERE payment_proof.order_id = "order".id
                                 )
