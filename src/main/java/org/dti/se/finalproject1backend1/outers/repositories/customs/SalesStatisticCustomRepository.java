@@ -25,716 +25,222 @@ public class SalesStatisticCustomRepository {
     @Autowired
     private ObjectMapper objectMapper;
 
-    // ==================== INCREMENT (Processing Status) ====================
-
-    // ------ Increment AVG ------
-    public List<StatisticSeriesResponse> getProductSalesIncrementAvg(Account account, List<UUID> productIds, String period) {
+    public List<StatisticSeriesResponse> getProductSalesSum(Account account, List<UUID> productIds, String period) {
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("period", period)
                 .addValue("accountId", account.getId())
                 .addValue("productIds", productIds);
 
         return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                AVG(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'PROCESSING'
-            AND o.account_id = :accountId
-            AND p.id IN (:productIds)
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
+                SELECT
+                    DATE_TRUNC(:period, latest_status.time) as x,
+                    SUM(oi.quantity * p.price) as y
+                FROM order_item oi
+                JOIN product p ON oi.product_id = p.id
+                JOIN "order" o ON oi.order_id = o.id
+                JOIN (
+                    SELECT DISTINCT ON (order_id) 
+                        order_id, 
+                        status, 
+                        time
+                    FROM order_status 
+                    ORDER BY order_id, time DESC
+                ) latest_status ON o.id = latest_status.order_id
+                WHERE latest_status.status = 'PROCESSING'
+                AND o.account_id = :accountId
+                AND p.id IN (:productIds)
+                GROUP BY x
+                ORDER BY x
+                """, parameters, this::mapRowToStatisticSeriesResponse);
     }
 
-    public List<StatisticSeriesResponse> getProductSalesIncrementAvg(Account account, String period) {
+    public List<StatisticSeriesResponse> getProductSalesSum(Account account, String period) {
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("period", period)
                 .addValue("accountId", account.getId());
 
         return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                AVG(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'PROCESSING'
-            AND o.account_id = :accountId
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
+                SELECT
+                    DATE_TRUNC(:period, latest_status.time) as x,
+                    SUM(oi.quantity * p.price) as y
+                FROM order_item oi
+                JOIN product p ON oi.product_id = p.id
+                JOIN "order" o ON oi.order_id = o.id
+                JOIN (
+                    SELECT DISTINCT ON (order_id) 
+                        order_id, 
+                        status, 
+                        time
+                    FROM order_status 
+                    ORDER BY order_id, time DESC
+                ) latest_status ON o.id = latest_status.order_id
+                WHERE latest_status.status = 'PROCESSING'
+                AND o.account_id = :accountId
+                GROUP BY x
+                ORDER BY x
+                """, parameters, this::mapRowToStatisticSeriesResponse);
     }
 
-    public List<StatisticSeriesResponse> getProductSalesIncrementAvg(List<UUID> productIds, String period) {
+    public List<StatisticSeriesResponse> getProductSalesSum(List<UUID> productIds, String period) {
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("period", period)
                 .addValue("productIds", productIds);
 
         return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                AVG(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'PROCESSING'
-            AND p.id IN (:productIds)
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
+                SELECT
+                    DATE_TRUNC(:period, latest_status.time) as x,
+                    SUM(oi.quantity * p.price) as y
+                FROM order_item oi
+                JOIN product p ON oi.product_id = p.id
+                JOIN "order" o ON oi.order_id = o.id
+                JOIN (
+                    SELECT DISTINCT ON (order_id) 
+                        order_id, 
+                        status, 
+                        time
+                    FROM order_status 
+                    ORDER BY order_id, time DESC
+                ) latest_status ON o.id = latest_status.order_id
+                WHERE latest_status.status = 'PROCESSING'
+                AND p.id IN (:productIds)
+                GROUP BY x
+                ORDER BY x
+                """, parameters, this::mapRowToStatisticSeriesResponse);
     }
 
-    public List<StatisticSeriesResponse> getProductSalesIncrementAvg(String period) {
+    public List<StatisticSeriesResponse> getProductSalesSum(String period) {
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("period", period);
 
         return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                AVG(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'PROCESSING'
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
+                SELECT
+                    DATE_TRUNC(:period, latest_status.time) as x,
+                    SUM(oi.quantity * p.price) as y
+                FROM order_item oi
+                JOIN product p ON oi.product_id = p.id
+                JOIN "order" o ON oi.order_id = o.id
+                JOIN (
+                    SELECT DISTINCT ON (order_id) 
+                        order_id, 
+                        status, 
+                        time
+                    FROM order_status 
+                    ORDER BY order_id, time DESC
+                ) latest_status ON o.id = latest_status.order_id
+                WHERE latest_status.status = 'PROCESSING'
+                GROUP BY x
+                ORDER BY x
+                """, parameters, this::mapRowToStatisticSeriesResponse);
     }
 
-    // ------ Increment SUM ------
-    public List<StatisticSeriesResponse> getProductSalesIncrementSum(Account account, List<UUID> productIds, String period) {
+    // --- getProductSalesAvg ---
+
+    public List<StatisticSeriesResponse> getProductSalesAvg(Account account, List<UUID> productIds, String period) {
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("period", period)
                 .addValue("accountId", account.getId())
                 .addValue("productIds", productIds);
 
         return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                SUM(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'PROCESSING'
-            AND o.account_id = :accountId
-            AND p.id IN (:productIds)
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
+                SELECT
+                    DATE_TRUNC(:period, latest_status.time) as x,
+                    AVG(oi.quantity * p.price) as y
+                FROM order_item oi
+                JOIN product p ON oi.product_id = p.id
+                JOIN "order" o ON oi.order_id = o.id
+                JOIN (
+                    SELECT DISTINCT ON (order_id) 
+                        order_id, 
+                        status, 
+                        time
+                    FROM order_status 
+                    ORDER BY order_id, time DESC
+                ) latest_status ON o.id = latest_status.order_id
+                WHERE latest_status.status = 'PROCESSING'
+                AND o.account_id = :accountId
+                AND p.id IN (:productIds)
+                GROUP BY x
+                ORDER BY x
+                """, parameters, this::mapRowToStatisticSeriesResponse);
     }
 
-    public List<StatisticSeriesResponse> getProductSalesIncrementSum(Account account, String period) {
+    public List<StatisticSeriesResponse> getProductSalesAvg(Account account, String period) {
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("period", period)
                 .addValue("accountId", account.getId());
 
         return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                SUM(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'PROCESSING'
-            AND o.account_id = :accountId
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
+                SELECT
+                    DATE_TRUNC(:period, latest_status.time) as x,
+                    AVG(oi.quantity * p.price) as y
+                FROM order_item oi
+                JOIN product p ON oi.product_id = p.id
+                JOIN "order" o ON oi.order_id = o.id
+                JOIN (
+                    SELECT DISTINCT ON (order_id) 
+                        order_id, 
+                        status, 
+                        time
+                    FROM order_status 
+                    ORDER BY order_id, time DESC
+                ) latest_status ON o.id = latest_status.order_id
+                WHERE latest_status.status = 'PROCESSING'
+                AND o.account_id = :accountId
+                GROUP BY x
+                ORDER BY x
+                """, parameters, this::mapRowToStatisticSeriesResponse);
     }
 
-    public List<StatisticSeriesResponse> getProductSalesIncrementSum(List<UUID> productIds, String period) {
+    public List<StatisticSeriesResponse> getProductSalesAvg(List<UUID> productIds, String period) {
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("period", period)
                 .addValue("productIds", productIds);
 
         return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                SUM(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'PROCESSING'
-            AND p.id IN (:productIds)
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
+                SELECT
+                    DATE_TRUNC(:period, latest_status.time) as x,
+                    AVG(oi.quantity * p.price) as y
+                FROM order_item oi
+                JOIN product p ON oi.product_id = p.id
+                JOIN "order" o ON oi.order_id = o.id
+                JOIN (
+                    SELECT DISTINCT ON (order_id) 
+                        order_id, 
+                        status, 
+                        time
+                    FROM order_status 
+                    ORDER BY order_id, time DESC
+                ) latest_status ON o.id = latest_status.order_id
+                WHERE latest_status.status = 'PROCESSING'
+                AND p.id IN (:productIds)
+                GROUP BY x
+                ORDER BY x
+                """, parameters, this::mapRowToStatisticSeriesResponse);
     }
 
-    public List<StatisticSeriesResponse> getProductSalesIncrementSum(String period) {
+    public List<StatisticSeriesResponse> getProductSalesAvg(String period) {
         SqlParameterSource parameters = new MapSqlParameterSource()
                 .addValue("period", period);
 
         return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                SUM(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'PROCESSING'
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-    // ==================== DECREMENT (Cancelled after Processing) ====================
-
-    // ------ Decrement Sum ------
-    public List<StatisticSeriesResponse> getProductSalesDecrementSum(Account account, List<UUID> productIds, String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period)
-                .addValue("accountId", account.getId())
-                .addValue("productIds", productIds);
-
-        return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                SUM(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'CANCELED'
-            AND EXISTS (
-                SELECT 1 FROM order_status os
-                WHERE os.order_id = latest_status.order_id
-                AND os.status = 'PROCESSING'
-                AND os.time < latest_status.time
-            )
-            AND o.account_id = :accountId
-            AND p.id IN (:productIds)
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-
-    public List<StatisticSeriesResponse> getProductSalesDecrementSum(Account account, String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period)
-                .addValue("accountId", account.getId());
-
-        return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                SUM(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'CANCELED'
-            AND EXISTS (
-                SELECT 1 FROM order_status os
-                WHERE os.order_id = latest_status.order_id
-                AND os.status = 'PROCESSING'
-                AND os.time < latest_status.time
-            )
-            AND o.account_id = :accountId
-            AND p.id IN (:productIds)
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-
-    public List<StatisticSeriesResponse> getProductSalesDecrementSum(List<UUID> productIds, String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period)
-                .addValue("productIds", productIds);
-
-        return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                SUM(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'CANCELED'
-            AND EXISTS (
-                SELECT 1 FROM order_status os
-                WHERE os.order_id = latest_status.order_id
-                AND os.status = 'PROCESSING'
-                AND os.time < latest_status.time
-            )
-            AND o.account_id = :accountId
-            AND p.id IN (:productIds)
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-
-    public List<StatisticSeriesResponse> getProductSalesDecrementSum(String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period);
-
-        return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                SUM(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'CANCELED'
-            AND EXISTS (
-                SELECT 1 FROM order_status os
-                WHERE os.order_id = latest_status.order_id
-                AND os.status = 'PROCESSING'
-                AND os.time < latest_status.time
-            )
-            AND o.account_id = :accountId
-            AND p.id IN (:productIds)
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-    // ------ Decrement Avg ------
-    public List<StatisticSeriesResponse> getProductSalesDecrementAvg(Account account, List<UUID> productIds, String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period)
-                .addValue("accountId", account.getId())
-                .addValue("productIds", productIds);
-
-        return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                AVG(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'CANCELED'
-            AND EXISTS (
-                SELECT 1 FROM order_status os
-                WHERE os.order_id = latest_status.order_id
-                AND os.status = 'PROCESSING'
-                AND os.time < latest_status.time
-            )
-            AND o.account_id = :accountId
-            AND p.id IN (:productIds)
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-
-    public List<StatisticSeriesResponse> getProductSalesDecrementAvg(Account account, String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period)
-                .addValue("accountId", account.getId());
-
-        return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                AVG(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'CANCELED'
-            AND EXISTS (
-                SELECT 1 FROM order_status os
-                WHERE os.order_id = latest_status.order_id
-                AND os.status = 'PROCESSING'
-                AND os.time < latest_status.time
-            )
-            AND o.account_id = :accountId
-            AND p.id IN (:productIds)
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-
-    public List<StatisticSeriesResponse> getProductSalesDecrementAvg(List<UUID> productIds, String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period)
-                .addValue("productIds", productIds);
-
-        return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                AVG(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'CANCELED'
-            AND EXISTS (
-                SELECT 1 FROM order_status os
-                WHERE os.order_id = latest_status.order_id
-                AND os.status = 'PROCESSING'
-                AND os.time < latest_status.time
-            )
-            AND o.account_id = :accountId
-            AND p.id IN (:productIds)
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-
-    public List<StatisticSeriesResponse> getProductSalesDecrementAvg(String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period);
-
-        return oneNamedTemplate.query("""
-            SELECT
-                DATE_TRUNC(:period, latest_status.time) AS x,
-                AVG(oi.quantity * p.price) AS y
-            FROM order_item oi
-            JOIN product p ON oi.product_id = p.id
-            JOIN "order" o ON oi.order_id = o.id
-            JOIN (
-                SELECT DISTINCT ON (order_id) 
-                    order_id, 
-                    status, 
-                    time
-                FROM order_status 
-                ORDER BY order_id, time DESC
-            ) latest_status ON o.id = latest_status.order_id
-            WHERE latest_status.status = 'CANCELED'
-            AND EXISTS (
-                SELECT 1 FROM order_status os
-                WHERE os.order_id = latest_status.order_id
-                AND os.status = 'PROCESSING'
-                AND os.time < latest_status.time
-            )
-            AND o.account_id = :accountId
-            AND p.id IN (:productIds)
-            GROUP BY x
-            ORDER BY x
-            """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-
-    // --- getProductSalesCurrentSum ---
-    public List<StatisticSeriesResponse> getProductSalesCurrentSum(Account account, List<UUID> productIds, String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period)
-                .addValue("accountId", account.getId())
-                .addValue("productIds", productIds);
-
-        return oneNamedTemplate.query("""
-        SELECT
-            DATE_TRUNC(:period, latest_status.time) AS x,
-            SUM(oi.quantity * p.price) AS y
-        FROM order_item oi
-        JOIN product p ON oi.product_id = p.id
-        JOIN "order" o ON oi.order_id = o.id
-        JOIN (
-            SELECT DISTINCT ON (order_id) 
-                order_id, 
-                status, 
-                time
-            FROM order_status 
-            ORDER BY order_id, time DESC
-        ) latest_status ON o.id = latest_status.order_id
-        WHERE latest_status.status = 'PROCESSING'
-        AND o.account_id = :accountId
-        AND p.id IN (:productIds)
-        GROUP BY x
-        ORDER BY x
-        """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-
-    public List<StatisticSeriesResponse> getProductSalesCurrentSum(Account account, String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period)
-                .addValue("accountId", account.getId());
-
-        return oneNamedTemplate.query("""
-        SELECT
-            DATE_TRUNC(:period, latest_status.time) AS x,
-            SUM(oi.quantity * p.price) AS y
-        FROM order_item oi
-        JOIN product p ON oi.product_id = p.id
-        JOIN "order" o ON oi.order_id = o.id
-        JOIN (
-            SELECT DISTINCT ON (order_id) 
-                order_id, 
-                status, 
-                time
-            FROM order_status 
-            ORDER BY order_id, time DESC
-        ) latest_status ON o.id = latest_status.order_id
-        WHERE latest_status.status = 'PROCESSING'
-        AND o.account_id = :accountId
-        GROUP BY x
-        ORDER BY x
-        """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-
-    public List<StatisticSeriesResponse> getProductSalesCurrentSum(List<UUID> productIds, String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period)
-                .addValue("productIds", productIds);
-
-        return oneNamedTemplate.query("""
-        SELECT
-            DATE_TRUNC(:period, latest_status.time) AS x,
-            SUM(oi.quantity * p.price) AS y
-        FROM order_item oi
-        JOIN product p ON oi.product_id = p.id
-        JOIN "order" o ON oi.order_id = o.id
-        JOIN (
-            SELECT DISTINCT ON (order_id) 
-                order_id, 
-                status, 
-                time
-            FROM order_status 
-            ORDER BY order_id, time DESC
-        ) latest_status ON o.id = latest_status.order_id
-        WHERE latest_status.status = 'PROCESSING'
-        AND p.id IN (:productIds)
-        GROUP BY x
-        ORDER BY x
-        """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-
-    public List<StatisticSeriesResponse> getProductSalesCurrentSum(String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period);
-
-        return oneNamedTemplate.query("""
-        SELECT
-            DATE_TRUNC(:period, latest_status.time) AS x,
-            SUM(oi.quantity * p.price) AS y
-        FROM order_item oi
-        JOIN product p ON oi.product_id = p.id
-        JOIN "order" o ON oi.order_id = o.id
-        JOIN (
-            SELECT DISTINCT ON (order_id) 
-                order_id, 
-                status, 
-                time
-            FROM order_status 
-            ORDER BY order_id, time DESC
-        ) latest_status ON o.id = latest_status.order_id
-        WHERE latest_status.status = 'PROCESSING'
-        GROUP BY x
-        ORDER BY x
-        """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-
-    // --- getProductSalesCurrentAvg ---
-    public List<StatisticSeriesResponse> getProductSalesCurrentAvg(Account account, List<UUID> productIds, String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period)
-                .addValue("accountId", account.getId())
-                .addValue("productIds", productIds);
-
-        return oneNamedTemplate.query("""
-        SELECT
-            DATE_TRUNC(:period, latest_status.time) AS x,
-            AVG(oi.quantity * p.price) AS y
-        FROM order_item oi
-        JOIN product p ON oi.product_id = p.id
-        JOIN "order" o ON oi.order_id = o.id
-        JOIN (
-            SELECT DISTINCT ON (order_id) 
-                order_id, 
-                status, 
-                time
-            FROM order_status 
-            ORDER BY order_id, time DESC
-        ) latest_status ON o.id = latest_status.order_id
-        WHERE latest_status.status = 'PROCESSING'
-        AND o.account_id = :accountId
-        AND p.id IN (:productIds)
-        GROUP BY x
-        ORDER BY x
-        """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-
-    public List<StatisticSeriesResponse> getProductSalesCurrentAvg(Account account, String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period)
-                .addValue("accountId", account.getId());
-
-        return oneNamedTemplate.query("""
-        SELECT
-            DATE_TRUNC(:period, latest_status.time) AS x,
-            AVG(oi.quantity * p.price) AS y
-        FROM order_item oi
-        JOIN product p ON oi.product_id = p.id
-        JOIN "order" o ON oi.order_id = o.id
-        JOIN (
-            SELECT DISTINCT ON (order_id) 
-                order_id, 
-                status, 
-                time
-            FROM order_status 
-            ORDER BY order_id, time DESC
-        ) latest_status ON o.id = latest_status.order_id
-        WHERE latest_status.status = 'PROCESSING'
-        AND o.account_id = :accountId
-        GROUP BY x
-        ORDER BY x
-        """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-
-    public List<StatisticSeriesResponse> getProductSalesCurrentAvg(List<UUID> productIds, String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period)
-                .addValue("productIds", productIds);
-
-        return oneNamedTemplate.query("""
-        SELECT
-            DATE_TRUNC(:period, latest_status.time) AS x,
-            AVG(oi.quantity * p.price) AS y
-        FROM order_item oi
-        JOIN product p ON oi.product_id = p.id
-        JOIN "order" o ON oi.order_id = o.id
-        JOIN (
-            SELECT DISTINCT ON (order_id) 
-                order_id, 
-                status, 
-                time
-            FROM order_status 
-            ORDER BY order_id, time DESC
-        ) latest_status ON o.id = latest_status.order_id
-        WHERE latest_status.status = 'PROCESSING'
-        AND p.id IN (:productIds)
-        GROUP BY x
-        ORDER BY x
-        """, parameters, this::mapRowToStatisticSeriesResponse);
-    }
-
-    public List<StatisticSeriesResponse> getProductSalesCurrentAvg(String period) {
-        SqlParameterSource parameters = new MapSqlParameterSource()
-                .addValue("period", period);
-
-        return oneNamedTemplate.query("""
-        SELECT
-            DATE_TRUNC(:period, latest_status.time) AS x,
-            AVG(oi.quantity * p.price) AS y
-        FROM order_item oi
-        JOIN product p ON oi.product_id = p.id
-        JOIN "order" o ON oi.order_id = o.id
-        JOIN (
-            SELECT DISTINCT ON (order_id) 
-                order_id, 
-                status, 
-                time
-            FROM order_status 
-            ORDER BY order_id, time DESC
-        ) latest_status ON o.id = latest_status.order_id
-        WHERE latest_status.status = 'PROCESSING'
-        GROUP BY x
-        ORDER BY x
-        """, parameters, this::mapRowToStatisticSeriesResponse);
+                SELECT
+                    DATE_TRUNC(:period, latest_status.time) as x,
+                    AVG(oi.quantity * p.price) as y
+                FROM order_item oi
+                JOIN product p ON oi.product_id = p.id
+                JOIN "order" o ON oi.order_id = o.id
+                JOIN (
+                    SELECT DISTINCT ON (order_id) 
+                        order_id, 
+                        status, 
+                        time
+                    FROM order_status 
+                    ORDER BY order_id, time DESC
+                ) latest_status ON o.id = latest_status.order_id
+                WHERE latest_status.status = 'PROCESSING'
+                GROUP BY x
+                ORDER BY x
+                """, parameters, this::mapRowToStatisticSeriesResponse);
     }
 
     private StatisticSeriesResponse mapRowToStatisticSeriesResponse(ResultSet rs, int rowNum) throws java.sql.SQLException {

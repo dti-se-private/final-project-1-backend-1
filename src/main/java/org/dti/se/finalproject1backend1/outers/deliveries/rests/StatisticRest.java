@@ -90,18 +90,15 @@ public class StatisticRest {
             @RequestParam(defaultValue = "day") String period
     ) {
         try {
-            List<StatisticSeriesResponse> series = switch (operation) {
-                case "increment" ->
-                        salesStatisticUseCase.getProductSalesIncrement(account, productIds, aggregation, period);
-                case "decrement" ->
-                        salesStatisticUseCase.getProductSalesDecrement(account, productIds, aggregation, period);
-                case "current" ->
-                        salesStatisticUseCase.getProductSalesCurrent(account, productIds, aggregation, period);
-                default -> throw new StatisticOperationInvalidException();
-            };
+            List<StatisticSeriesResponse> series = salesStatisticUseCase.getProductSales(
+                    account,
+                    productIds,
+                    aggregation,
+                    period
+            );
             return ResponseBody
                     .<List<StatisticSeriesResponse>>builder()
-                    .message("Product stock statistic found.")
+                    .message("Product sales statistic found.")
                     .data(series)
                     .build()
                     .toEntity(HttpStatus.OK);
