@@ -20,6 +20,7 @@ public class SalesStatisticUseCase {
 
     public List<StatisticSeriesResponse> getProductSales(
             Account account,
+            List<UUID> categoryIds,
             List<UUID> productIds,
             String aggregation,
             String period

@@ -84,14 +84,15 @@ public class StatisticRest {
     @GetMapping("/product-sales")
     public ResponseEntity<ResponseBody<List<StatisticSeriesResponse>>> getProductSalesStatistic(
             @AuthenticationPrincipal Account account,
+            @RequestParam(defaultValue = "") List<UUID> categoryIds,
             @RequestParam(defaultValue = "") List<UUID> productIds,
-            @RequestParam(defaultValue = "") String operation,
             @RequestParam(defaultValue = "sum") String aggregation,
             @RequestParam(defaultValue = "day") String period
     ) {
         try {
             List<StatisticSeriesResponse> series = salesStatisticUseCase.getProductSales(
                     account,
+                    categoryIds,
                     productIds,
                     aggregation,
                     period
