@@ -31,35 +31,17 @@ public class StockStatisticUseCase {
                 .toList();
 
         if (accountPermissions.contains("SUPER_ADMIN")) {
-            if (productIds.isEmpty()) {
-                return switch (aggregation) {
-                    case "sum" -> stockStatisticCustomRepository.getProductStockIncrementSum(period);
-                    case "avg" -> stockStatisticCustomRepository.getProductStockIncrementAvg(period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            } else {
-                return switch (aggregation) {
-                    case "sum" -> stockStatisticCustomRepository.getProductStockIncrementSum(productIds, period);
-                    case "avg" -> stockStatisticCustomRepository.getProductStockIncrementAvg(productIds, period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            }
+            return switch (aggregation) {
+                case "sum" -> stockStatisticCustomRepository.getProductStockIncrementSum(productIds, period);
+                case "avg" -> stockStatisticCustomRepository.getProductStockIncrementAvg(productIds, period);
+                default -> throw new StatisticAggregationInvalidException();
+            };
         } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
-            if (productIds.isEmpty()) {
-                return switch (aggregation) {
-                    case "sum" -> stockStatisticCustomRepository.getProductStockIncrementSum(account, period);
-                    case "avg" -> stockStatisticCustomRepository.getProductStockIncrementAvg(account, period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            } else {
-                return switch (aggregation) {
-                    case "sum" ->
-                            stockStatisticCustomRepository.getProductStockIncrementSum(account, productIds, period);
-                    case "avg" ->
-                            stockStatisticCustomRepository.getProductStockIncrementAvg(account, productIds, period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            }
+            return switch (aggregation) {
+                case "sum" -> stockStatisticCustomRepository.getProductStockIncrementSum(account, productIds, period);
+                case "avg" -> stockStatisticCustomRepository.getProductStockIncrementAvg(account, productIds, period);
+                default -> throw new StatisticAggregationInvalidException();
+            };
         } else {
             throw new AccountPermissionInvalidException();
         }
@@ -79,35 +61,17 @@ public class StockStatisticUseCase {
                 .toList();
 
         if (accountPermissions.contains("SUPER_ADMIN")) {
-            if (productIds.isEmpty()) {
-                return switch (aggregation) {
-                    case "sum" -> stockStatisticCustomRepository.getProductStockDecrementSum(period);
-                    case "avg" -> stockStatisticCustomRepository.getProductStockDecrementAvg(period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            } else {
-                return switch (aggregation) {
-                    case "sum" -> stockStatisticCustomRepository.getProductStockDecrementSum(productIds, period);
-                    case "avg" -> stockStatisticCustomRepository.getProductStockDecrementAvg(productIds, period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            }
+            return switch (aggregation) {
+                case "sum" -> stockStatisticCustomRepository.getProductStockDecrementSum(productIds, period);
+                case "avg" -> stockStatisticCustomRepository.getProductStockDecrementAvg(productIds, period);
+                default -> throw new StatisticAggregationInvalidException();
+            };
         } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
-            if (productIds.isEmpty()) {
-                return switch (aggregation) {
-                    case "sum" -> stockStatisticCustomRepository.getProductStockDecrementSum(account, period);
-                    case "avg" -> stockStatisticCustomRepository.getProductStockDecrementAvg(account, period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            } else {
-                return switch (aggregation) {
-                    case "sum" ->
-                            stockStatisticCustomRepository.getProductStockDecrementSum(account, productIds, period);
-                    case "avg" ->
-                            stockStatisticCustomRepository.getProductStockDecrementAvg(account, productIds, period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            }
+            return switch (aggregation) {
+                case "sum" -> stockStatisticCustomRepository.getProductStockDecrementSum(account, productIds, period);
+                case "avg" -> stockStatisticCustomRepository.getProductStockDecrementAvg(account, productIds, period);
+                default -> throw new StatisticAggregationInvalidException();
+            };
         } else {
             throw new AccountPermissionInvalidException();
         }
@@ -127,33 +91,17 @@ public class StockStatisticUseCase {
                 .toList();
 
         if (accountPermissions.contains("SUPER_ADMIN")) {
-            if (productIds.isEmpty()) {
-                return switch (aggregation) {
-                    case "sum" -> stockStatisticCustomRepository.getProductStockCurrentSum(period);
-                    case "avg" -> stockStatisticCustomRepository.getProductStockCurrentAvg(period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            } else {
-                return switch (aggregation) {
-                    case "sum" -> stockStatisticCustomRepository.getProductStockCurrentSum(productIds, period);
-                    case "avg" -> stockStatisticCustomRepository.getProductStockCurrentAvg(productIds, period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            }
+            return switch (aggregation) {
+                case "sum" -> stockStatisticCustomRepository.getProductStockCurrentSum(productIds, period);
+                case "avg" -> stockStatisticCustomRepository.getProductStockCurrentAvg(productIds, period);
+                default -> throw new StatisticAggregationInvalidException();
+            };
         } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
-            if (productIds.isEmpty()) {
-                return switch (aggregation) {
-                    case "sum" -> stockStatisticCustomRepository.getProductStockCurrentSum(account, period);
-                    case "avg" -> stockStatisticCustomRepository.getProductStockCurrentAvg(account, period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            } else {
-                return switch (aggregation) {
-                    case "sum" -> stockStatisticCustomRepository.getProductStockCurrentSum(account, productIds, period);
-                    case "avg" -> stockStatisticCustomRepository.getProductStockCurrentAvg(account, productIds, period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            }
+            return switch (aggregation) {
+                case "sum" -> stockStatisticCustomRepository.getProductStockCurrentSum(account, productIds, period);
+                case "avg" -> stockStatisticCustomRepository.getProductStockCurrentAvg(account, productIds, period);
+                default -> throw new StatisticAggregationInvalidException();
+            };
         } else {
             throw new AccountPermissionInvalidException();
         }
