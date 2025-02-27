@@ -29,37 +29,38 @@ public class SalesStatisticUseCase {
                 .stream()
                 .map(AccountPermission::getPermission)
                 .toList();
-
-        if (accountPermissions.contains("SUPER_ADMIN")) {
-            if (productIds.isEmpty()) {
-                return switch (aggregation) {
-                    case "sum" -> salesStatisticCustomRepository.getProductSalesSum(period);
-                    case "avg" -> salesStatisticCustomRepository.getProductSalesAvg(period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            } else {
-                return switch (aggregation) {
-                    case "sum" -> salesStatisticCustomRepository.getProductSalesSum(productIds, period);
-                    case "avg" -> salesStatisticCustomRepository.getProductSalesAvg(productIds, period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            }
-        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
-            if (productIds.isEmpty()) {
-                return switch (aggregation) {
-                    case "sum" -> salesStatisticCustomRepository.getProductSalesSum(account, period);
-                    case "avg" -> salesStatisticCustomRepository.getProductSalesAvg(account, period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            } else {
-                return switch (aggregation) {
-                    case "sum" -> salesStatisticCustomRepository.getProductSalesSum(account, productIds, period);
-                    case "avg" -> salesStatisticCustomRepository.getProductSalesAvg(account, productIds, period);
-                    default -> throw new StatisticAggregationInvalidException();
-                };
-            }
-        } else {
-            throw new AccountPermissionInvalidException();
-        }
+        return null;
+//
+//        if (accountPermissions.contains("SUPER_ADMIN")) {
+//            if (productIds.isEmpty()) {
+//                return switch (aggregation) {
+//                    case "sum" -> salesStatisticCustomRepository.getProductSalesSum(period);
+//                    case "avg" -> salesStatisticCustomRepository.getProductSalesAvg(period);
+//                    default -> throw new StatisticAggregationInvalidException();
+//                };
+//            } else {
+//                return switch (aggregation) {
+//                    case "sum" -> salesStatisticCustomRepository.getProductSalesSum(productIds, period);
+//                    case "avg" -> salesStatisticCustomRepository.getProductSalesAvg(productIds, period);
+//                    default -> throw new StatisticAggregationInvalidException();
+//                };
+//            }
+//        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+//            if (productIds.isEmpty()) {
+//                return switch (aggregation) {
+//                    case "sum" -> salesStatisticCustomRepository.getProductSalesSum(account, period);
+//                    case "avg" -> salesStatisticCustomRepository.getProductSalesAvg(account, period);
+//                    default -> throw new StatisticAggregationInvalidException();
+//                };
+//            } else {
+//                return switch (aggregation) {
+//                    case "sum" -> salesStatisticCustomRepository.getProductSalesSum(account, productIds, period);
+//                    case "avg" -> salesStatisticCustomRepository.getProductSalesAvg(account, productIds, period);
+//                    default -> throw new StatisticAggregationInvalidException();
+//                };
+//            }
+//        } else {
+//            throw new AccountPermissionInvalidException();
+//        }
     }
 }

@@ -40,10 +40,12 @@ public class StockStatisticCustomRepository {
                                 SUM(stock_ledger.post_quantity - stock_ledger.pre_quantity) as y
                                 FROM stock_ledger
                                 INNER JOIN warehouse_product ON warehouse_product.id = stock_ledger.warehouse_product_id
-                                INNER JOIN warehouse ON warehouse.id = warehouse_product.warehouse_id
-                                INNER JOIN warehouse_admin ON warehouse_admin.warehouse_id = warehouse.id
                                 WHERE (stock_ledger.post_quantity - stock_ledger.pre_quantity) > 0
-                                AND warehouse_admin.account_id = :accountId::uuid
+                                AND warehouse_product.warehouse_id in (
+                    SELECT DISTINCT warehouse_admin.warehouse_id
+                    FROM warehouse_admin
+                    WHERE warehouse_admin.account_id = :accountId::uuid
+                )
                                 AND warehouse_product.product_id IN (:productIds)
                                 GROUP BY x
                                 ORDER BY x;
@@ -64,10 +66,12 @@ public class StockStatisticCustomRepository {
                 SUM(stock_ledger.post_quantity - stock_ledger.pre_quantity) as y
                 FROM stock_ledger
                 INNER JOIN warehouse_product ON warehouse_product.id = stock_ledger.warehouse_product_id
-                INNER JOIN warehouse ON warehouse.id = warehouse_product.warehouse_id
-                INNER JOIN warehouse_admin ON warehouse_admin.warehouse_id = warehouse.id
                 WHERE (stock_ledger.post_quantity - stock_ledger.pre_quantity) > 0
-                AND warehouse_admin.account_id = :accountId::uuid
+                AND warehouse_product.warehouse_id in (
+                    SELECT DISTINCT warehouse_admin.warehouse_id
+                    FROM warehouse_admin
+                    WHERE warehouse_admin.account_id = :accountId::uuid
+                )
                 GROUP BY x
                 ORDER BY x;
                 """, parameters, this::mapRowToStatisticSeriesResponse);
@@ -121,10 +125,12 @@ public class StockStatisticCustomRepository {
                 AVG(stock_ledger.post_quantity - stock_ledger.pre_quantity) as y
                 FROM stock_ledger
                 INNER JOIN warehouse_product ON warehouse_product.id = stock_ledger.warehouse_product_id
-                INNER JOIN warehouse ON warehouse.id = warehouse_product.warehouse_id
-                INNER JOIN warehouse_admin ON warehouse_admin.warehouse_id = warehouse.id
                 WHERE (stock_ledger.post_quantity - stock_ledger.pre_quantity) > 0
-                AND warehouse_admin.account_id = :accountId::uuid
+                AND warehouse_product.warehouse_id in (
+                    SELECT DISTINCT warehouse_admin.warehouse_id
+                    FROM warehouse_admin
+                    WHERE warehouse_admin.account_id = :accountId::uuid
+                )
                 AND warehouse_product.product_id IN (:productIds)
                 GROUP BY x
                 ORDER BY x;
@@ -142,10 +148,12 @@ public class StockStatisticCustomRepository {
                 AVG(stock_ledger.post_quantity - stock_ledger.pre_quantity) as y
                 FROM stock_ledger
                 INNER JOIN warehouse_product ON warehouse_product.id = stock_ledger.warehouse_product_id
-                INNER JOIN warehouse ON warehouse.id = warehouse_product.warehouse_id
-                INNER JOIN warehouse_admin ON warehouse_admin.warehouse_id = warehouse.id
                 WHERE (stock_ledger.post_quantity - stock_ledger.pre_quantity) > 0
-                AND warehouse_admin.account_id = :accountId::uuid
+                AND warehouse_product.warehouse_id in (
+                    SELECT DISTINCT warehouse_admin.warehouse_id
+                    FROM warehouse_admin
+                    WHERE warehouse_admin.account_id = :accountId::uuid
+                )
                 GROUP BY x
                 ORDER BY x;
                 """, parameters, this::mapRowToStatisticSeriesResponse);
@@ -199,10 +207,12 @@ public class StockStatisticCustomRepository {
                 SUM(stock_ledger.pre_quantity - stock_ledger.post_quantity) as y
                 FROM stock_ledger
                 INNER JOIN warehouse_product ON warehouse_product.id = stock_ledger.warehouse_product_id
-                INNER JOIN warehouse ON warehouse.id = warehouse_product.warehouse_id
-                INNER JOIN warehouse_admin ON warehouse_admin.warehouse_id = warehouse.id
                 WHERE (stock_ledger.pre_quantity - stock_ledger.post_quantity) > 0
-                AND warehouse_admin.account_id = :accountId::uuid
+                AND warehouse_product.warehouse_id in (
+                    SELECT DISTINCT warehouse_admin.warehouse_id
+                    FROM warehouse_admin
+                    WHERE warehouse_admin.account_id = :accountId::uuid
+                )
                 AND warehouse_product.product_id IN (:productIds)
                 GROUP BY x
                 ORDER BY x;
@@ -220,10 +230,12 @@ public class StockStatisticCustomRepository {
                 SUM(stock_ledger.pre_quantity - stock_ledger.post_quantity) as y
                 FROM stock_ledger
                 INNER JOIN warehouse_product ON warehouse_product.id = stock_ledger.warehouse_product_id
-                INNER JOIN warehouse ON warehouse.id = warehouse_product.warehouse_id
-                INNER JOIN warehouse_admin ON warehouse_admin.warehouse_id = warehouse.id
                 WHERE (stock_ledger.pre_quantity - stock_ledger.post_quantity) > 0
-                AND warehouse_admin.account_id = :accountId::uuid
+                AND warehouse_product.warehouse_id in (
+                    SELECT DISTINCT warehouse_admin.warehouse_id
+                    FROM warehouse_admin
+                    WHERE warehouse_admin.account_id = :accountId::uuid
+                )
                 GROUP BY x
                 ORDER BY x;
                 """, parameters, this::mapRowToStatisticSeriesResponse);
@@ -276,10 +288,12 @@ public class StockStatisticCustomRepository {
                 AVG(stock_ledger.pre_quantity - stock_ledger.post_quantity) as y
                 FROM stock_ledger
                 INNER JOIN warehouse_product ON warehouse_product.id = stock_ledger.warehouse_product_id
-                INNER JOIN warehouse ON warehouse.id = warehouse_product.warehouse_id
-                INNER JOIN warehouse_admin ON warehouse_admin.warehouse_id = warehouse.id
                 WHERE (stock_ledger.pre_quantity - stock_ledger.post_quantity) > 0
-                AND warehouse_admin.account_id = :accountId::uuid
+                AND warehouse_product.warehouse_id in (
+                    SELECT DISTINCT warehouse_admin.warehouse_id
+                    FROM warehouse_admin
+                    WHERE warehouse_admin.account_id = :accountId::uuid
+                )
                 AND warehouse_product.product_id IN (:productIds)
                 GROUP BY x
                 ORDER BY x;
@@ -297,10 +311,12 @@ public class StockStatisticCustomRepository {
                 AVG(stock_ledger.pre_quantity - stock_ledger.post_quantity) as y
                 FROM stock_ledger
                 INNER JOIN warehouse_product ON warehouse_product.id = stock_ledger.warehouse_product_id
-                INNER JOIN warehouse ON warehouse.id = warehouse_product.warehouse_id
-                INNER JOIN warehouse_admin ON warehouse_admin.warehouse_id = warehouse.id
                 WHERE (stock_ledger.pre_quantity - stock_ledger.post_quantity) > 0
-                AND warehouse_admin.account_id = :accountId::uuid
+                AND warehouse_product.warehouse_id in (
+                    SELECT DISTINCT warehouse_admin.warehouse_id
+                    FROM warehouse_admin
+                    WHERE warehouse_admin.account_id = :accountId::uuid
+                )
                 GROUP BY x
                 ORDER BY x;
                 """, parameters, this::mapRowToStatisticSeriesResponse);
@@ -354,9 +370,11 @@ public class StockStatisticCustomRepository {
                 SUM(stock_ledger.post_quantity) as y
                 FROM stock_ledger
                 INNER JOIN warehouse_product ON warehouse_product.id = stock_ledger.warehouse_product_id
-                INNER JOIN warehouse ON warehouse.id = warehouse_product.warehouse_id
-                INNER JOIN warehouse_admin ON warehouse_admin.warehouse_id = warehouse.id
-                WHERE warehouse_admin.account_id = :accountId::uuid
+                WHERE warehouse_product.warehouse_id in (
+                    SELECT DISTINCT warehouse_admin.warehouse_id
+                    FROM warehouse_admin
+                    WHERE warehouse_admin.account_id = :accountId::uuid
+                )
                 AND warehouse_product.product_id IN (:productIds)
                 GROUP BY x
                 ORDER BY x;
@@ -374,9 +392,11 @@ public class StockStatisticCustomRepository {
                 SUM(stock_ledger.post_quantity) as y
                 FROM stock_ledger
                 INNER JOIN warehouse_product ON warehouse_product.id = stock_ledger.warehouse_product_id
-                INNER JOIN warehouse ON warehouse.id = warehouse_product.warehouse_id
-                INNER JOIN warehouse_admin ON warehouse_admin.warehouse_id = warehouse.id
-                WHERE warehouse_admin.account_id = :accountId::uuid
+                WHERE warehouse_product.warehouse_id in (
+                    SELECT DISTINCT warehouse_admin.warehouse_id
+                    FROM warehouse_admin
+                    WHERE warehouse_admin.account_id = :accountId::uuid
+                )
                 GROUP BY x
                 ORDER BY x;
                 """, parameters, this::mapRowToStatisticSeriesResponse);
@@ -427,9 +447,11 @@ public class StockStatisticCustomRepository {
                 AVG(stock_ledger.post_quantity) as y
                 FROM stock_ledger
                 INNER JOIN warehouse_product ON warehouse_product.id = stock_ledger.warehouse_product_id
-                INNER JOIN warehouse ON warehouse.id = warehouse_product.warehouse_id
-                INNER JOIN warehouse_admin ON warehouse_admin.warehouse_id = warehouse.id
-                WHERE warehouse_admin.account_id = :accountId::uuid
+                WHERE warehouse_product.warehouse_id in (
+                    SELECT DISTINCT warehouse_admin.warehouse_id
+                    FROM warehouse_admin
+                    WHERE warehouse_admin.account_id = :accountId::uuid
+                )
                 AND warehouse_product.product_id IN (:productIds)
                 GROUP BY x
                 ORDER BY x;
@@ -447,9 +469,11 @@ public class StockStatisticCustomRepository {
                 AVG(stock_ledger.post_quantity) as y
                 FROM stock_ledger
                 INNER JOIN warehouse_product ON warehouse_product.id = stock_ledger.warehouse_product_id
-                INNER JOIN warehouse ON warehouse.id = warehouse_product.warehouse_id
-                INNER JOIN warehouse_admin ON warehouse_admin.warehouse_id = warehouse.id
-                WHERE warehouse_admin.account_id = :accountId::uuid
+                WHERE warehouse_product.warehouse_id in (
+                    SELECT DISTINCT warehouse_admin.warehouse_id
+                    FROM warehouse_admin
+                    WHERE warehouse_admin.account_id = :accountId::uuid
+                )
                 GROUP BY x
                 ORDER BY x;
                 """, parameters, this::mapRowToStatisticSeriesResponse);
