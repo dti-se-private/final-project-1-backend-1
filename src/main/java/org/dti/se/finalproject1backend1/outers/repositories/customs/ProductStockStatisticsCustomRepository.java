@@ -34,17 +34,17 @@ public class ProductStockStatisticsCustomRepository {
                 : "quantity_change < 0";
 
         String sql = String.format("""
-            SELECT json_build_object(
-                'x', date_trunc('%s', created_at),
-                'y', SUM(ABS(quantity_change))
-            ) AS statistic_series
-            FROM stock_history
-            WHERE warehouse_id IN (%s)
-              AND product_id IN (%s)
-              AND %s
-            GROUP BY date_trunc('%s', created_at)
-            ORDER BY date_trunc('%s', created_at)
-            """,
+                        SELECT json_build_object(
+                            'x', date_trunc('%s', created_at),
+                            'y', SUM(ABS(quantity_change))
+                        ) AS statistic_series
+                        FROM stock_history
+                        WHERE warehouse_id IN (%s)
+                          AND product_id IN (%s)
+                          AND %s
+                        GROUP BY date_trunc('%s', created_at)
+                        ORDER BY date_trunc('%s', created_at)
+                        """,
                 period.toLowerCase(),
                 warehouseIds.isEmpty()
                         ? "NULL"
@@ -64,7 +64,8 @@ public class ProductStockStatisticsCustomRepository {
             try {
                 return objectMapper.readValue(
                         rs.getString("statistic_series"),
-                        new TypeReference<StatisticSeriesResponse>() {}
+                        new TypeReference<StatisticSeriesResponse>() {
+                        }
                 );
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Failed to parse statistic series", e);
@@ -74,14 +75,14 @@ public class ProductStockStatisticsCustomRepository {
 
     public Double findCurrentStockSum(List<UUID> warehouseIds, List<UUID> productIds) {
         String sql = String.format("""
-            SELECT json_build_object(
-                'x', NOW(),
-                'y', COALESCE(SUM(quantity), 0)
-            ) AS statistic_series
-            FROM warehouse_product
-            WHERE warehouse_id IN (%s)
-              AND product_id IN (%s)
-            """,
+                        SELECT json_build_object(
+                            'x', NOW(),
+                            'y', COALESCE(SUM(quantity), 0)
+                        ) AS statistic_series
+                        FROM warehouse_product
+                        WHERE warehouse_id IN (%s)
+                          AND product_id IN (%s)
+                        """,
                 warehouseIds.isEmpty()
                         ? "NULL"
                         : warehouseIds.stream()

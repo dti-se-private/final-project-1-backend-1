@@ -8,13 +8,10 @@ import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFou
 import org.dti.se.finalproject1backend1.outers.exceptions.providers.ProviderInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.providers.ProviderNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
-import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.ProviderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.security.ProviderException;
 
 @Service
 public class ResetPasswordUseCase {

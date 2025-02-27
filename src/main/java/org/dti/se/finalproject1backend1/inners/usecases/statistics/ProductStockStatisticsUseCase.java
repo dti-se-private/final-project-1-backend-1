@@ -1,6 +1,8 @@
 package org.dti.se.finalproject1backend1.inners.usecases.statistics;
 
-import org.dti.se.finalproject1backend1.inners.models.entities.*;
+import org.dti.se.finalproject1backend1.inners.models.entities.Account;
+import org.dti.se.finalproject1backend1.inners.models.entities.Warehouse;
+import org.dti.se.finalproject1backend1.inners.models.entities.WarehouseAdmin;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.statistics.StatisticSeriesResponse;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseAdminNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.ProductStockStatisticsCustomRepository;

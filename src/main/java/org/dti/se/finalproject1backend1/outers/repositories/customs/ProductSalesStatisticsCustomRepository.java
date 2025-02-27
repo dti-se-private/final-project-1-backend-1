@@ -38,17 +38,17 @@ public class ProductSalesStatisticsCustomRepository {
 
         // 2. Build SQL query directly (no helper methods)
         String sql = String.format("""
-            SELECT json_build_object(
-                'x', DATE_TRUNC('%s', sales.date),
-                'y', %s(sales.quantity)
-            ) AS statistic_series
-            FROM sales
-            WHERE (?::text[] IS NULL OR sales.warehouse_id::text = ANY(?))
-              AND (?::text[] IS NULL OR sales.category_id::text = ANY(?))
-              AND (?::text[] IS NULL OR sales.product_id::text = ANY(?))
-            GROUP BY DATE_TRUNC('%s', sales.date)
-            ORDER BY DATE_TRUNC('%s', sales.date)
-            """, period, aggregation, period, period);
+                SELECT json_build_object(
+                    'x', DATE_TRUNC('%s', sales.date),
+                    'y', %s(sales.quantity)
+                ) AS statistic_series
+                FROM sales
+                WHERE (?::text[] IS NULL OR sales.warehouse_id::text = ANY(?))
+                  AND (?::text[] IS NULL OR sales.category_id::text = ANY(?))
+                  AND (?::text[] IS NULL OR sales.product_id::text = ANY(?))
+                GROUP BY DATE_TRUNC('%s', sales.date)
+                ORDER BY DATE_TRUNC('%s', sales.date)
+                """, period, aggregation, period, period);
 
         // 3. Prepare parameters inline (no helper methods)
         Object[] params = new Object[]{
@@ -67,7 +67,8 @@ public class ProductSalesStatisticsCustomRepository {
                     try {
                         return objectMapper.readValue(
                                 rs.getString("statistic_series"),
-                                new TypeReference<StatisticSeriesResponse>() {}
+                                new TypeReference<StatisticSeriesResponse>() {
+                                }
                         );
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
