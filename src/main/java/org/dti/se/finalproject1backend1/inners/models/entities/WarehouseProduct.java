@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.Accessors;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -28,5 +30,13 @@ public class WarehouseProduct {
     private Product product;
 
     private Double quantity;
+
+    @OneToMany(mappedBy = "originWarehouseProduct")
+    @Builder.Default
+    private Set<WarehouseLedger> originWarehouseLedgers = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "destinationWarehouseProduct")
+    @Builder.Default
+    private Set<WarehouseLedger> destinationWarehouseLedgers = new LinkedHashSet<>();
 
 }

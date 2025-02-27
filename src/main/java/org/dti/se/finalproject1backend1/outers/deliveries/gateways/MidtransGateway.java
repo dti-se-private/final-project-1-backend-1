@@ -69,6 +69,11 @@ public class MidtransGateway {
         requestBody.put("customer_required", false);
         requestBody.put("usage_limit", 1);
 
+        Map<String, Object> callbacks = new HashMap<>();
+        String finishUrl = environment.getProperty("midtrans.callback.host") + "/customers/orders/" + order.getId();
+        callbacks.put("finish", finishUrl);
+        requestBody.put("callbacks", callbacks);
+
         try {
             String json = objectMapper.writeValueAsString(requestBody);
             System.out.println("MidtransGateway.getPaymentLinkUrl: Request body: " + json);

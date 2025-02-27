@@ -31,14 +31,6 @@ public class Warehouse {
 
     private Point location;
 
-    @OneToMany(mappedBy = "originWarehouse")
-    @Builder.Default
-    private Set<WarehouseLedger> warehouseLedgersOrigin = new LinkedHashSet<>();
-
-    @OneToMany(mappedBy = "destinationWarehouse")
-    @Builder.Default
-    private Set<WarehouseLedger> warehouseLedgersDestination = new LinkedHashSet<>();
-
     @OneToMany(mappedBy = "warehouse")
     @Builder.Default
     private Set<WarehouseProduct> warehouseProducts = new LinkedHashSet<>();
