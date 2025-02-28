@@ -2,6 +2,7 @@ package org.dti.se.finalproject1backend1.inners.usecases.stockmutation;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.*;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.stockmutation.AddMutationRequest;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.stockmutation.ApprovalMutationRequest;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.stockmutation.WarehouseLedgerResponse;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.*;
@@ -66,11 +67,11 @@ public class WarehouseLedgerUseCase {
         }
     }
 
-    public void approveMutationRequest(Account account, UUID warehouseLedgerId) {
+    public void approveMutationRequest(Account account, ApprovalMutationRequest request) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
         WarehouseLedger foundWarehouseLedger = warehouseLedgerRepository
-                .findById(warehouseLedgerId)
+                .findById(request.getWarehouseLedgerId())
                 .orElseThrow(WarehouseLedgerNotFoundException::new);
 
         if (!foundWarehouseLedger.getStatus().equals("WAITING_FOR_APPROVAL")) {
@@ -87,7 +88,7 @@ public class WarehouseLedgerUseCase {
             // Do nothing.
         } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
             Boolean isAccountRelatedToOriginWarehouseLedger = warehouseLedgerCustomRepository
-                    .isAccountRelatedToOriginWarehouseLedger(account, warehouseLedgerId);
+                    .isAccountRelatedToOriginWarehouseLedger(account, request.getWarehouseLedgerId());
             if (!isAccountRelatedToOriginWarehouseLedger) {
                 throw new AccountPermissionInvalidException();
             }
@@ -155,11 +156,11 @@ public class WarehouseLedgerUseCase {
 
     }
 
-    public void rejectMutationRequest(Account account, UUID warehouseLedgerId) {
+    public void rejectMutationRequest(Account account, ApprovalMutationRequest request) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
         WarehouseLedger foundWarehouseLedger = warehouseLedgerRepository
-                .findById(warehouseLedgerId)
+                .findById(request.getWarehouseLedgerId())
                 .orElseThrow(WarehouseLedgerNotFoundException::new);
 
         if (!foundWarehouseLedger.getStatus().equals("WAITING_FOR_APPROVAL")) {
@@ -176,7 +177,7 @@ public class WarehouseLedgerUseCase {
             // Do nothing.
         } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
             Boolean isAccountRelatedToOriginWarehouseLedger = warehouseLedgerCustomRepository
-                    .isAccountRelatedToOriginWarehouseLedger(account, warehouseLedgerId);
+                    .isAccountRelatedToOriginWarehouseLedger(account, request.getWarehouseLedgerId());
             if (!isAccountRelatedToOriginWarehouseLedger) {
                 throw new AccountPermissionInvalidException();
             }
@@ -219,7 +220,7 @@ public class WarehouseLedgerUseCase {
                 .orElseThrow(WarehouseProductNotFoundException::new);
 
         if (originWarehouseProduct.getWarehouse().getId().equals(destinationWarehouseProduct.getWarehouse().getId())) {
-            throw new WarehouseLedgerQuantityInvalidException();
+            throw new WarehouseLedgerWarehouseInvalidException();
         }
 
         Double originWarehousePostQuantity = originWarehouseProduct.getQuantity() - request.getQuantity();

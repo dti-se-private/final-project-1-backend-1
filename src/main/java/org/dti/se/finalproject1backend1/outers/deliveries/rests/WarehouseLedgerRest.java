@@ -113,10 +113,10 @@ public class WarehouseLedgerRest {
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.FORBIDDEN);
-        } catch (WarehouseLedgerQuantityInvalidException e) {
+        } catch (WarehouseLedgerWarehouseInvalidException e) {
             return ResponseBody
                     .<Void>builder()
-                    .message("Warehouse ledger quantity invalid.")
+                    .message("Warehouse ledger warehouse invalid.")
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.BAD_REQUEST);
@@ -144,7 +144,7 @@ public class WarehouseLedgerRest {
             @RequestBody ApprovalMutationRequest request
     ) {
         try {
-            warehouseLedgerService.approveMutationRequest(account, request.getWarehouseLedgerId());
+            warehouseLedgerService.approveMutationRequest(account, request);
             return ResponseBody
                     .<Void>builder()
                     .message("Stock mutation request approved.")
@@ -158,6 +158,13 @@ public class WarehouseLedgerRest {
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.FORBIDDEN);
+        } catch (WarehouseProductInsufficientException e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Warehouse product insufficient.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (WarehouseLedgerNotFoundException e) {
             return ResponseBody
                     .<Void>builder()
@@ -210,7 +217,7 @@ public class WarehouseLedgerRest {
             @RequestBody ApprovalMutationRequest request
     ) {
         try {
-            warehouseLedgerService.rejectMutationRequest(account, request.getWarehouseLedgerId());
+            warehouseLedgerService.rejectMutationRequest(account, request);
             return ResponseBody
                     .<Void>builder()
                     .message("Stock mutation request rejected.")
