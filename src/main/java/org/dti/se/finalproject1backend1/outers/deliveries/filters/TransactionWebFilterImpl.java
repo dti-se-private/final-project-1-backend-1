@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.UnexpectedRollbackException;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.springframework.web.filter.GenericFilterBean;
 
@@ -25,12 +26,12 @@ public class TransactionWebFilterImpl extends GenericFilterBean {
 
     @Autowired
     @Qualifier("oneTransactionManager")
-    private PlatformTransactionManager transactionManager;
+    PlatformTransactionManager transactionManager;
 
-    private static final Logger logger = LoggerFactory.getLogger(TransactionWebFilterImpl.class);
+    static final Logger logger = LoggerFactory.getLogger(TransactionWebFilterImpl.class);
 
-    private static final Long MAX_RETRIES = 3L;
-    private static final Long RETRY_DELAY_MS = 100L;
+    static final Long MAX_RETRIES = 3L;
+    static final Long RETRY_DELAY_MS = 100L;
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -44,7 +45,7 @@ public class TransactionWebFilterImpl extends GenericFilterBean {
         Long retryCount = 0L;
         while (retryCount <= MAX_RETRIES) {
             TransactionStatus status = transactionManager.getTransaction(definition);
-
+            httpRequest.setAttribute("transactionStatus", status);
             try {
                 chain.doFilter(request, response);
                 transactionManager.commit(status);
@@ -73,8 +74,12 @@ public class TransactionWebFilterImpl extends GenericFilterBean {
                     httpResponse.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                     return; // Exit after max retries.
                 }
+            } catch (UnexpectedRollbackException unexpectedRollbackException) {
+                logger.warn("Transaction unexpectedly rollback: {}", unexpectedRollbackException.getMessage());
+                break; // Exit without retry.
             } catch (Exception otherException) {
                 // For other exceptions, rollback and fail without retry.
+                otherException.printStackTrace();
                 logger.error("Non-concurrency exception, rolling back and failing: {}", otherException.getMessage(), otherException);
                 if (!status.isCompleted()) {
                     transactionManager.rollback(status);

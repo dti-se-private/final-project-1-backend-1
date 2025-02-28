@@ -2,6 +2,7 @@ package org.dti.se.finalproject1backend1;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.statistics.StatisticSeriesResponse;
 import org.junit.jupiter.api.AfterEach;
@@ -25,15 +26,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class StatisticRestTest extends TestConfiguration {
 
     @Autowired
-    private MockMvc mockMvc;
+    MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    ObjectMapper objectMapper;
 
     @BeforeEach
     public void beforeEach() throws Exception {
         populate();
-        auth();
+        Account selectedAccount = fakeAccounts.getFirst();
+        auth(selectedAccount);
     }
 
     @AfterEach
@@ -43,17 +45,17 @@ public class StatisticRestTest extends TestConfiguration {
     }
 
     @Test
-    public void testEventTransactionAmountStatistic() throws Exception {
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/statistics/events")
-                .param("type", "transactionAmount")
+    public void testProductStockStatistic() throws Exception {
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
+                .get("/statistics/product-stocks")
+                .param("operation", "current")
                 .param("aggregation", "sum")
                 .param("period", "day")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .contentType(MediaType.APPLICATION_JSON);
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -64,19 +66,19 @@ public class StatisticRestTest extends TestConfiguration {
         assert body.getMessage() != null;
         assert body.getData() != null;
     }
+
 
     @Test
-    public void testEventParticipantCountStatistic() throws Exception {
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
-                .get("/statistics/events")
-                .param("type", "participantCount")
+    public void testProductSalesStatistic() throws Exception {
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
+                .get("/statistics/product-sales")
                 .param("aggregation", "sum")
                 .param("period", "day")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .contentType(MediaType.APPLICATION_JSON);
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -87,4 +89,5 @@ public class StatisticRestTest extends TestConfiguration {
         assert body.getMessage() != null;
         assert body.getData() != null;
     }
+
 }

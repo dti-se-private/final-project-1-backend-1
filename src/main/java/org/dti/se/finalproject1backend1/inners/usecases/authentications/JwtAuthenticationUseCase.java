@@ -21,7 +21,7 @@ import java.util.Objects;
 public class JwtAuthenticationUseCase {
 
     @Autowired
-    private Environment environment;
+    Environment environment;
 
     @Bean
     public Algorithm algorithm() {
