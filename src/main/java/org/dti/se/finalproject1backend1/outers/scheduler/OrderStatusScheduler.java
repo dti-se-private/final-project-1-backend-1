@@ -15,12 +15,12 @@ public class OrderStatusScheduler {
     @Autowired
     OrderStatusCustomRepository orderStatusCustomRepository;
 
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
     public void scheduleMaxTimeShippingOrderStatus() {
         orderStatusCustomRepository.proceedShippingToConfirmedAfterTwoDays();
     }
 
-    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.SECONDS)
+    @Scheduled(fixedDelay = 1, timeUnit = TimeUnit.MINUTES)
     public void scheduleMaxTimeWaitingForPaymentOrderStatus() {
         orderStatusCustomRepository.proceedWaitingForPaymentToCancelledAfterOneHours();
     }

@@ -2,16 +2,16 @@ package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.Provider;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.ResetPasswordRequest;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
-import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.providers.ProviderInvalidException;
+import org.dti.se.finalproject1backend1.outers.exceptions.providers.ProviderNotFoundException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.ProviderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.nio.file.ProviderNotFoundException;
-import java.security.ProviderException;
 
 @Service
 public class ResetPasswordUseCase {
@@ -27,23 +27,23 @@ public class ResetPasswordUseCase {
     @Autowired
     SecurityConfiguration securityConfiguration;
 
-    public void resetPassword(String email, String newPassword, String otp) {
-        Account account = accountRepository.findByEmail(email)
-                .orElseThrow(() -> new AccountNotFoundException("Account not found"));
+    public void resetPassword(ResetPasswordRequest request) {
+        Account account = accountRepository.findByEmail(request.getEmail())
+                .orElseThrow(AccountNotFoundException::new);
 
         Provider provider = providerRepository.findByAccountId(account.getId())
-                .orElseThrow(() -> new ProviderNotFoundException("Provider not found"));
+                .orElseThrow(ProviderNotFoundException::new);
 
-        if (!"INTERNAL".equals(provider.getName())) {
-            throw new ProviderException("Reset password is only allowed for register by email and password");
+        if (!provider.getName().equals("INTERNAL")) {
+            throw new ProviderInvalidException();
         }
 
-        if (verificationUseCase.verifyOtp(email, otp, "RESET_PASSWORD")) {
-            String encodedPassword = securityConfiguration.encode(newPassword);
+        if (verificationUseCase.verifyOtp(request.getEmail(), request.getOtp(), "RESET_PASSWORD")) {
+            String encodedPassword = securityConfiguration.encode(request.getNewPassword());
             account.setPassword(encodedPassword);
             accountRepository.saveAndFlush(account);
         } else {
-            throw new VerificationNotFoundException("Invalid OTP");
+            throw new VerificationInvalidException();
         }
     }
 }

@@ -3,6 +3,7 @@ package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
+import org.dti.se.finalproject1backend1.inners.models.entities.Provider;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
 import org.dti.se.finalproject1backend1.outers.deliveries.filters.AuthenticationManagerImpl;
@@ -19,7 +20,6 @@ import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class BasicAuthenticationUseCase {
@@ -73,7 +73,13 @@ public class BasicAuthenticationUseCase {
         List<String> permissions = permissionsList
                 .stream()
                 .map(AccountPermission::getPermission)
-                .collect(Collectors.toList());
+                .toList();
+
+        List<String> providers = account
+                .getProviders()
+                .stream()
+                .map(Provider::getName)
+                .toList();
 
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
         String newAccessToken = jwtAuthenticationUseCase.generate(account, now.plusSeconds(30));
@@ -86,6 +92,7 @@ public class BasicAuthenticationUseCase {
                 .accessTokenExpiredAt(now.plusSeconds(5))
                 .refreshTokenExpiredAt(now.plusDays(3))
                 .permissions(permissions)
+                .providers(providers)
                 .build();
 
         sessionRepository.setByAccessToken(newSession);

@@ -67,4 +67,27 @@ public class StatisticRestTest extends TestConfiguration {
         assert body.getData() != null;
     }
 
+
+    @Test
+    public void testProductSalesStatistic() throws Exception {
+        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+                .get("/statistics/product-sales")
+                .param("aggregation", "sum")
+                .param("period", "day")
+                .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
+                .contentType(MediaType.APPLICATION_JSON);
+
+        MvcResult result = mockMvc
+                .perform(request)
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        ResponseBody<List<StatisticSeriesResponse>> body = objectMapper.readValue(content, new TypeReference<>() {
+        });
+        assert body != null;
+        assert body.getMessage() != null;
+        assert body.getData() != null;
+    }
+
 }

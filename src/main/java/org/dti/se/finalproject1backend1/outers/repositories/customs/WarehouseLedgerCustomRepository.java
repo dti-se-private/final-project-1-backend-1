@@ -109,7 +109,8 @@ public class WarehouseLedgerCustomRepository {
                     try {
                         return objectMapper.readValue(
                                 rs.getString("item"),
-                                new TypeReference<>() {}
+                                new TypeReference<>() {
+                                }
                         );
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
@@ -124,18 +125,18 @@ public class WarehouseLedgerCustomRepository {
 
     public void approveMutation(UUID id) {
         oneTemplate.update("""
-            UPDATE warehouse_ledger 
-            SET status = 'APPROVED'
-            WHERE id = ?
-            """, id);
+                UPDATE warehouse_ledger 
+                SET status = 'APPROVED'
+                WHERE id = ?
+                """, id);
     }
 
     public void rejectMutation(UUID id) {
         oneTemplate.update("""
-            UPDATE warehouse_ledger 
-            SET status = 'REJECTED'
-            WHERE id = ?
-            """, id);
+                UPDATE warehouse_ledger 
+                SET status = 'REJECTED'
+                WHERE id = ?
+                """, id);
     }
 
     public WarehouseLedgerResponse addMutation(
@@ -232,7 +233,8 @@ public class WarehouseLedgerCustomRepository {
                     try {
                         return objectMapper.readValue(
                                 rs.getString("ledger"),
-                                new TypeReference<WarehouseLedgerResponse>() {}
+                                new TypeReference<WarehouseLedgerResponse>() {
+                                }
                         );
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);

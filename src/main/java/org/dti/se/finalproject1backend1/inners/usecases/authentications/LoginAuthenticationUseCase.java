@@ -4,6 +4,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
+import org.dti.se.finalproject1backend1.inners.models.entities.Provider;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
@@ -22,7 +23,6 @@ import java.security.GeneralSecurityException;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class LoginAuthenticationUseCase {
@@ -91,7 +91,13 @@ public class LoginAuthenticationUseCase {
         List<String> permissions = permissionsList
                 .stream()
                 .map(AccountPermission::getPermission)
-                .collect(Collectors.toList());
+                .toList();
+
+        List<String> providers = account
+                .getProviders()
+                .stream()
+                .map(Provider::getName)
+                .toList();
 
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
         OffsetDateTime accessTokenExpiredAt = now.plusMinutes(30);
@@ -104,6 +110,7 @@ public class LoginAuthenticationUseCase {
                 .accessTokenExpiredAt(accessTokenExpiredAt)
                 .refreshTokenExpiredAt(refreshTokenExpiredAt)
                 .permissions(permissions)
+                .providers(providers)
                 .build();
 
         sessionRepository.setByAccessToken(session);
