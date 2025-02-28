@@ -1,19 +1,21 @@
 package org.dti.se.finalproject1backend1.inners.models.valueobjects.stockmutation;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import lombok.experimental.Accessors;
+import org.dti.se.finalproject1backend1.inners.models.Model;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouseproducts.WarehouseProductResponse;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+
 @Data
+@EqualsAndHashCode(callSuper = true)
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class WarehouseLedgerResponse {
+@NoArgsConstructor
+@Accessors(chain = true)
+public class WarehouseLedgerResponse extends Model {
     private UUID id;
     private WarehouseProductResponse originWarehouseProduct;
     private WarehouseProductResponse destinationWarehouseProduct;

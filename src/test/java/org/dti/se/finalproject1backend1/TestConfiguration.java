@@ -96,7 +96,7 @@ public class TestConfiguration {
     protected List<Order> fakeOrders = new ArrayList<>();
     protected List<OrderItem> fakeOrderItems = new ArrayList<>();
     protected List<OrderStatus> fakeOrderStatuses = new ArrayList<>();
-    protected List<WarehouseLedger> fakeWarehouseLedger = new ArrayList<>();
+    protected List<WarehouseLedger> fakeWarehouseLedgers = new ArrayList<>();
     protected List<WarehouseAdmin> fakeWarehouseAdmins = new ArrayList<>();
 
     protected String rawPassword = String.format("password-%s", UUID.randomUUID());
@@ -259,10 +259,11 @@ public class TestConfiguration {
                     fakeOrderStatuses.add(newOrderStatus);
                 }
 
-                fakeProducts.forEach(product -> {
+                for (int j = 0; j < fakeProducts.size(); j++) {
+                    Product product = fakeProducts.get(j);
                     WarehouseProduct originWarehouseProduct = fakeWarehouseProducts
                             .stream()
-                            .filter(warehouseProduct -> warehouseProduct.getWarehouse().equals(orderOriginWarehouse) && warehouseProduct.getProduct().equals(product))
+                            .filter(warehouseProduct -> !warehouseProduct.getWarehouse().equals(orderOriginWarehouse) && warehouseProduct.getProduct().equals(product))
                             .findFirst()
                             .orElseThrow();
                     WarehouseProduct destinationWarehouseProduct = fakeWarehouseProducts
@@ -270,20 +271,21 @@ public class TestConfiguration {
                             .filter(warehouseProduct -> warehouseProduct.getWarehouse().equals(orderOriginWarehouse) && warehouseProduct.getProduct().equals(product))
                             .findFirst()
                             .orElseThrow();
-                    String ledgerStatus = ledgerStatuses.get((int) Math.floor(Math.random() * ledgerStatuses.size()));
+                    String ledgerStatus = ledgerStatuses.get(j % ledgerStatuses.size());
+                    Double difference = Math.ceil(Math.random() * 100);
                     WarehouseLedger newWarehouseLedger = WarehouseLedger
                             .builder()
                             .id(UUID.randomUUID())
                             .originWarehouseProduct(originWarehouseProduct)
                             .destinationWarehouseProduct(destinationWarehouseProduct)
-                            .originPreQuantity(Math.ceil(Math.random() * 100))
-                            .originPostQuantity(Math.ceil(Math.random() * 100))
-                            .destinationPreQuantity(Math.ceil(Math.random() * 100))
-                            .destinationPostQuantity(Math.ceil(Math.random() * 100))
+                            .originPreQuantity(100.0)
+                            .originPostQuantity(100 - difference)
+                            .destinationPreQuantity(200.0)
+                            .destinationPostQuantity(200 + difference)
                             .time(now)
                             .status(ledgerStatus)
                             .build();
-                    fakeWarehouseLedger.add(newWarehouseLedger);
+                    fakeWarehouseLedgers.add(newWarehouseLedger);
 
                     OrderItem newOrderItem = OrderItem
                             .builder()
@@ -294,12 +296,12 @@ public class TestConfiguration {
                             .warehouseLedger(newWarehouseLedger)
                             .build();
                     fakeOrderItems.add(newOrderItem);
-                });
+                }
             }
         });
         orderRepository.saveAllAndFlush(fakeOrders);
         orderStatusRepository.saveAllAndFlush(fakeOrderStatuses);
-        warehouseLedgerRepository.saveAllAndFlush(fakeWarehouseLedger);
+        warehouseLedgerRepository.saveAllAndFlush(fakeWarehouseLedgers);
         orderItemRepository.saveAllAndFlush(fakeOrderItems);
 
         WarehouseAdmin warehouseAdmin = WarehouseAdmin.builder()
@@ -316,8 +318,8 @@ public class TestConfiguration {
         fakeOrderStatuses.clear();
         orderItemRepository.deleteAll(fakeOrderItems);
         fakeOrderItems.clear();
-        warehouseLedgerRepository.deleteAll(fakeWarehouseLedger);
-        fakeWarehouseLedger.clear();
+        warehouseLedgerRepository.deleteAll(fakeWarehouseLedgers);
+        fakeWarehouseLedgers.clear();
         orderRepository.deleteAll(fakeOrders);
         fakeOrders.clear();
         cartItemRepository.deleteAll(fakeCartItems);
@@ -373,13 +375,13 @@ public class TestConfiguration {
                 .otp(verification.getCode())
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/authentications/registers/internal")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -426,13 +428,13 @@ public class TestConfiguration {
                 .credential(idTokenMock)
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/authentications/registers/external")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -457,13 +459,13 @@ public class TestConfiguration {
                 .password(rawPassword)
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/authentications/logins/internal")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -483,13 +485,13 @@ public class TestConfiguration {
 
     protected ResponseBody<Void> logout(Session session) throws Exception {
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/authentications/logouts/session")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(session));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -513,13 +515,13 @@ public class TestConfiguration {
                 .type(type)
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/verifications/send")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 

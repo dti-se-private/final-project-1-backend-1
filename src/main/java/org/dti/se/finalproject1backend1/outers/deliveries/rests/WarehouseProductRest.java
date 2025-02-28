@@ -29,8 +29,8 @@ public class WarehouseProductRest {
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")
     public ResponseEntity<ResponseBody<List<WarehouseProductResponse>>> getWarehouseProducts(
             @AuthenticationPrincipal Account account,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "") String search
     ) {
         try {

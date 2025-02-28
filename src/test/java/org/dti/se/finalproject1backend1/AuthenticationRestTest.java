@@ -71,13 +71,13 @@ public class AuthenticationRestTest extends TestConfiguration {
                 .otp(verification.getCode())
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/authentications/registers/internal")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -124,13 +124,13 @@ public class AuthenticationRestTest extends TestConfiguration {
                 .credential(idTokenMock)
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/authentications/registers/external")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -163,13 +163,13 @@ public class AuthenticationRestTest extends TestConfiguration {
                 .password(rawPassword)
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/authentications/logins/internal")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -198,13 +198,13 @@ public class AuthenticationRestTest extends TestConfiguration {
                 .credential("mock-id-token")
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/authentications/logins/external")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -239,13 +239,13 @@ public class AuthenticationRestTest extends TestConfiguration {
                 .newPassword(newRawPassword)
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/authentications/reset-password")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(resetPasswordRequest));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -277,13 +277,13 @@ public class AuthenticationRestTest extends TestConfiguration {
         ResponseBody<Session> loginResponse = loginByInternal(realAccount);
         Session requestBody = loginResponse.getData();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/authentications/logouts/session")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -305,13 +305,13 @@ public class AuthenticationRestTest extends TestConfiguration {
         ResponseBody<Session> loginResponse = loginByInternal(realAccount);
         Session requestBody = loginResponse.getData();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/authentications/refreshes/session")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 

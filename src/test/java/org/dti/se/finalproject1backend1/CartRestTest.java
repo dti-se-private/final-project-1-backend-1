@@ -55,14 +55,14 @@ public class CartRestTest extends TestConfiguration {
                 .filter(cartItem -> cartItem.getAccount().getId().equals(authenticatedAccount.getId()))
                 .toList();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .get("/carts")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .param("page", "0")
                 .param("size", String.valueOf(realCartItems.size()));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -102,14 +102,14 @@ public class CartRestTest extends TestConfiguration {
                 .quantity(Math.ceil(Math.random() * 10))
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/carts/add")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -147,14 +147,14 @@ public class CartRestTest extends TestConfiguration {
                 .quantity(realCartItem.getQuantity())
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/carts/remove")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 

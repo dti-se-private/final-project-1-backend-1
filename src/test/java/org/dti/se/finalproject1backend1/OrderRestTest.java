@@ -111,14 +111,14 @@ public class OrderRestTest extends TestConfiguration {
                 .items(orderItemRequests)
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/orders/checkout")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -156,14 +156,14 @@ public class OrderRestTest extends TestConfiguration {
                 .orderId(String.format("%s-%s", realOrder.getId(), now.toInstant().toEpochMilli()))
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/orders/automatic-payments/process")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -210,14 +210,14 @@ public class OrderRestTest extends TestConfiguration {
                 .paymentProofs(List.of(paymentProofRequest))
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/orders/manual-payments/process")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -237,14 +237,14 @@ public class OrderRestTest extends TestConfiguration {
     public void testGetOrders() throws Exception {
         List<Order> realOrders = fakeOrders;
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .get("/orders")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .param("page", "0")
                 .param("size", String.valueOf(realOrders.size()));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -271,14 +271,14 @@ public class OrderRestTest extends TestConfiguration {
                 )
                 .toList();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .get("/orders/payment-confirmations")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .param("page", "0")
                 .param("size", String.valueOf(realOrders.size()));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -320,14 +320,14 @@ public class OrderRestTest extends TestConfiguration {
                 .action("APPROVE")
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/orders/payment-confirmations/process")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -365,14 +365,14 @@ public class OrderRestTest extends TestConfiguration {
                 .action("REJECT")
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/orders/payment-confirmations/process")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -410,14 +410,14 @@ public class OrderRestTest extends TestConfiguration {
                 .action("CANCEL")
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/orders/cancellations/process")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -459,14 +459,14 @@ public class OrderRestTest extends TestConfiguration {
                 .orderId(realOrder.getId())
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/orders/payment-gateways/process")
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody));
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 

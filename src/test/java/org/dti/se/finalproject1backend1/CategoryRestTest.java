@@ -51,14 +51,14 @@ public class CategoryRestTest extends TestConfiguration {
     public void testGetCategories() throws Exception {
         List<Category> realCategories = fakeCategories;
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .get("/categories")
                 .param("page", "0")
                 .param("size", String.valueOf(realCategories.size()))
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -80,12 +80,12 @@ public class CategoryRestTest extends TestConfiguration {
                 .findFirst()
                 .orElseThrow(CategoryNotFoundException::new);
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .get("/categories/{categoryId}", realCategory.getId())
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -110,14 +110,14 @@ public class CategoryRestTest extends TestConfiguration {
                 .description(String.format("description-%s", UUID.randomUUID()))
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .post("/categories")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody))
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -152,14 +152,14 @@ public class CategoryRestTest extends TestConfiguration {
                 .description(String.format("description-%s", UUID.randomUUID()))
                 .build();
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .patch("/categories/{categoryId}", realCategory.getId())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(requestBody))
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -189,12 +189,12 @@ public class CategoryRestTest extends TestConfiguration {
                 .findFirst()
                 .orElseThrow(CategoryNotFoundException::new);
 
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .delete("/categories/{categoryId}", realCategory.getId())
                 .header("Authorization", "Bearer " + authenticatedSession.getAccessToken());
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 

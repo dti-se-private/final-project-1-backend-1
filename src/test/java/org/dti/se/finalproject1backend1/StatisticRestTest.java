@@ -46,7 +46,7 @@ public class StatisticRestTest extends TestConfiguration {
 
     @Test
     public void testProductStockStatistic() throws Exception {
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .get("/statistics/product-stocks")
                 .param("operation", "current")
                 .param("aggregation", "sum")
@@ -55,7 +55,7 @@ public class StatisticRestTest extends TestConfiguration {
                 .contentType(MediaType.APPLICATION_JSON);
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 
@@ -70,7 +70,7 @@ public class StatisticRestTest extends TestConfiguration {
 
     @Test
     public void testProductSalesStatistic() throws Exception {
-        MockHttpServletRequestBuilder request = MockMvcRequestBuilders
+        MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
                 .get("/statistics/product-sales")
                 .param("aggregation", "sum")
                 .param("period", "day")
@@ -78,7 +78,7 @@ public class StatisticRestTest extends TestConfiguration {
                 .contentType(MediaType.APPLICATION_JSON);
 
         MvcResult result = mockMvc
-                .perform(request)
+                .perform(httpRequest)
                 .andExpect(status().isOk())
                 .andReturn();
 

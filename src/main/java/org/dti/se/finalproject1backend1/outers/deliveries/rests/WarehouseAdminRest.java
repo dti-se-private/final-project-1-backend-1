@@ -28,8 +28,8 @@ public class WarehouseAdminRest {
     @GetMapping
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN')")
     public ResponseEntity<ResponseBody<List<WarehouseAdminResponse>>> getWarehouseAdmins(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
             @RequestParam(defaultValue = "") String search
     ) {
         try {

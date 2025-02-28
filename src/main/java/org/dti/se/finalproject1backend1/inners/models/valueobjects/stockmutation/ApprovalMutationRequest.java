@@ -12,8 +12,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class AddMutationRequest extends Model {
-    private UUID originWarehouseProductId;
-    private UUID destinationWarehouseProductId;
-    private Double quantity;
+public class ApprovalMutationRequest extends Model {
+    private UUID warehouseLedgerId;
 }

@@ -2,14 +2,16 @@ package org.dti.se.finalproject1backend1.inners.models.valueobjects.authenticati
 
 import lombok.*;
 import lombok.experimental.Accessors;
+import org.dti.se.finalproject1backend1.inners.models.Model;
+
 
 @Data
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 @Accessors(chain = true)
-public class ResetPasswordRequest {
+public class ResetPasswordRequest extends Model {
     private String email;
     private String otp;
     private String newPassword;
