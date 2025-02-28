@@ -13,7 +13,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @Accessors(chain = true)
 public class AddMutationRequest extends Model {
-    private UUID originWarehouseProductId;
-    private UUID destinationWarehouseProductId;
+    private UUID productId;
+    private UUID originWarehouseId;
+    private UUID destinationWarehouseId;
     private Double quantity;
 }

@@ -211,11 +211,11 @@ public class WarehouseLedgerUseCase {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
         WarehouseProduct originWarehouseProduct = warehouseProductRepository
-                .findById(request.getOriginWarehouseProductId())
+                .findByProductIdAndWarehouseId(request.getProductId(), request.getOriginWarehouseId())
                 .orElseThrow(WarehouseProductNotFoundException::new);
 
         WarehouseProduct destinationWarehouseProduct = warehouseProductRepository
-                .findById(request.getDestinationWarehouseProductId())
+                .findByProductIdAndWarehouseId(request.getProductId(), request.getDestinationWarehouseId())
                 .orElseThrow(WarehouseProductNotFoundException::new);
 
         if (originWarehouseProduct.getWarehouse().getId().equals(destinationWarehouseProduct.getWarehouse().getId())) {

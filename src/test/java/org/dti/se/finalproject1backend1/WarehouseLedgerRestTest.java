@@ -102,9 +102,10 @@ public class WarehouseLedgerRestTest extends TestConfiguration {
                 .orElseThrow();
         AddMutationRequest requestBody = AddMutationRequest
                 .builder()
-                .originWarehouseProductId(realOriginWarehouseProduct.getId())
-                .destinationWarehouseProductId(realDestinationWarehouseProduct.getId())
-                .quantity(Math.ceil(Math.random() * 10))
+                .productId(realOriginWarehouseProduct.getProduct().getId())
+                .originWarehouseId(realOriginWarehouseProduct.getWarehouse().getId())
+                .destinationWarehouseId(realDestinationWarehouseProduct.getWarehouse().getId())
+                .quantity(Math.ceil(Math.random() * 100))
                 .build();
 
         MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
