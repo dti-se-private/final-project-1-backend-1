@@ -1,12 +1,14 @@
 package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
 import org.dti.se.finalproject1backend1.inners.models.entities.Provider;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.Session;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.authentications.LoginByExternalRequest;
+import org.dti.se.finalproject1backend1.outers.configurations.GoogleConfiguration;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.deliveries.filters.AuthenticationManagerImpl;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountCredentialsInvalidException;
@@ -42,10 +44,10 @@ public class LoginAuthenticationUseCase {
     AccountPermissionRepository accountPermissionRepository;
 
     @Autowired
-    GoogleIdTokenVerifier googleIdTokenVerifier;
+    AuthenticationManagerImpl authenticationManager;
 
     @Autowired
-    AuthenticationManagerImpl authenticationManager;
+    GoogleConfiguration googleConfiguration;
 
     public Session loginByInternal(String email, String password) {
         Account account = accountRepository
@@ -55,11 +57,18 @@ public class LoginAuthenticationUseCase {
         return getSession(account);
     }
 
-    public Session loginByExternal(String credential) {
+    public Session loginByExternal(LoginByExternalRequest request) {
+        GoogleTokenResponse tokenResponse;
+        try {
+            tokenResponse = googleConfiguration.getToken(request.getAuthorizationCode());
+        } catch (GeneralSecurityException | IOException e) {
+            throw new VerificationInvalidException();
+        }
+
         GoogleIdToken idToken;
         try {
-            idToken = googleIdTokenVerifier.verify(credential);
-        } catch (GeneralSecurityException | IOException e) {
+            idToken = tokenResponse.parseIdToken();
+        } catch (IOException e) {
             throw new VerificationInvalidException();
         }
 

@@ -205,7 +205,7 @@ public class AuthenticationRest {
             @RequestBody LoginByExternalRequest request
     ) {
         try {
-            Session session = loginAuthenticationUseCase.loginByExternal(request.getCredential());
+            Session session = loginAuthenticationUseCase.loginByExternal(request);
             return ResponseBody
                     .<Session>builder()
                     .message("Login succeed.")

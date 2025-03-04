@@ -12,5 +12,5 @@ import org.dti.se.finalproject1backend1.inners.models.Model;
 @NoArgsConstructor
 @Accessors(chain = true)
 public class LoginByExternalRequest extends Model {
-    private String credential;
+    private String authorizationCode;
 }

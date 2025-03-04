@@ -3,7 +3,7 @@ package org.dti.se.finalproject1backend1;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.Verification;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
@@ -20,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -41,9 +40,6 @@ public class AuthenticationRestTest extends TestConfiguration {
 
     @Autowired
     ObjectMapper objectMapper;
-
-    @MockitoBean
-    GoogleIdTokenVerifier authGoogleIdTokenVerifier;
 
     @BeforeEach
     public void beforeEach() {
@@ -102,26 +98,25 @@ public class AuthenticationRestTest extends TestConfiguration {
     }
 
     @Test
-    @ResourceLock("idTokenMock")
+    @ResourceLock("googleTokenMock")
     public void testRegisterByExternal() throws Exception {
-        String idTokenMock = "mock-id-token";
         String email = String.format("email-%s", UUID.randomUUID());
         String name = String.format("name-%s", UUID.randomUUID());
         String picture = "https://placehold.co/400x400";
 
+        GoogleTokenResponse tokenResponse = Mockito.mock(GoogleTokenResponse.class);
+        Mockito.when(googleConfiguration.getToken(Mockito.any())).thenReturn(tokenResponse);
+        GoogleIdToken googleIdToken = Mockito.mock(GoogleIdToken.class);
+        Mockito.when(tokenResponse.parseIdToken()).thenReturn(googleIdToken);
         GoogleIdToken.Payload payload = Mockito.mock(GoogleIdToken.Payload.class);
         Mockito.when(payload.getEmail()).thenReturn(email);
         Mockito.when(payload.get("name")).thenReturn(name);
         Mockito.when(payload.get("picture")).thenReturn(picture);
-
-        GoogleIdToken idToken = Mockito.mock(GoogleIdToken.class);
-        Mockito.when(idToken.getPayload()).thenReturn(payload);
-
-        Mockito.when(authGoogleIdTokenVerifier.verify(idTokenMock)).thenReturn(idToken);
+        Mockito.when(googleIdToken.getPayload()).thenReturn(payload);
 
         RegisterByExternalRequest requestBody = RegisterByExternalRequest
                 .builder()
-                .credential(idTokenMock)
+                .authorizationCode(UUID.randomUUID().toString())
                 .build();
 
         MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
@@ -188,14 +183,14 @@ public class AuthenticationRestTest extends TestConfiguration {
     }
 
     @Test
-    @ResourceLock("idTokenMock")
+    @ResourceLock("googleTokenMock")
     public void testLoginByExternal() throws Exception {
         ResponseBody<Account> registerResponse = registerByExternal();
         Account realAccount = registerResponse.getData();
 
         LoginByExternalRequest requestBody = LoginByExternalRequest
                 .builder()
-                .credential("mock-id-token")
+                .authorizationCode(UUID.randomUUID().toString())
                 .build();
 
         MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders

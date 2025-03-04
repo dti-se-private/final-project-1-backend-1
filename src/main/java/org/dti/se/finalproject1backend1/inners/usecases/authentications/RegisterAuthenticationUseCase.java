@@ -1,7 +1,7 @@
 package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.entities.AccountPermission;
 import org.dti.se.finalproject1backend1.inners.models.entities.Provider;
@@ -39,10 +39,10 @@ public class RegisterAuthenticationUseCase {
     SecurityConfiguration securityConfiguration;
 
     @Autowired
-    GoogleIdTokenVerifier googleIdTokenVerifier;
+    VerificationUseCase verificationUseCase;
 
     @Autowired
-    VerificationUseCase verificationUseCase;
+    GoogleConfiguration googleConfiguration;
 
 
     public AccountResponse registerByInternal(RegisterByInternalRequest request) {
@@ -97,17 +97,18 @@ public class RegisterAuthenticationUseCase {
 
 
     public AccountResponse registerByExternal(RegisterByExternalRequest request) {
-        GoogleIdToken idToken;
-
-        String idTokenString = request.getCredential();
-        if (idTokenString == null || idTokenString.isEmpty()) {
-            throw new VerificationNotFoundException("ID token is null or empty");
+        GoogleTokenResponse tokenResponse;
+        try {
+            tokenResponse = googleConfiguration.getToken(request.getAuthorizationCode());
+        } catch (GeneralSecurityException | IOException e) {
+            throw new VerificationInvalidException();
         }
 
+        GoogleIdToken idToken;
         try {
-            idToken = googleIdTokenVerifier.verify(request.getCredential());
-        } catch (GeneralSecurityException | IOException e) {
-            throw new VerificationInvalidException("Invalid Google ID token");
+            idToken = tokenResponse.parseIdToken();
+        } catch (IOException e) {
+            throw new VerificationInvalidException();
         }
 
         GoogleIdToken.Payload payload = idToken.getPayload();
