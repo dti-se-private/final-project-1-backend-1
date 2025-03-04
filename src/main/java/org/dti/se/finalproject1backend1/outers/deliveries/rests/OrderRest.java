@@ -414,6 +414,85 @@ public class OrderRest {
         }
     }
 
+    @GetMapping("/shipment-start-confirmations")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN')")
+    public ResponseEntity<ResponseBody<List<OrderResponse>>> getShipmentStartConfirmationOrders(
+            @AuthenticationPrincipal Account account,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size,
+            @RequestParam(defaultValue = "") String search
+    ) {
+        try {
+            List<OrderResponse> orders = shipmentUseCase
+                    .getShipmentStartConfirmationOrders(account, page, size, search);
+            return ResponseBody
+                    .<List<OrderResponse>>builder()
+                    .message("Shipment start confirmation orders found.")
+                    .data(orders)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (AccountPermissionInvalidException e) {
+            return ResponseBody
+                    .<List<OrderResponse>>builder()
+                    .message("Account permission invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.FORBIDDEN);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<List<OrderResponse>>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @PostMapping("/shipment-start-confirmations/process")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
+    public ResponseEntity<ResponseBody<OrderResponse>> processShipmentStartConfirmation(
+            @RequestBody OrderProcessRequest request
+    ) {
+        try {
+            OrderResponse order = shipmentUseCase.processShipmentStartConfirmation(request);
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Order shipment start confirmation processed.")
+                    .data(order)
+                    .build()
+                    .toEntity(HttpStatus.OK);
+        } catch (OrderNotFoundException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Order not found.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (OrderStatusInvalidException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Order status invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (OrderActionInvalidException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Order action invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Internal server error.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @PostMapping("/shipment-confirmations/process")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
     public ResponseEntity<ResponseBody<OrderResponse>> processShipmentConfirmation(
@@ -434,6 +513,13 @@ public class OrderRest {
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
+        } catch (OrderStatusInvalidException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Order status invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (OrderActionInvalidException e) {
             return ResponseBody
                     .<OrderResponse>builder()

@@ -112,7 +112,7 @@ public class PaymentUseCase {
                 .findById(orderId)
                 .orElseThrow(OrderNotFoundException::new);
 
-        orderUseCase.processOrderProcessing(foundOrder.getId(), "APPROVED");
+        orderUseCase.processOrderProcessing(foundOrder.getId());
 
         return orderCustomRepository.getOrder(orderId);
     }
@@ -155,7 +155,7 @@ public class PaymentUseCase {
         }
 
         if (request.getAction().equals("APPROVE")) {
-            orderUseCase.processOrderProcessing(request.getOrderId(), "APPROVED");
+            orderUseCase.processOrderProcessing(request.getOrderId());
         } else if (request.getAction().equals("REJECT")) {
             OrderStatus newOrderStatus = OrderStatus
                     .builder()

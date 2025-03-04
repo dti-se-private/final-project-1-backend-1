@@ -104,7 +104,7 @@ public class OrderUseCase {
         }
     }
 
-    public void processOrderProcessing(UUID orderId, String ledgerStatus) throws Exception {
+    public void processOrderProcessing(UUID orderId) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
         Order foundOrder = orderRepository
@@ -187,7 +187,7 @@ public class OrderUseCase {
                             .originPostQuantity(originPostQuantity)
                             .destinationPreQuantity(destinationWarehouseProduct.getQuantity())
                             .destinationPostQuantity(destinationPostQuantity)
-                            .status(ledgerStatus)
+                            .status("APPROVED")
                             .build();
 
                     originWarehouseProduct.setQuantity(originPostQuantity);
@@ -217,24 +217,16 @@ public class OrderUseCase {
                 warehouseProductRepository.saveAndFlush(destinationWarehouseProduct);
             }
             transactionManager.commit(status);
-            OrderStatus newOrderStatusShipping = OrderStatus
-                    .builder()
-                    .id(UUID.randomUUID())
-                    .order(foundOrder)
-                    .status("SHIPPING")
-                    .time(now.plusSeconds(1))
-                    .build();
-            orderStatusRepository.saveAndFlush(newOrderStatusShipping);
         } catch (Exception exception) {
             transactionManager.rollback(status);
-            OrderStatus newOrderStatusFailed = OrderStatus
+            OrderStatus newOrderStatusCanceled = OrderStatus
                     .builder()
                     .id(UUID.randomUUID())
                     .order(foundOrder)
                     .status("CANCELED")
                     .time(now.plusSeconds(1))
                     .build();
-            orderStatusRepository.saveAndFlush(newOrderStatusFailed);
+            orderStatusRepository.saveAndFlush(newOrderStatusCanceled);
             throw exception;
         }
     }
