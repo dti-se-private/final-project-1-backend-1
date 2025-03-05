@@ -286,6 +286,12 @@ public class AuthenticationRest {
                     .data(newSession)
                     .build()
                     .toEntity(HttpStatus.OK);
+        } catch (AccountNotFoundException e) {
+            return ResponseBody
+                    .<Session>builder()
+                    .message("Account not found.")
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
         } catch (TokenExpiredException e) {
             return ResponseBody
                     .<Session>builder()
