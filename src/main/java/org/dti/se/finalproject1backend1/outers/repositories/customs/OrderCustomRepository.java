@@ -301,12 +301,10 @@ public class OrderCustomRepository {
                         )
                     ) as item
                     FROM "order"
-                    WHERE "order".id in (
-                        SELECT DISTINCT order_item.order_id
-                        FROM order_item
-                        INNER JOIN warehouse_product ON order_item.product_id = warehouse_product.product_id
-                        INNER JOIN warehouse_admin ON warehouse_product.warehouse_id = warehouse_admin.warehouse_id
-                        WHERE order_item.order_id = "order".id
+                    WHERE "order".origin_warehouse_id in (
+                        SELECT DISTINCT warehouse_admin.warehouse_id
+                        FROM warehouse_admin
+                        WHERE warehouse_admin.warehouse_id = "order".origin_warehouse_id
                         AND warehouse_admin.account_id = ?
                     )
                 ) as sq1
@@ -600,12 +598,10 @@ public class OrderCustomRepository {
                     )
                 ) as item
                 FROM "order"
-                WHERE "order".id in (
-                    SELECT DISTINCT order_item.order_id
-                    FROM order_item
-                    INNER JOIN warehouse_product ON order_item.product_id = warehouse_product.product_id
-                    INNER JOIN warehouse_admin ON warehouse_product.warehouse_id = warehouse_admin.warehouse_id
-                    WHERE order_item.order_id = "order".id
+                WHERE "order".origin_warehouse_id in (
+                    SELECT DISTINCT warehouse_admin.warehouse_id
+                    FROM warehouse_admin
+                    WHERE warehouse_admin.warehouse_id = "order".origin_warehouse_id
                     AND warehouse_admin.account_id = ?
                 )
                 AND "order".id = ?
@@ -718,12 +714,10 @@ public class OrderCustomRepository {
                         ) as sq2
                         WHERE sq2.status = 'WAITING_FOR_PAYMENT_CONFIRMATION'
                     )
-                    AND "order".id in (
-                        SELECT DISTINCT order_item.order_id
-                        FROM order_item
-                        INNER JOIN warehouse_product ON order_item.product_id = warehouse_product.product_id
-                        INNER JOIN warehouse_admin ON warehouse_product.warehouse_id = warehouse_admin.warehouse_id
-                        WHERE order_item.order_id = "order".id
+                    AND "order".origin_warehouse_id in (
+                        SELECT DISTINCT warehouse_admin.warehouse_id
+                        FROM warehouse_admin
+                        WHERE warehouse_admin.warehouse_id = "order".origin_warehouse_id
                         AND warehouse_admin.account_id = ?
                     )
                 ) as sq1
@@ -946,12 +940,10 @@ public class OrderCustomRepository {
                         ) as sq2
                         WHERE sq2.status = 'PROCESSING'
                     )
-                    AND "order".id in (
-                        SELECT DISTINCT order_item.order_id
-                        FROM order_item
-                        INNER JOIN warehouse_product ON order_item.product_id = warehouse_product.product_id
-                        INNER JOIN warehouse_admin ON warehouse_product.warehouse_id = warehouse_admin.warehouse_id
-                        WHERE order_item.order_id = "order".id
+                    AND "order".origin_warehouse_id in (
+                        SELECT DISTINCT warehouse_admin.warehouse_id
+                        FROM warehouse_admin
+                        WHERE warehouse_admin.warehouse_id = "order".origin_warehouse_id
                         AND warehouse_admin.account_id = ?
                     )
                 ) as sq1
