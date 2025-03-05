@@ -4,6 +4,7 @@ import lombok.*;
 import lombok.experimental.Accessors;
 import org.dti.se.finalproject1backend1.inners.models.Model;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.accounts.AccountResponse;
+import org.dti.se.finalproject1backend1.inners.models.valueobjects.warehouses.WarehouseResponse;
 import org.locationtech.jts.geom.Point;
 
 import java.util.List;
@@ -35,4 +36,6 @@ public class OrderResponse extends Model {
     private Point shipmentOrigin;
 
     private Point shipmentDestination;
+
+    private WarehouseResponse originWarehouse;
 }

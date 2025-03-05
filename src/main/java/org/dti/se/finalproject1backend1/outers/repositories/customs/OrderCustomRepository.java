@@ -53,6 +53,16 @@ public class OrderCustomRepository {
                         'shipment_destination', "order".shipment_destination,
                         'shipment_price', "order".shipment_price,
                         'item_price', "order".item_price,
+                        'origin_warehouse', (
+                            SELECT json_build_object(
+                                'id', warehouse.id,
+                                'name', warehouse.name,
+                                'description', warehouse.description,
+                                'location', warehouse.location
+                            )
+                            FROM warehouse
+                            WHERE warehouse.id = "order".origin_warehouse_id
+                        ),
                         'statuses', (
                             SELECT COALESCE(json_agg(json_build_object(
                                 'id', order_status.id,
@@ -154,6 +164,16 @@ public class OrderCustomRepository {
                     'shipment_destination', "order".shipment_destination,
                     'shipment_price', "order".shipment_price,
                     'item_price', "order".item_price,
+                    'origin_warehouse', (
+                        SELECT json_build_object(
+                            'id', warehouse.id,
+                            'name', warehouse.name,
+                            'description', warehouse.description,
+                            'location', warehouse.location
+                        )
+                        FROM warehouse
+                        WHERE warehouse.id = "order".origin_warehouse_id
+                    ),
                     'statuses', (
                         SELECT COALESCE(json_agg(json_build_object(
                             'id', order_status.id,
@@ -249,6 +269,16 @@ public class OrderCustomRepository {
                         'shipment_destination', "order".shipment_destination,
                         'shipment_price', "order".shipment_price,
                         'item_price', "order".item_price,
+                        'origin_warehouse', (
+                            SELECT json_build_object(
+                                'id', warehouse.id,
+                                'name', warehouse.name,
+                                'description', warehouse.description,
+                                'location', warehouse.location
+                            )
+                            FROM warehouse
+                            WHERE warehouse.id = "order".origin_warehouse_id
+                        ),
                         'statuses', (
                             SELECT COALESCE(json_agg(json_build_object(
                                 'id', order_status.id,
@@ -354,6 +384,16 @@ public class OrderCustomRepository {
                                 'shipment_destination', "order".shipment_destination,
                                 'shipment_price', "order".shipment_price,
                                 'item_price', "order".item_price,
+                                'origin_warehouse', (
+                                    SELECT json_build_object(
+                                        'id', warehouse.id,
+                                        'name', warehouse.name,
+                                        'description', warehouse.description,
+                                        'location', warehouse.location
+                                    )
+                                    FROM warehouse
+                                    WHERE warehouse.id = "order".origin_warehouse_id
+                                ),
                                 'statuses', (
                                     SELECT COALESCE(json_agg(json_build_object(
                                         'id', order_status.id,
@@ -450,6 +490,16 @@ public class OrderCustomRepository {
                     'shipment_destination', "order".shipment_destination,
                     'shipment_price', "order".shipment_price,
                     'item_price', "order".item_price,
+                    'origin_warehouse', (
+                        SELECT json_build_object(
+                            'id', warehouse.id,
+                            'name', warehouse.name,
+                            'description', warehouse.description,
+                            'location', warehouse.location
+                        )
+                        FROM warehouse
+                        WHERE warehouse.id = "order".origin_warehouse_id
+                    ),
                     'statuses', (
                         SELECT COALESCE(json_agg(json_build_object(
                             'id', order_status.id,
@@ -546,6 +596,16 @@ public class OrderCustomRepository {
                     'shipment_destination', "order".shipment_destination,
                     'shipment_price', "order".shipment_price,
                     'item_price', "order".item_price,
+                    'origin_warehouse', (
+                        SELECT json_build_object(
+                            'id', warehouse.id,
+                            'name', warehouse.name,
+                            'description', warehouse.description,
+                            'location', warehouse.location
+                        )
+                        FROM warehouse
+                        WHERE warehouse.id = "order".origin_warehouse_id
+                    ),
                     'statuses', (
                         SELECT COALESCE(json_agg(json_build_object(
                             'id', order_status.id,
@@ -651,6 +711,16 @@ public class OrderCustomRepository {
                                 'shipment_destination', "order".shipment_destination,
                                 'shipment_price', "order".shipment_price,
                                 'item_price', "order".item_price,
+                                'origin_warehouse', (
+                                    SELECT json_build_object(
+                                        'id', warehouse.id,
+                                        'name', warehouse.name,
+                                        'description', warehouse.description,
+                                        'location', warehouse.location
+                                    )
+                                    FROM warehouse
+                                    WHERE warehouse.id = "order".origin_warehouse_id
+                                ),
                                 'statuses', (
                                     SELECT COALESCE(json_agg(json_build_object(
                                         'id', order_status.id,
@@ -768,6 +838,16 @@ public class OrderCustomRepository {
                                 'shipment_destination', "order".shipment_destination,
                                 'shipment_price', "order".shipment_price,
                                 'item_price', "order".item_price,
+                                'origin_warehouse', (
+                                    SELECT json_build_object(
+                                        'id', warehouse.id,
+                                        'name', warehouse.name,
+                                        'description', warehouse.description,
+                                        'location', warehouse.location
+                                    )
+                                    FROM warehouse
+                                    WHERE warehouse.id = "order".origin_warehouse_id
+                                ),
                                 'statuses', (
                                     SELECT COALESCE(json_agg(json_build_object(
                                         'id', order_status.id,
@@ -877,6 +957,16 @@ public class OrderCustomRepository {
                                 'shipment_destination', "order".shipment_destination,
                                 'shipment_price', "order".shipment_price,
                                 'item_price', "order".item_price,
+                                'origin_warehouse', (
+                                    SELECT json_build_object(
+                                        'id', warehouse.id,
+                                        'name', warehouse.name,
+                                        'description', warehouse.description,
+                                        'location', warehouse.location
+                                    )
+                                    FROM warehouse
+                                    WHERE warehouse.id = "order".origin_warehouse_id
+                                ),
                                 'statuses', (
                                     SELECT COALESCE(json_agg(json_build_object(
                                         'id', order_status.id,
@@ -993,6 +1083,16 @@ public class OrderCustomRepository {
                                 'shipment_destination', "order".shipment_destination,
                                 'shipment_price', "order".shipment_price,
                                 'item_price', "order".item_price,
+                                'origin_warehouse', (
+                                    SELECT json_build_object(
+                                        'id', warehouse.id,
+                                        'name', warehouse.name,
+                                        'description', warehouse.description,
+                                        'location', warehouse.location
+                                    )
+                                    FROM warehouse
+                                    WHERE warehouse.id = "order".origin_warehouse_id
+                                ),
                                 'statuses', (
                                     SELECT COALESCE(json_agg(json_build_object(
                                         'id', order_status.id,
