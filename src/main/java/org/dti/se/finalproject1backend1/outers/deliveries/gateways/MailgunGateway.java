@@ -25,13 +25,13 @@ public class MailgunGateway {
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
         headers.setBasicAuth("api", environment.getProperty("mailgun.api.key"));
 
-        MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
-        map.add("from", "Mailgun Sandbox <postmaster@" + environment.getProperty("mailgun.domain") + ">");
-        map.add("to", to);
-        map.add("subject", subject);
-        map.add("text", text);
+        MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
+        requestBody.add("from", "Mailgun Sandbox <postmaster@" + environment.getProperty("mailgun.domain") + ">");
+        requestBody.add("to", to);
+        requestBody.add("subject", subject);
+        requestBody.add("text", text);
 
-        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(map, headers);
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(requestBody, headers);
 
         restTemplate.postForObject(url, request, String.class);
     }

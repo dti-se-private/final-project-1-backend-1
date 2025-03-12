@@ -85,7 +85,6 @@ public class CheckoutUseCase {
                 .findById(request.getAddressId())
                 .orElseThrow(AccountAddressNotFoundException::new);
 
-
         Point shipmentDestination = foundAccountAddress.getLocation();
         Warehouse nearestWarehouse = locationCustomRepository.getNearestWarehouse(shipmentDestination);
         Point shipmentOrigin = nearestWarehouse.getLocation();

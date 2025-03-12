@@ -31,6 +31,8 @@ public class Product {
 
     private Double price;
 
+    private Double weight;
+
     private byte[] image;
 
     @OneToMany(mappedBy = "product")

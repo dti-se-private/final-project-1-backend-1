@@ -112,7 +112,8 @@ public class WarehouseProductRestTest extends TestConfiguration {
                 .category(fakeCategories.getFirst())
                 .name(String.format("name-%s", UUID.randomUUID()))
                 .description(String.format("description-%s", UUID.randomUUID()))
-                .price(Math.random() * 1000000)
+                .price(Math.ceil(Math.random() * 1000000))
+                .weight(Math.ceil(Math.random() * 10000))
                 .image(null)
                 .build();
         fakeProducts.add(newProduct);

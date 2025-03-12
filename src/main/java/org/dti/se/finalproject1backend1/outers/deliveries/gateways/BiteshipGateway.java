@@ -1,14 +1,16 @@
 package org.dti.se.finalproject1backend1.outers.deliveries.gateways;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.dti.se.finalproject1backend1.inners.models.entities.CartItem;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.shipments.ShipmentRateResponse;
+import org.dti.se.finalproject1backend1.outers.exceptions.orders.ShipmentInvalidException;
 import org.locationtech.jts.geom.Point;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -22,9 +24,11 @@ public class BiteshipGateway {
     @Autowired
     Environment environment;
 
+    @Autowired
+    ObjectMapper objectMapper;
+
     public ShipmentRateResponse getShipmentRate(Point origin, Point destination, List<CartItem> items) {
         RestTemplate restTemplate = new RestTemplate();
-        String url = environment.getProperty("biteship.api.url") + "/v1/rates/couriers";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -42,14 +46,27 @@ public class BiteshipGateway {
             Map<String, Object> itemMap = new HashMap<>();
             itemMap.put("value", item.getProduct().getPrice());
             itemMap.put("quantity", item.getQuantity());
-            itemMap.put("weight", 1000);
+            itemMap.put("weight", item.getProduct().getWeight());
             itemsList.add(itemMap);
         }
 
         requestBody.put("items", itemsList);
 
-        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+        try {
+            String json = objectMapper.writeValueAsString(requestBody);
+            System.out.println("BiteshipGateway.getShipmentRate: Request body: " + json);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
 
-        return restTemplate.postForObject(url, request, ShipmentRateResponse.class);
+        try {
+            HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+            String url = environment.getProperty("biteship.api.url") + "/v1/rates/couriers";
+            ResponseEntity<ShipmentRateResponse> response = restTemplate
+                    .exchange(url, HttpMethod.POST, request, ShipmentRateResponse.class);
+            return response.getBody();
+        } catch (HttpClientErrorException httpException) {
+            throw new ShipmentInvalidException();
+        }
     }
 }

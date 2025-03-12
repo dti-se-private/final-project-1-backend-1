@@ -15,5 +15,4 @@ import java.util.UUID;
 @Accessors(chain = true)
 public class OrderRequest extends Model {
     private UUID addressId;
-    private List<OrderItemRequest> items;
 }

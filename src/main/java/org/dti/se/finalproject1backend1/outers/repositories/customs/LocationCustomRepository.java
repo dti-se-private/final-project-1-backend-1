@@ -66,6 +66,7 @@ public class LocationCustomRepository {
                         'name', product.name,
                         'description', product.description,
                         'price', product.price,
+                        'weight', product.weight,
                         'image', product.image,
                         'category', json_build_object(
                             'id', category.id,

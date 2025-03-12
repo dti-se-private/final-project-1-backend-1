@@ -69,6 +69,7 @@ public class WarehouseLedgerCustomRepository {
                                 'name', product_origin.name,
                                 'description', product_origin.description,
                                 'price', product_origin.price,
+                                'weight', product_origin.weight,
                                 'image', product_origin.image,
                                 'category', json_build_object(
                                     'id', category_origin.id,
@@ -91,6 +92,7 @@ public class WarehouseLedgerCustomRepository {
                                 'name', product_destination.name,
                                 'description', product_destination.description,
                                 'price', product_destination.price,
+                                'weight', product_destination.weight,
                                 'image', product_destination.image,
                                 'category', json_build_object(
                                     'id', category_destination.id,
@@ -171,6 +173,7 @@ public class WarehouseLedgerCustomRepository {
                                 'name', product_origin.name,
                                 'description', product_origin.description,
                                 'price', product_origin.price,
+                                'weight', product_origin.weight,
                                 'image', product_origin.image,
                                 'category', json_build_object(
                                     'id', category_origin.id,
@@ -193,6 +196,7 @@ public class WarehouseLedgerCustomRepository {
                                 'name', product_destination.name,
                                 'description', product_destination.description,
                                 'price', product_destination.price,
+                                'weight', product_destination.weight,
                                 'image', product_destination.image,
                                 'category', json_build_object(
                                     'id', category_destination.id,
@@ -263,6 +267,7 @@ public class WarehouseLedgerCustomRepository {
                             'name', product_origin.name,
                             'description', product_origin.description,
                             'price', product_origin.price,
+                            'weight', product_origin.weight,
                             'image', product_origin.image,
                             'category', json_build_object(
                                 'id', category_origin.id,
@@ -285,6 +290,7 @@ public class WarehouseLedgerCustomRepository {
                             'name', product_destination.name,
                             'description', product_destination.description,
                             'price', product_destination.price,
+                            'weight', product_destination.weight,
                             'image', product_destination.image,
                             'category', json_build_object(
                                 'id', category_destination.id,
@@ -358,6 +364,7 @@ public class WarehouseLedgerCustomRepository {
                             'name', product_origin.name,
                             'description', product_origin.description,
                             'price', product_origin.price,
+                            'weight', product_origin.weight,
                             'image', product_origin.image,
                             'category', json_build_object(
                                 'id', category_origin.id,
@@ -380,6 +387,7 @@ public class WarehouseLedgerCustomRepository {
                             'name', product_destination.name,
                             'description', product_destination.description,
                             'price', product_destination.price,
+                            'weight', product_destination.weight,
                             'image', product_destination.image,
                             'category', json_build_object(
                                 'id', category_destination.id,

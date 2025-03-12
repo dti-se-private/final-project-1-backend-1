@@ -61,6 +61,7 @@ public class ProductUseCase {
                 .name(request.getName())
                 .description(request.getDescription())
                 .price(request.getPrice())
+                .weight(request.getWeight())
                 .image(request.getImage())
                 .build();
 
@@ -89,6 +90,7 @@ public class ProductUseCase {
         foundProduct.setName(request.getName());
         foundProduct.setDescription(request.getDescription());
         foundProduct.setPrice(request.getPrice());
+        foundProduct.setWeight(request.getWeight());
         foundProduct.setImage(request.getImage());
 
         productRepository.saveAndFlush(foundProduct);

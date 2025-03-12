@@ -5,6 +5,7 @@ import org.dti.se.finalproject1backend1.inners.models.entities.Account;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.ResponseBody;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.orders.*;
 import org.dti.se.finalproject1backend1.inners.usecases.orders.*;
+import org.dti.se.finalproject1backend1.outers.exceptions.orders.ShipmentInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountAddressNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountPermissionInvalidException;
@@ -64,6 +65,13 @@ public class OrderRest {
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
+        } catch (ShipmentInvalidException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Shipment invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (CartItemInvalidException e) {
             return ResponseBody
                     .<OrderResponse>builder()
@@ -110,6 +118,13 @@ public class OrderRest {
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
+        } catch (ShipmentInvalidException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Shipment invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (CartItemInvalidException e) {
             return ResponseBody
                     .<OrderResponse>builder()

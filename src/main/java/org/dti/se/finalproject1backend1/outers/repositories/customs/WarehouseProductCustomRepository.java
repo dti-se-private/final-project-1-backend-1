@@ -44,6 +44,7 @@ public class WarehouseProductCustomRepository {
                                  'name', product.name,
                                  'description', product.description,
                                  'price', product.price,
+                                 'weight', product.weight,
                                  'image', product.image,
                                  'quantity', COALESCE((
                                      SELECT sum(warehouse_product.quantity)
@@ -107,6 +108,7 @@ public class WarehouseProductCustomRepository {
                                  'name', product.name,
                                  'description', product.description,
                                  'price', product.price,
+                                 'weight', product.weight,
                                  'image', product.image,
                                  'quantity', COALESCE((
                                      SELECT sum(warehouse_product.quantity)
@@ -167,6 +169,7 @@ public class WarehouseProductCustomRepository {
                                  'name', product.name,
                                  'description', product.description,
                                  'price', product.price,
+                                 'weight', product.weight,
                                  'image', product.image,
                                  'quantity', COALESCE((
                                      SELECT sum(warehouse_product.quantity)
@@ -226,6 +229,7 @@ public class WarehouseProductCustomRepository {
                                  'name', product.name,
                                  'description', product.description,
                                  'price', product.price,
+                                 'weight', product.weight,
                                  'image', product.image,
                                  'quantity', COALESCE((
                                      SELECT sum(warehouse_product.quantity)

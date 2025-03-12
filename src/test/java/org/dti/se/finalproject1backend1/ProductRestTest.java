@@ -104,6 +104,7 @@ public class ProductRestTest extends TestConfiguration {
         assert responseBody.getData().getName().equals(realProduct.getName());
         assert responseBody.getData().getDescription().equals(realProduct.getDescription());
         assert responseBody.getData().getPrice().equals(realProduct.getPrice());
+        assert responseBody.getData().getWeight().equals(realProduct.getWeight());
         assert Arrays.equals(responseBody.getData().getImage(), realProduct.getImage());
         assert responseBody.getData().getCategory().getId().equals(realProduct.getCategory().getId());
         assert responseBody.getData().getCategory().getName().equals(realProduct.getCategory().getName());
@@ -122,7 +123,8 @@ public class ProductRestTest extends TestConfiguration {
                 .categoryId(realCategory.getId())
                 .name(String.format("name-%s", UUID.randomUUID()))
                 .description(String.format("description-%s", UUID.randomUUID()))
-                .price(1000.0)
+                .price(Math.ceil(Math.random() * 1000000))
+                .weight(Math.ceil(Math.random() * 10000))
                 .image(null)
                 .build();
 
@@ -149,6 +151,7 @@ public class ProductRestTest extends TestConfiguration {
         assert responseBody.getData().getName().equals(requestBody.getName());
         assert responseBody.getData().getDescription().equals(requestBody.getDescription());
         assert responseBody.getData().getPrice().equals(requestBody.getPrice());
+        assert responseBody.getData().getWeight().equals(requestBody.getWeight());
         assert Arrays.equals(responseBody.getData().getImage(), requestBody.getImage());
         assert responseBody.getData().getCategory().getId().equals(realCategory.getId());
         assert responseBody.getData().getCategory().getName().equals(realCategory.getName());
@@ -176,7 +179,8 @@ public class ProductRestTest extends TestConfiguration {
                 .builder()
                 .name(String.format("name-%s", UUID.randomUUID()))
                 .description(String.format("description-%s", UUID.randomUUID()))
-                .price(1000.0)
+                .price(Math.ceil(Math.random() * 1000000))
+                .weight(Math.ceil(Math.random() * 10000))
                 .image(null)
                 .categoryId(realCategory.getId())
                 .build();
@@ -204,6 +208,7 @@ public class ProductRestTest extends TestConfiguration {
         assert responseBody.getData().getName().equals(requestBody.getName());
         assert responseBody.getData().getDescription().equals(requestBody.getDescription());
         assert responseBody.getData().getPrice().equals(requestBody.getPrice());
+        assert responseBody.getData().getWeight().equals(requestBody.getWeight());
         assert Arrays.equals(responseBody.getData().getImage(), requestBody.getImage());
         assert responseBody.getData().getCategory().getId().equals(realCategory.getId());
         assert responseBody.getData().getCategory().getName().equals(realCategory.getName());

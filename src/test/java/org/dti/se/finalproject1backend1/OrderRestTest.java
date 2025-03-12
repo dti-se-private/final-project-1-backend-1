@@ -94,21 +94,9 @@ public class OrderRestTest extends TestConfiguration {
                 .findFirst()
                 .orElseThrow();
 
-        List<OrderItemRequest> orderItemRequests = fakeCartItems
-                .stream()
-                .filter(cartItem -> cartItem.getAccount().getId().equals(authenticatedAccount.getId()))
-                .map(cartItem -> OrderItemRequest
-                        .builder()
-                        .productId(cartItem.getProduct().getId())
-                        .quantity(cartItem.getQuantity())
-                        .build()
-                )
-                .toList();
-
         OrderRequest requestBody = OrderRequest
                 .builder()
                 .addressId(realAddress.getId())
-                .items(orderItemRequests)
                 .build();
 
         MockHttpServletRequestBuilder httpRequest = MockMvcRequestBuilders
