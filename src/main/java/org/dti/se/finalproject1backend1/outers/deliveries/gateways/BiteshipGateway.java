@@ -39,7 +39,7 @@ public class BiteshipGateway {
         requestBody.put("origin_latitude", origin.getY());
         requestBody.put("destination_longitude", destination.getX());
         requestBody.put("destination_latitude", destination.getY());
-        requestBody.put("couriers", "pos");
+        requestBody.put("couriers", "pos,jne,tiki,anteraja,sicepat,lion,idexpress,rpx");
 
         ArrayList<Map<String, Object>> itemsList = new ArrayList<>();
         for (CartItem item : items) {
