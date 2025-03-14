@@ -84,7 +84,7 @@ public class CartCustomRepository {
     public Double getTotalPrice(UUID accountId) {
         return oneTemplate
                 .queryForObject("""
-                                SELECT SUM(product.price * cart_item.quantity)
+                                SELECT COALESCE(SUM(product.price * cart_item.quantity), 0)
                                 FROM cart_item
                                 JOIN product ON cart_item.product_id = product.id
                                 WHERE account_id = ?
