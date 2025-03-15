@@ -2,6 +2,7 @@ package org.dti.se.finalproject1backend1.inners.usecases.authentications;
 
 import org.dti.se.finalproject1backend1.inners.models.entities.Verification;
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.verifications.VerificationRequest;
+import org.dti.se.finalproject1backend1.outers.deliveries.gateways.GmailGateway;
 import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationExpiredException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
@@ -21,7 +22,7 @@ public class VerificationUseCase {
     VerificationRepository verificationRepository;
 
     @Autowired
-    MailgunGateway mailgunGateway;
+    GmailGateway gmailGateway;
 
     public void send(VerificationRequest request) {
         String otp = generateOtp();
@@ -38,9 +39,10 @@ public class VerificationUseCase {
 
         verificationRepository.saveAndFlush(verification);
 
-        mailgunGateway.sendEmail(
+        gmailGateway.sendOtp(
                 verification.getEmail(),
-                "Your Commerce OTP Code", "Your " + verification.getType().toLowerCase().replace("_", " ") + " OTP code is: " + otp
+                "Your Commerce OTP Code",
+                "Your " + verification.getType().toLowerCase().replace("_", " ") + " OTP code is: " + otp
         );
     }
 
