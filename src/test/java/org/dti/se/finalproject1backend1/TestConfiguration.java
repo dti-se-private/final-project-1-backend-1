@@ -14,7 +14,7 @@ import org.dti.se.finalproject1backend1.inners.models.valueobjects.authenticatio
 import org.dti.se.finalproject1backend1.inners.models.valueobjects.verifications.VerificationRequest;
 import org.dti.se.finalproject1backend1.outers.configurations.GoogleConfiguration;
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
-import org.dti.se.finalproject1backend1.outers.deliveries.gateways.MailgunGateway;
+import org.dti.se.finalproject1backend1.outers.deliveries.gateways.GmailGateway;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
@@ -78,9 +78,9 @@ public class TestConfiguration {
     protected WarehouseAdminRepository warehouseAdminRepository;
 
     @MockitoBean
-    protected MailgunGateway mailgunGatewayMock;
+    protected GmailGateway gmailGatewayMock;
     @MockitoBean
-    GoogleConfiguration googleConfiguration;
+    protected GoogleConfiguration googleConfiguration;
 
     @Autowired
     protected SecurityConfiguration securityConfiguration;
@@ -507,7 +507,7 @@ public class TestConfiguration {
     protected Verification getVerification(String email, String type) throws Exception {
         Mockito
                 .doNothing()
-                .when(mailgunGatewayMock)
+                .when(gmailGatewayMock)
                 .sendEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 
         VerificationRequest requestBody = VerificationRequest

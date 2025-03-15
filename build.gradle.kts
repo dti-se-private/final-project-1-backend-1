@@ -34,7 +34,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-aop")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-mail")
-    implementation("org.springframework:spring-context-support")
     implementation("com.auth0:java-jwt:latest.release")
     implementation("com.github.javadev:underscore:latest.release")
     implementation("com.google.api-client:google-api-client:2.7.2")

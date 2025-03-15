@@ -47,7 +47,7 @@ public class VerificationRestTest extends TestConfiguration {
 
     @Test
     public void send() throws Exception {
-        Mockito.doNothing().when(mailgunGatewayMock).sendEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
+        Mockito.doNothing().when(gmailGatewayMock).sendEmail(Mockito.anyString(), Mockito.anyString(), Mockito.anyString());
 
         VerificationRequest requestBody = VerificationRequest
                 .builder()

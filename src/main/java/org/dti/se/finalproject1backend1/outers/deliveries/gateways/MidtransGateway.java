@@ -10,13 +10,13 @@ import org.dti.se.finalproject1backend1.outers.exceptions.orders.PaymentLinkInva
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.http.*;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 
-@Service
+@Component
 public class MidtransGateway {
 
     @Autowired
