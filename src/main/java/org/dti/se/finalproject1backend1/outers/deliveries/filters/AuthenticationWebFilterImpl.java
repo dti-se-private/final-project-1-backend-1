@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 
 import java.io.IOException;
 
@@ -37,7 +38,7 @@ public class AuthenticationWebFilterImpl extends OncePerRequestFilter {
                 SecurityContextHolder.getContext().setAuthentication(authenticationResponse);
             }
             filterChain.doFilter(request, response);
-        } catch (TokenExpiredException e) {
+        } catch (TokenExpiredException | AccountNotFoundException e) {
             response.setStatus(HttpStatus.UNAUTHORIZED.value());
         }
     }
