@@ -52,11 +52,11 @@ public class VerificationUseCase {
                 .findByEmailAndCodeAndType(email, otp, type)
                 .orElseThrow(VerificationNotFoundException::new);
 
+        verificationRepository.delete(verification);
+
         if (now.isAfter(verification.getEndTime())) {
             throw new VerificationExpiredException();
         }
-
-        verificationRepository.delete(verification);
 
         return true;
     }

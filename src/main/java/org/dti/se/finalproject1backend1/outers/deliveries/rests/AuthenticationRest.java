@@ -71,6 +71,12 @@ public class AuthenticationRest {
                     .message("Verification expired.")
                     .build()
                     .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (VerificationInvalidException e) {
+            return ResponseBody
+                    .<AccountResponse>builder()
+                    .message("Verification invalid.")
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseBody
                     .<AccountResponse>builder()
@@ -154,6 +160,18 @@ public class AuthenticationRest {
             return ResponseBody
                     .<Void>builder()
                     .message("Provider invalid, only internal provider can reset password.")
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (VerificationNotFoundException e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Verification not found.")
+                    .build()
+                    .toEntity(HttpStatus.NOT_FOUND);
+        } catch (VerificationExpiredException e) {
+            return ResponseBody
+                    .<Void>builder()
+                    .message("Verification expired.")
                     .build()
                     .toEntity(HttpStatus.BAD_REQUEST);
         } catch (VerificationInvalidException e) {

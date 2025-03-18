@@ -7,6 +7,7 @@ import org.dti.se.finalproject1backend1.inners.usecases.accounts.BasicAccountUse
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountNotFoundException;
 import org.dti.se.finalproject1backend1.outers.exceptions.blobs.ObjectSizeExceededException;
+import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationExpiredException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -125,6 +126,13 @@ public class AccountRest {
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.NOT_FOUND);
+        } catch (VerificationExpiredException e) {
+            return ResponseBody
+                    .<AccountResponse>builder()
+                    .message("Verification expired.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
         } catch (VerificationInvalidException e) {
             return ResponseBody
                     .<AccountResponse>builder()

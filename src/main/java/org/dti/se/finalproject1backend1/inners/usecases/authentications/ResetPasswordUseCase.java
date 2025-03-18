@@ -28,6 +28,13 @@ public class ResetPasswordUseCase {
     SecurityConfiguration securityConfiguration;
 
     public void resetPassword(ResetPasswordRequest request) {
+        Boolean isOtpVerified = verificationUseCase
+                .verifyOtp(request.getEmail(), request.getOtp(), "RESET_PASSWORD");
+
+        if (!isOtpVerified) {
+            throw new VerificationInvalidException();
+        }
+
         Account account = accountRepository.findByEmail(request.getEmail())
                 .orElseThrow(AccountNotFoundException::new);
 
@@ -38,12 +45,8 @@ public class ResetPasswordUseCase {
             throw new ProviderInvalidException();
         }
 
-        if (verificationUseCase.verifyOtp(request.getEmail(), request.getOtp(), "RESET_PASSWORD")) {
-            String encodedPassword = securityConfiguration.encode(request.getNewPassword());
-            account.setPassword(encodedPassword);
-            accountRepository.saveAndFlush(account);
-        } else {
-            throw new VerificationInvalidException();
-        }
+        String encodedPassword = securityConfiguration.encode(request.getNewPassword());
+        account.setPassword(encodedPassword);
+        accountRepository.saveAndFlush(account);
     }
 }

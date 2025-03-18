@@ -12,7 +12,6 @@ import org.dti.se.finalproject1backend1.outers.configurations.GoogleConfiguratio
 import org.dti.se.finalproject1backend1.outers.configurations.SecurityConfiguration;
 import org.dti.se.finalproject1backend1.outers.exceptions.accounts.AccountExistsException;
 import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationInvalidException;
-import org.dti.se.finalproject1backend1.outers.exceptions.verifications.VerificationNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountPermissionRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.AccountRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.ProviderRepository;
@@ -46,10 +45,11 @@ public class RegisterAuthenticationUseCase {
 
 
     public AccountResponse registerByInternal(RegisterByInternalRequest request) {
-        boolean isOtpVerified = verificationUseCase.verifyOtp(request.getEmail(), request.getOtp(), "REGISTER");
+        Boolean isOtpVerified = verificationUseCase
+                .verifyOtp(request.getEmail(), request.getOtp(), "REGISTER");
 
         if (!isOtpVerified) {
-            throw new VerificationNotFoundException();
+            throw new VerificationInvalidException();
         }
 
         Optional<Account> foundAccount = accountRepository
