@@ -59,12 +59,24 @@ public class PaymentUseCase {
                 .build();
     }
 
-    public OrderResponse processManualPayment(ManualPaymentProcessRequest request) {
+    public OrderResponse processManualPayment(Account account, ManualPaymentProcessRequest request) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
         Order foundOrder = orderRepository
                 .findById(request.getOrderId())
                 .orElseThrow(OrderNotFoundException::new);
+
+        List<String> accountPermissions = account
+                .getAccountPermissions()
+                .stream()
+                .map(AccountPermission::getPermission)
+                .toList();
+
+        if (accountPermissions.contains("CUSTOMER")) {
+            if (!foundOrder.getAccount().getId().equals(account.getId())) {
+                throw new AccountPermissionInvalidException();
+            }
+        }
 
         List<OrderStatus> orderStatuses = orderStatusRepository
                 .findAllByOrderIdOrderByTimeAsc(foundOrder.getId());

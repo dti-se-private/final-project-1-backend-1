@@ -64,7 +64,7 @@ public class MidtransGateway {
         customerDetails.put("first_name", order.getAccount().getName());
         customerDetails.put("email", order.getAccount().getEmail());
         String phone = order.getAccount().getPhone();
-        if (!(phone.length() >= 5 && phone.length() <= 20)) {
+        if (phone == null || !(phone.length() >= 5 && phone.length() <= 20)) {
             phone = "00000";
         }
         customerDetails.put("phone", phone);

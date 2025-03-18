@@ -201,10 +201,11 @@ public class OrderRest {
     @PostMapping("/manual-payments/process")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
     public ResponseEntity<ResponseBody<OrderResponse>> processManualPayment(
+            @AuthenticationPrincipal Account account,
             @RequestBody ManualPaymentProcessRequest request
     ) {
         try {
-            OrderResponse order = paymentUseCase.processManualPayment(request);
+            OrderResponse order = paymentUseCase.processManualPayment(account, request);
             return ResponseBody
                     .<OrderResponse>builder()
                     .message("Order manual payment processed.")
@@ -215,6 +216,13 @@ public class OrderRest {
             return ResponseBody
                     .<OrderResponse>builder()
                     .message("Object size exceeded.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (AccountPermissionInvalidException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Account permission invalid.")
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.BAD_REQUEST);
@@ -510,10 +518,11 @@ public class OrderRest {
     @PostMapping("/shipment-confirmations/process")
     @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'WAREHOUSE_ADMIN', 'CUSTOMER')")
     public ResponseEntity<ResponseBody<OrderResponse>> processShipmentConfirmation(
+            @AuthenticationPrincipal Account account,
             @RequestBody OrderProcessRequest request
     ) {
         try {
-            OrderResponse order = shipmentUseCase.processShipmentConfirmation(request);
+            OrderResponse order = shipmentUseCase.processShipmentConfirmation(account, request);
             return ResponseBody
                     .<OrderResponse>builder()
                     .message("Order shipment confirmation processed.")
@@ -538,6 +547,13 @@ public class OrderRest {
             return ResponseBody
                     .<OrderResponse>builder()
                     .message("Order action invalid.")
+                    .exception(e)
+                    .build()
+                    .toEntity(HttpStatus.BAD_REQUEST);
+        } catch (AccountPermissionInvalidException e) {
+            return ResponseBody
+                    .<OrderResponse>builder()
+                    .message("Account permission invalid.")
                     .exception(e)
                     .build()
                     .toEntity(HttpStatus.BAD_REQUEST);
