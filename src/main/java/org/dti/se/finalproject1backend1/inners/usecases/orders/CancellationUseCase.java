@@ -56,6 +56,10 @@ public class CancellationUseCase {
         }
 
         if (accountPermissions.contains("CUSTOMER")) {
+            if (!foundOrder.getAccount().getId().equals(account.getId())) {
+                throw new AccountPermissionInvalidException();
+            }
+
             List<String> validCancelStatuses = List.of("WAITING_FOR_PAYMENT", "WAITING_FOR_PAYMENT_CONFIRMATION");
             Boolean isValidStatus = foundOrder
                     .getOrderStatuses()

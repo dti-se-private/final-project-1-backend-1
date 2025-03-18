@@ -98,12 +98,24 @@ public class ShipmentUseCase {
         return orderCustomRepository.getOrder(request.getOrderId());
     }
 
-    public OrderResponse processShipmentConfirmation(OrderProcessRequest request) {
+    public OrderResponse processShipmentConfirmation(Account account, OrderProcessRequest request) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
         Order foundOrder = orderRepository
                 .findById(request.getOrderId())
                 .orElseThrow(OrderNotFoundException::new);
+
+        List<String> accountPermissions = account
+                .getAccountPermissions()
+                .stream()
+                .map(AccountPermission::getPermission)
+                .toList();
+
+        if (accountPermissions.contains("CUSTOMER")) {
+            if (!foundOrder.getAccount().getId().equals(account.getId())) {
+                throw new AccountPermissionInvalidException();
+            }
+        }
 
         List<String> validStatuses = List.of("SHIPPING");
         Boolean isValidStatus = foundOrder
