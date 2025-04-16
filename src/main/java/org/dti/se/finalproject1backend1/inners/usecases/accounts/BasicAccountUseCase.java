@@ -70,13 +70,6 @@ public class BasicAccountUseCase {
     }
 
     public AccountResponse patchAccount(UUID id, AccountRequest request) {
-        Boolean isOtpVerified = verificationUseCase
-                .verifyOtp(request.getEmail(), request.getOtp(), "UPDATE_ACCOUNT");
-
-        if (!isOtpVerified) {
-            throw new VerificationInvalidException();
-        }
-
         if (request.getImage() != null && request.getImage().length > 1024000) {
             throw new ObjectSizeExceededException();
         }
@@ -95,6 +88,13 @@ public class BasicAccountUseCase {
                 .anyMatch(provider -> provider.getName().equals("INTERNAL"));
 
         if (isProviderContainInternal) {
+            Boolean isOtpVerified = verificationUseCase
+                    .verifyOtp(request.getEmail(), request.getOtp(), "UPDATE_ACCOUNT");
+
+            if (!isOtpVerified) {
+                throw new VerificationInvalidException();
+            }
+            
             accountToPatch.setEmail(request.getEmail());
             String encodedPassword = securityConfiguration.encode(request.getPassword());
             accountToPatch.setPassword(encodedPassword);
