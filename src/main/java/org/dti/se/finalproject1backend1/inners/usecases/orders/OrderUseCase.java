@@ -21,6 +21,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -93,6 +94,16 @@ public class OrderUseCase {
         }
     }
 
+    /**
+     * Process order by allocating warehouse inventory.
+     * 
+     * Performance optimizations:
+     * - Uses batch operations to reduce database round-trips
+     * - Transaction isolation prevents race conditions
+     * - Spatial query optimization via indexed location lookups
+     * 
+     * @param orderId The order to process
+     */
     public void processOrderProcessing(UUID orderId) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
@@ -119,6 +130,11 @@ public class OrderUseCase {
         definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         TransactionStatus status = transactionManager.getTransaction(definition);
         try {
+            // Collect entities for batch operations
+            List<StockLedger> stockLedgersToSave = new ArrayList<>();
+            List<WarehouseLedger> warehouseLedgersToSave = new ArrayList<>();
+            List<WarehouseProduct> warehouseProductsToUpdate = new ArrayList<>();
+            
             for (OrderItem foundOrderItem : foundOrderItems) {
                 // Get nearest warehouse product from order shipment origin warehouse.
                 WarehouseProduct originWarehouseProduct = locationCustomRepository
@@ -155,7 +171,7 @@ public class OrderUseCase {
                             .postQuantity(originPostQuantity)
                             .time(now)
                             .build();
-                    stockLedgerRepository.saveAndFlush(originStockLedger);
+                    stockLedgersToSave.add(originStockLedger);
 
                     StockLedger destinationStockLedger = StockLedger
                             .builder()
@@ -165,7 +181,7 @@ public class OrderUseCase {
                             .postQuantity(destinationPostQuantity)
                             .time(now)
                             .build();
-                    stockLedgerRepository.saveAndFlush(destinationStockLedger);
+                    stockLedgersToSave.add(destinationStockLedger);
 
                     WarehouseLedger newWarehouseLedger = WarehouseLedger
                             .builder()
@@ -181,9 +197,9 @@ public class OrderUseCase {
 
                     originWarehouseProduct.setQuantity(originPostQuantity);
                     destinationWarehouseProduct.setQuantity(destinationPostQuantity);
-                    warehouseProductRepository.saveAndFlush(originWarehouseProduct);
-                    warehouseProductRepository.saveAndFlush(destinationWarehouseProduct);
-                    warehouseLedgerRepository.saveAndFlush(newWarehouseLedger);
+                    warehouseProductsToUpdate.add(originWarehouseProduct);
+                    warehouseProductsToUpdate.add(destinationWarehouseProduct);
+                    warehouseLedgersToSave.add(newWarehouseLedger);
                 }
 
                 // Use warehouse product for order item.
@@ -200,11 +216,29 @@ public class OrderUseCase {
                         .postQuantity(warehouseProductQuantity)
                         .time(now)
                         .build();
-                stockLedgerRepository.saveAndFlush(destinationStockLedger);
+                stockLedgersToSave.add(destinationStockLedger);
 
                 destinationWarehouseProduct.setQuantity(warehouseProductQuantity);
-                warehouseProductRepository.saveAndFlush(destinationWarehouseProduct);
+                // Only add if not already in the update list
+                if (!warehouseProductsToUpdate.contains(destinationWarehouseProduct)) {
+                    warehouseProductsToUpdate.add(destinationWarehouseProduct);
+                }
             }
+            
+            // Batch save all entities - reduces database round-trips
+            if (!stockLedgersToSave.isEmpty()) {
+                stockLedgerRepository.saveAll(stockLedgersToSave);
+                stockLedgerRepository.flush();
+            }
+            if (!warehouseProductsToUpdate.isEmpty()) {
+                warehouseProductRepository.saveAll(warehouseProductsToUpdate);
+                warehouseProductRepository.flush();
+            }
+            if (!warehouseLedgersToSave.isEmpty()) {
+                warehouseLedgerRepository.saveAll(warehouseLedgersToSave);
+                warehouseLedgerRepository.flush();
+            }
+            
             transactionManager.commit(status);
         } catch (Exception exception) {
             transactionManager.rollback(status);
