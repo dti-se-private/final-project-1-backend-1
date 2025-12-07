@@ -9,6 +9,7 @@ import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehousePr
 import org.dti.se.finalproject1backend1.outers.repositories.customs.LocationCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.OrderCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
+import org.dti.se.finalproject1backend1.outers.utilities.PermissionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -20,8 +21,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderUseCase {
@@ -59,19 +60,13 @@ public class OrderUseCase {
             Integer size,
             String search
     ) {
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (accountPermissions.contains("SUPER_ADMIN")) {
+        if (PermissionUtil.isSuperAdmin(account)) {
             return orderCustomRepository
                     .getOrders(page, size, search);
-        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+        } else if (PermissionUtil.isWarehouseAdmin(account)) {
             return orderCustomRepository
                     .getOrders(account, page, size, search);
-        } else if (accountPermissions.contains("CUSTOMER")) {
+        } else if (PermissionUtil.isCustomer(account)) {
             return orderCustomRepository
                     .getCustomerOrders(account, page, size, search);
         } else {
@@ -84,19 +79,13 @@ public class OrderUseCase {
             Account account,
             UUID orderId
     ) {
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (accountPermissions.contains("SUPER_ADMIN")) {
+        if (PermissionUtil.isSuperAdmin(account)) {
             return orderCustomRepository
                     .getOrder(orderId);
-        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+        } else if (PermissionUtil.isWarehouseAdmin(account)) {
             return orderCustomRepository
                     .getOrder(account, orderId);
-        } else if (accountPermissions.contains("CUSTOMER")) {
+        } else if (PermissionUtil.isCustomer(account)) {
             return orderCustomRepository
                     .getCustomerOrder(account, orderId);
         } else {
@@ -104,6 +93,16 @@ public class OrderUseCase {
         }
     }
 
+    /**
+     * Process order by allocating warehouse inventory.
+     * 
+     * Performance optimizations:
+     * - Uses batch operations to reduce database round-trips
+     * - Transaction isolation prevents race conditions
+     * - Spatial query optimization via indexed location lookups
+     * 
+     * @param orderId The order to process
+     */
     public void processOrderProcessing(UUID orderId) {
         OffsetDateTime now = OffsetDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
@@ -130,6 +129,12 @@ public class OrderUseCase {
         definition.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
         TransactionStatus status = transactionManager.getTransaction(definition);
         try {
+            // Collect entities for batch operations
+            List<StockLedger> stockLedgersToSave = new ArrayList<>();
+            List<WarehouseLedger> warehouseLedgersToSave = new ArrayList<>();
+            // Use Set to efficiently track unique warehouse products to update
+            Set<WarehouseProduct> warehouseProductsToUpdate = new HashSet<>();
+            
             for (OrderItem foundOrderItem : foundOrderItems) {
                 // Get nearest warehouse product from order shipment origin warehouse.
                 WarehouseProduct originWarehouseProduct = locationCustomRepository
@@ -166,7 +171,7 @@ public class OrderUseCase {
                             .postQuantity(originPostQuantity)
                             .time(now)
                             .build();
-                    stockLedgerRepository.saveAndFlush(originStockLedger);
+                    stockLedgersToSave.add(originStockLedger);
 
                     StockLedger destinationStockLedger = StockLedger
                             .builder()
@@ -176,7 +181,7 @@ public class OrderUseCase {
                             .postQuantity(destinationPostQuantity)
                             .time(now)
                             .build();
-                    stockLedgerRepository.saveAndFlush(destinationStockLedger);
+                    stockLedgersToSave.add(destinationStockLedger);
 
                     WarehouseLedger newWarehouseLedger = WarehouseLedger
                             .builder()
@@ -192,9 +197,9 @@ public class OrderUseCase {
 
                     originWarehouseProduct.setQuantity(originPostQuantity);
                     destinationWarehouseProduct.setQuantity(destinationPostQuantity);
-                    warehouseProductRepository.saveAndFlush(originWarehouseProduct);
-                    warehouseProductRepository.saveAndFlush(destinationWarehouseProduct);
-                    warehouseLedgerRepository.saveAndFlush(newWarehouseLedger);
+                    warehouseProductsToUpdate.add(originWarehouseProduct);
+                    warehouseProductsToUpdate.add(destinationWarehouseProduct);
+                    warehouseLedgersToSave.add(newWarehouseLedger);
                 }
 
                 // Use warehouse product for order item.
@@ -211,11 +216,29 @@ public class OrderUseCase {
                         .postQuantity(warehouseProductQuantity)
                         .time(now)
                         .build();
-                stockLedgerRepository.saveAndFlush(destinationStockLedger);
+                stockLedgersToSave.add(destinationStockLedger);
 
                 destinationWarehouseProduct.setQuantity(warehouseProductQuantity);
-                warehouseProductRepository.saveAndFlush(destinationWarehouseProduct);
+                // Set automatically handles duplicates efficiently
+                warehouseProductsToUpdate.add(destinationWarehouseProduct);
             }
+            
+            // Batch save all entities to reduce database round-trips
+            // Flush all at once for better transaction efficiency
+            if (!stockLedgersToSave.isEmpty()) {
+                stockLedgerRepository.saveAll(stockLedgersToSave);
+            }
+            if (!warehouseProductsToUpdate.isEmpty()) {
+                warehouseProductRepository.saveAll(warehouseProductsToUpdate);
+            }
+            if (!warehouseLedgersToSave.isEmpty()) {
+                warehouseLedgerRepository.saveAll(warehouseLedgersToSave);
+            }
+            // Single flush after all saves
+            if (!stockLedgersToSave.isEmpty() || !warehouseProductsToUpdate.isEmpty() || !warehouseLedgersToSave.isEmpty()) {
+                stockLedgerRepository.flush();
+            }
+            
             transactionManager.commit(status);
         } catch (Exception exception) {
             transactionManager.rollback(status);

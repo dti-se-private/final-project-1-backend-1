@@ -10,6 +10,7 @@ import org.dti.se.finalproject1backend1.outers.repositories.customs.WarehouseLed
 import org.dti.se.finalproject1backend1.outers.repositories.ones.StockLedgerRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseLedgerRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.WarehouseProductRepository;
+import org.dti.se.finalproject1backend1.outers.utilities.PermissionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -36,15 +37,9 @@ public class WarehouseLedgerUseCase {
             Integer size,
             String search
     ) {
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (accountPermissions.contains("SUPER_ADMIN")) {
+        if (PermissionUtil.isSuperAdmin(account)) {
             return warehouseLedgerCustomRepository.getOriginWarehouseLedgers(page, size, search);
-        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+        } else if (PermissionUtil.isWarehouseAdmin(account)) {
             return warehouseLedgerCustomRepository.getOriginWarehouseLedgers(account, page, size, search);
         } else {
             throw new AccountPermissionInvalidException();
@@ -52,15 +47,9 @@ public class WarehouseLedgerUseCase {
     }
 
     public WarehouseLedgerResponse getMutationRequest(Account account, UUID warehouseLedgerId) {
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (accountPermissions.contains("SUPER_ADMIN")) {
+        if (PermissionUtil.isSuperAdmin(account)) {
             return warehouseLedgerCustomRepository.getOriginWarehouseLedger(warehouseLedgerId);
-        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+        } else if (PermissionUtil.isWarehouseAdmin(account)) {
             return warehouseLedgerCustomRepository.getOriginWarehouseLedger(account, warehouseLedgerId);
         } else {
             throw new AccountPermissionInvalidException();
@@ -78,15 +67,9 @@ public class WarehouseLedgerUseCase {
             throw new WarehouseLedgerApprovalInvalidException();
         }
 
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (accountPermissions.contains("SUPER_ADMIN")) {
+        if (PermissionUtil.isSuperAdmin(account)) {
             // Do nothing.
-        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+        } else if (PermissionUtil.isWarehouseAdmin(account)) {
             Boolean isAccountRelatedToOriginWarehouseLedger = warehouseLedgerCustomRepository
                     .isAccountRelatedToOriginWarehouseLedger(account, request.getWarehouseLedgerId());
             if (!isAccountRelatedToOriginWarehouseLedger) {
@@ -167,15 +150,9 @@ public class WarehouseLedgerUseCase {
             throw new WarehouseLedgerApprovalInvalidException();
         }
 
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (accountPermissions.contains("SUPER_ADMIN")) {
+        if (PermissionUtil.isSuperAdmin(account)) {
             // Do nothing.
-        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+        } else if (PermissionUtil.isWarehouseAdmin(account)) {
             Boolean isAccountRelatedToOriginWarehouseLedger = warehouseLedgerCustomRepository
                     .isAccountRelatedToOriginWarehouseLedger(account, request.getWarehouseLedgerId());
             if (!isAccountRelatedToOriginWarehouseLedger) {

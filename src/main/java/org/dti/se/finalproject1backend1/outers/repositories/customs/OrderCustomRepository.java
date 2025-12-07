@@ -24,6 +24,21 @@ public class OrderCustomRepository {
     @Autowired
     ObjectMapper objectMapper;
 
+    /**
+     * Get customer orders with pagination and search.
+     * 
+     * Performance Note: This query includes a correlated subquery for product quantity calculation.
+     * For better performance with large datasets, consider:
+     * 1. Creating a materialized view for product quantities
+     * 2. Pre-calculating and caching product quantities
+     * 3. Using a separate query to fetch quantities after initial results
+     * 
+     * @param account The customer account
+     * @param page Page number (0-indexed)
+     * @param size Number of results per page
+     * @param search Search term for fuzzy matching
+     * @return List of order responses
+     */
     public List<OrderResponse> getCustomerOrders(
             Account account,
             Integer page,
