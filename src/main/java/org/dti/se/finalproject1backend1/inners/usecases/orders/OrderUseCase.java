@@ -21,9 +21,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderUseCase {
@@ -133,7 +132,8 @@ public class OrderUseCase {
             // Collect entities for batch operations
             List<StockLedger> stockLedgersToSave = new ArrayList<>();
             List<WarehouseLedger> warehouseLedgersToSave = new ArrayList<>();
-            List<WarehouseProduct> warehouseProductsToUpdate = new ArrayList<>();
+            // Use Set to efficiently track unique warehouse products to update
+            Set<WarehouseProduct> warehouseProductsToUpdate = new HashSet<>();
             
             for (OrderItem foundOrderItem : foundOrderItems) {
                 // Get nearest warehouse product from order shipment origin warehouse.
@@ -219,10 +219,8 @@ public class OrderUseCase {
                 stockLedgersToSave.add(destinationStockLedger);
 
                 destinationWarehouseProduct.setQuantity(warehouseProductQuantity);
-                // Only add if not already in the update list
-                if (!warehouseProductsToUpdate.contains(destinationWarehouseProduct)) {
-                    warehouseProductsToUpdate.add(destinationWarehouseProduct);
-                }
+                // Set automatically handles duplicates with O(1) complexity
+                warehouseProductsToUpdate.add(destinationWarehouseProduct);
             }
             
             // Batch save all entities - reduces database round-trips
