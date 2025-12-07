@@ -11,6 +11,7 @@ import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehousePr
 import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehouseProductNotFoundException;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.WarehouseProductCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
+import org.dti.se.finalproject1backend1.outers.utilities.PermissionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -41,16 +42,10 @@ public class WarehouseProductUseCase {
             Integer size,
             String search
     ) {
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (accountPermissions.contains("SUPER_ADMIN")) {
+        if (PermissionUtil.isSuperAdmin(account)) {
             return warehouseProductCustomRepository
                     .getWarehouseProducts(page, size, search);
-        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+        } else if (PermissionUtil.isWarehouseAdmin(account)) {
             return warehouseProductCustomRepository
                     .getAccountWarehouseProducts(account, page, size, search);
         } else {
@@ -59,16 +54,10 @@ public class WarehouseProductUseCase {
     }
 
     public WarehouseProductResponse getWarehouseProduct(Account account, UUID warehouseProductId) {
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (accountPermissions.contains("SUPER_ADMIN")) {
+        if (PermissionUtil.isSuperAdmin(account)) {
             return warehouseProductCustomRepository
                     .getWarehouseProduct(warehouseProductId);
-        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+        } else if (PermissionUtil.isWarehouseAdmin(account)) {
             return warehouseProductCustomRepository
                     .getAccountWarehouseProduct(account, warehouseProductId);
         } else {
@@ -94,15 +83,9 @@ public class WarehouseProductUseCase {
             throw new WarehouseProductExistsException();
         }
 
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (accountPermissions.contains("SUPER_ADMIN")) {
+        if (PermissionUtil.isSuperAdmin(account)) {
             // Do nothing.
-        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+        } else if (PermissionUtil.isWarehouseAdmin(account)) {
             Boolean isAccountAssociatedWithWarehouse = warehouseAdminRepository
                     .existsByAccountIdAndWarehouseId(account.getId(), request.getWarehouseId());
             if (!isAccountAssociatedWithWarehouse) {
@@ -150,15 +133,9 @@ public class WarehouseProductUseCase {
                 .findById(warehouseProductId)
                 .orElseThrow(WarehouseProductNotFoundException::new);
 
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (accountPermissions.contains("SUPER_ADMIN")) {
+        if (PermissionUtil.isSuperAdmin(account)) {
             // Do nothing.
-        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+        } else if (PermissionUtil.isWarehouseAdmin(account)) {
             Boolean isAccountAssociatedWithWarehouse = warehouseAdminRepository
                     .existsByAccountIdAndWarehouseId(account.getId(), request.getWarehouseId());
             if (!isAccountAssociatedWithWarehouse) {
@@ -191,15 +168,9 @@ public class WarehouseProductUseCase {
                 .findById(warehouseProductId)
                 .orElseThrow(WarehouseProductNotFoundException::new);
 
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (accountPermissions.contains("SUPER_ADMIN")) {
+        if (PermissionUtil.isSuperAdmin(account)) {
             // Do nothing.
-        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+        } else if (PermissionUtil.isWarehouseAdmin(account)) {
             Boolean isAccountAssociatedWithWarehouse = warehouseAdminRepository
                     .existsByAccountIdAndWarehouseId(account.getId(), warehouseProduct.getWarehouse().getId());
             if (!isAccountAssociatedWithWarehouse) {

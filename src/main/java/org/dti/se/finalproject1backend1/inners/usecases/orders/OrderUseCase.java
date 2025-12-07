@@ -9,6 +9,7 @@ import org.dti.se.finalproject1backend1.outers.exceptions.warehouses.WarehousePr
 import org.dti.se.finalproject1backend1.outers.repositories.customs.LocationCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.customs.OrderCustomRepository;
 import org.dti.se.finalproject1backend1.outers.repositories.ones.*;
+import org.dti.se.finalproject1backend1.outers.utilities.PermissionUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -59,19 +60,13 @@ public class OrderUseCase {
             Integer size,
             String search
     ) {
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (accountPermissions.contains("SUPER_ADMIN")) {
+        if (PermissionUtil.isSuperAdmin(account)) {
             return orderCustomRepository
                     .getOrders(page, size, search);
-        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+        } else if (PermissionUtil.isWarehouseAdmin(account)) {
             return orderCustomRepository
                     .getOrders(account, page, size, search);
-        } else if (accountPermissions.contains("CUSTOMER")) {
+        } else if (PermissionUtil.isCustomer(account)) {
             return orderCustomRepository
                     .getCustomerOrders(account, page, size, search);
         } else {
@@ -84,19 +79,13 @@ public class OrderUseCase {
             Account account,
             UUID orderId
     ) {
-        List<String> accountPermissions = account
-                .getAccountPermissions()
-                .stream()
-                .map(AccountPermission::getPermission)
-                .toList();
-
-        if (accountPermissions.contains("SUPER_ADMIN")) {
+        if (PermissionUtil.isSuperAdmin(account)) {
             return orderCustomRepository
                     .getOrder(orderId);
-        } else if (accountPermissions.contains("WAREHOUSE_ADMIN")) {
+        } else if (PermissionUtil.isWarehouseAdmin(account)) {
             return orderCustomRepository
                     .getOrder(account, orderId);
-        } else if (accountPermissions.contains("CUSTOMER")) {
+        } else if (PermissionUtil.isCustomer(account)) {
             return orderCustomRepository
                     .getCustomerOrder(account, orderId);
         } else {
