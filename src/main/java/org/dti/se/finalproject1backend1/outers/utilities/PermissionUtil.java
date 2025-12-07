@@ -71,24 +71,19 @@ public class PermissionUtil {
 
     /**
      * Check if account has any of the specified permissions.
-     * Optimized to use stream's anyMatch for early termination.
+     * Optimized to use Set lookup with O(n) complexity where n is account permissions.
      *
      * @param account     The account to check
      * @param permissions The permissions to check for
      * @return true if account has any of the permissions
      */
     public static boolean hasAnyPermission(Account account, String... permissions) {
+        // Convert to Set for O(1) lookup instead of O(m) per permission
+        Set<String> permissionSet = Set.of(permissions);
         return account
                 .getAccountPermissions()
                 .stream()
-                .anyMatch(p -> {
-                    for (String permission : permissions) {
-                        if (permission.equals(p.getPermission())) {
-                            return true;
-                        }
-                    }
-                    return false;
-                });
+                .anyMatch(p -> permissionSet.contains(p.getPermission()));
     }
 
     /**

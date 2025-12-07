@@ -219,22 +219,24 @@ public class OrderUseCase {
                 stockLedgersToSave.add(destinationStockLedger);
 
                 destinationWarehouseProduct.setQuantity(warehouseProductQuantity);
-                // Set automatically handles duplicates with O(1) complexity
+                // Set automatically handles duplicates efficiently
                 warehouseProductsToUpdate.add(destinationWarehouseProduct);
             }
             
-            // Batch save all entities - reduces database round-trips
+            // Batch save all entities to reduce database round-trips
+            // Flush all at once for better transaction efficiency
             if (!stockLedgersToSave.isEmpty()) {
                 stockLedgerRepository.saveAll(stockLedgersToSave);
-                stockLedgerRepository.flush();
             }
             if (!warehouseProductsToUpdate.isEmpty()) {
                 warehouseProductRepository.saveAll(warehouseProductsToUpdate);
-                warehouseProductRepository.flush();
             }
             if (!warehouseLedgersToSave.isEmpty()) {
                 warehouseLedgerRepository.saveAll(warehouseLedgersToSave);
-                warehouseLedgerRepository.flush();
+            }
+            // Single flush after all saves
+            if (!stockLedgersToSave.isEmpty() || !warehouseProductsToUpdate.isEmpty() || !warehouseLedgersToSave.isEmpty()) {
+                stockLedgerRepository.flush();
             }
             
             transactionManager.commit(status);
